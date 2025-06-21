@@ -3,27 +3,155 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import './EmailComposer.css';
 import Draggable from 'react-draggable';
-import { XMarkIcon, PaperClipIcon, PaperAirplaneIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PaperClipIcon, PaperAirplaneIcon, ArchiveBoxIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
+import { fetchEmailTemplates } from '../utils/mockApi';
 
-const EmailComposer = ({ onClose, onSend }) => {  const [to, setTo] = useState([]);
+const EmailComposer = ({ onClose, onSend, preData = null, selectedTemplate = null }) => {
+  const [to, setTo] = useState(preData?.to || []);
   const [cc, setCc] = useState([]);
   const [bcc, setBcc] = useState([]);
-  const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
+  const [subject, setSubject] = useState(preData?.subject || '');
+  const [body, setBody] = useState(preData?.templateBody || '<p></p>');
+  
+  // Ensure form fields update when preData changes (for selected rows compose)
+  useEffect(() => {
+    if (preData) {
+      if (preData.to && preData.to.length > 0) {
+        setTo(preData.to);
+      }
+      if (preData.subject) {
+        setSubject(preData.subject);
+      }
+    }
+  }, [preData]);
   const [files, setFiles] = useState([]);
   const [toInput, setToInput] = useState('');
   const [ccInput, setCcInput] = useState('');
-  const [bccInput, setBccInput] = useState('');
-  const [showCc, setShowCc] = useState(false);
+  const [bccInput, setBccInput] = useState('');  const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [draftTimer, setDraftTimer] = useState(null);
-
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(selectedTemplate || 'default');
   const toInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const dragNodeRef = useRef(null);
+  // Set initial state based on selectedTemplate
+  useEffect(() => {
+    // If a template is selected, update the selectedTemplateId
+    if (selectedTemplate) {
+      setSelectedTemplateId(selectedTemplate);
+    }
+  }, [selectedTemplate]);
+  // Apply template immediately on mount if we have preData
+  useEffect(() => {
+    // If preData includes a templateBody, use it directly
+    if (preData?.templateBody) {
+      setBody(preData.templateBody);
+    } 
+    // Otherwise check if we should fetch the default template
+    else if (preData?.useDefaultTemplate === true) {
+      const applyDefaultTemplate = async () => {
+        try {
+          const response = await fetchEmailTemplates();
+          if (response.success) {
+            const defaultTemplate = response.data.find(t => t.id === 'default');
+            if (defaultTemplate) {
+              setBody(defaultTemplate.body);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load default template on mount:', error);
+          // If we can't fetch the template, use a simple default
+          setBody('<p>Please enter your message here.</p>');
+        }
+      };
+      
+      applyDefaultTemplate();
+    }
+    // For "Compose New Email", keep the body completely empty
+    else if (preData && preData.useDefaultTemplate === false) {
+      setBody('<p></p>');
+    }
+  }, [preData]);// Load templates on component mount
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        const response = await fetchEmailTemplates();
+        if (response.success) {
+          setTemplates(response.data);
+          
+          // For "Compose New Email", we should NOT apply any template
+          if (preData && preData.useDefaultTemplate === false) {
+            // If explicitly set not to use a template, don't apply one
+            // Just ensure we have at least an empty paragraph
+            if (!body || body === '') {
+              setBody('<p></p>');
+            }
+            return; // Exit early, don't apply any template
+          }
+          
+          // If a template was pre-selected or default is set, apply it
+          if (selectedTemplate || selectedTemplateId) {
+            const templateToUse = response.data.find(t => t.id === (selectedTemplate || selectedTemplateId));
+            if (templateToUse) {
+              // Apply template if it exists and body is empty or just contains default content
+              if (!body || body === '<p></p>' || body === '<p>Please enter your message here.</p>') {
+                setBody(templateToUse.body);
+              }
+              // Only prepend subject template if there's a prefix and subject is either empty or came from preData
+              if (templateToUse.subject && (subject === '' || subject === preData?.subject)) {
+                setSubject(subject ? `${templateToUse.subject}${subject}` : templateToUse.subject);
+              }
+            } else {
+              // If selected template is not found, use a default empty template
+              console.warn('Selected template not found, using default empty template');
+              if (!body || body === '<p></p>') {
+                setBody('<p>Please enter your message here.</p>');
+              }
+            }
+          }
+        } else {
+          // Handle API error gracefully
+          console.error('Template API response was not successful');
+          if (!body) {
+            setBody('<p>Please enter your message here.</p>');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load email templates:', error);
+        // Provide a fallback template if there's an error
+        if (!body || body === '<p></p>') {
+          setBody('<p>Please enter your message here.</p>');
+        }
+      }
+    };
+    
+    loadTemplates();
+  }, [selectedTemplate, selectedTemplateId, body, subject, preData]);
+  // Handle template selection - no longer needed in UI but kept for API
+  const handleTemplateChange = (templateId) => {
+    const selectedTemplate = templates.find(t => t.id === templateId);
+    if (selectedTemplate) {
+      setSelectedTemplateId(templateId);
+      setBody(selectedTemplate.body);
+      
+      // Only adjust subject if template has a subject prefix
+      if (selectedTemplate.subject) {
+        // If current subject starts with another template prefix, replace it
+        let newSubject = subject;
+        for (const template of templates) {
+          if (template.subject && subject.startsWith(template.subject)) {
+            newSubject = subject.substring(template.subject.length);
+            break;
+          }
+        }
+        setSubject(selectedTemplate.subject + newSubject);
+      }
+    }
+  };
 
   // Validate email format
   const isValidEmail = (email) => {
@@ -241,14 +369,14 @@ const EmailComposer = ({ onClose, onSend }) => {  const [to, setTo] = useState([
     return () => {
       window.removeEventListener('keydown', handleKeyboardShortcuts);
     };
-  }, [to, cc, bcc, subject, body]);
-  // Quill editor modules configuration
+  }, [to, cc, bcc, subject, body]);  // Quill editor modules configuration
   const modules = {
     toolbar: [
       ['bold', 'italic', 'underline'],
       [{'list': 'ordered'}, {'list': 'bullet'}],
       ['link'],
       [{ 'color': [] }],
+      [{ 'align': [] }],
       ['clean']
     ],
   };// Email chip component
@@ -386,8 +514,7 @@ const EmailComposer = ({ onClose, onSend }) => {  const [to, setTo] = useState([
                 />
               </div>
             </div>
-          )}
-            {/* Subject Field */}
+          )}            {/* Subject Field */}
           <div className="mb-1 py-1 border-b border-gray-200">
             <input
               type="text"
@@ -395,16 +522,16 @@ const EmailComposer = ({ onClose, onSend }) => {  const [to, setTo] = useState([
               onChange={(e) => setSubject(e.target.value)}
               className="w-full outline-none text-sm"
               placeholder="Subject"
-            />
-          </div>
+            />          </div>
+            
             {/* Rich Text Editor */}
-          <div className="flex-grow mb-1 overflow-auto">
-            <ReactQuill
+          <div className="flex-grow mb-1 overflow-auto">            <ReactQuill
               theme="snow"
               value={body}
               onChange={setBody}
               modules={modules}
               className="h-[160px]"
+              preserveWhitespace={true}
             />
           </div>
             {/* Attachments */}
@@ -476,8 +603,8 @@ const EmailComposer = ({ onClose, onSend }) => {  const [to, setTo] = useState([
               <span>Send</span>
               <PaperAirplaneIcon className="ml-1 h-3 w-3" />
             </button>
-          </div>
-        </div>
+          </div>        </div>
+        {/* Template selector has been moved to ComposePage.jsx and is no longer needed here */}
       </div>
     </Draggable>
   );

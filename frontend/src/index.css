@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gradient-to-br from-gray-50 to-gray-100 font-sans min-h-screen;
+  background-image: radial-gradient(rgba(14, 165, 233, 0.04) 2px, transparent 2px);
+  background-size: 32px 32px;
+}
+
+.card {
+  @apply rounded-xl shadow-card bg-white backdrop-blur-sm bg-opacity-95 p-8 transition-all duration-300 hover:shadow-card-hover;
+}
+
+.card.glass {
+  @apply bg-white bg-opacity-70 backdrop-blur-md border border-white border-opacity-20;
+}
+
+.card-glass {
+  @apply rounded-xl shadow-card bg-white bg-opacity-70 backdrop-blur-md border border-white border-opacity-20 p-8 transition-all duration-300 hover:shadow-card-hover;
+}
+
+/* Sidebar specific styles */
+aside {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+aside nav ul li a {
+  transform: translateX(0);
+  transition: all 0.2s ease-in-out;
+}
+
+aside nav ul li a:hover {
+  transform: translateX(4px);
+}
+
+.input-field {
+  @apply w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 shadow-inner;
+}
+
+.input-group {
+  @apply relative flex flex-col mb-6;
+}
+
+.input-label {
+  @apply mb-2 text-sm font-medium text-gray-700 flex items-center;
+}
+
+.form-row {
+  @apply flex flex-col sm:flex-row gap-6;
+}
+
+.input-icon {
+  @apply absolute right-3 top-10 text-gray-400;
+}
+
+.btn {
+  @apply px-5 py-2.5 rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed;
+}
+
+.btn-primary {
+  @apply btn bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 focus:ring-primary-500 shadow-sm hover:shadow-md;
+}
+
+.btn-secondary {
+  @apply btn bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-gray-400 border border-gray-200;
+}
+
+.status-card {
+  @apply card flex flex-col items-center justify-center h-32 cursor-help;
+}
+
+.status-count {
+  @apply text-4xl font-bold;
+}
+
+.status-label {
+  @apply text-sm text-gray-500 uppercase tracking-wide font-medium;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes number {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-number {
+  animation: number 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Toast animations */
+.Toastify__toast--info {
+  background-color: theme('colors.blue.50');
+  color: theme('colors.blue.800');
+  border: 1px solid theme('colors.blue.200');
+}
+
+.Toastify__toast--success {
+  background-color: theme('colors.green.50');
+  color: theme('colors.green.800');
+  border: 1px solid theme('colors.green.200');
+}
+
+.Toastify__toast--error {
+  background-color: theme('colors.red.50');
+  color: theme('colors.red.800');
+  border: 1px solid theme('colors.red.200');
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 640px) {
+  .status-count {
+    font-size: theme('fontSize.3xl');
+  }
+  
+  .card {
+    padding: theme('spacing.4');
+  }
+}
+
+/* Sidebar CSS */
+.sidebar-toggle {
+  @apply z-50 fixed top-4 left-4 md:hidden bg-primary-500 text-white p-2 rounded-lg shadow-lg;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+  }
+}
+
+/* Ensure smooth transitions */
+.sidebar-transition {
+  transition: transform 0.3s ease, width 0.3s ease;
+}
+
+/* Enhance collapsed sidebar appearance */
+.sidebar-collapsed {
+  width: 70px;
+}
+
+.sidebar-collapsed .sidebar-icon {
+  margin: 0 auto;
+}
+
+/* Improve menu toggle button styling */
+.menu-toggle {
+  @apply flex items-center justify-center w-8 h-8 rounded-full bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors;
+}
+
+/* Fix main content area to prevent layout shift */
+#root {
+  overflow-x: hidden;
+}

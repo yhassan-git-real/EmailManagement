@@ -10,9 +10,14 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
         <div className="flex flex-row flex-grow relative">
         <Sidebar />
         
-        <main className="flex-grow py-12 px-4 sm:px-8 lg:px-16 bg-gradient-to-b from-gray-50 to-gray-100 w-full md:ml-20">
-          <div className="max-w-5xl mx-auto">
-            <h1 className="text-3xl font-bold mb-6 text-gray-800">Automate Email</h1>
+        <main className="flex-grow py-3 px-1 bg-gradient-to-b from-gray-50 to-gray-100 w-full md:ml-14">
+          <div className="w-full lg:px-1">
+            <h1 className="text-sm font-medium mb-2 text-primary-600 pl-1 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+              </svg>
+              Automate Email
+            </h1>
             
             <div className="bg-white rounded-xl shadow-lg p-6">
               <p className="text-gray-600">This is the Automate Email page where you can set up automated email workflows.</p>

@@ -90,3 +90,47 @@ export const fetchEmailStatus = async () => {
     }, 1000);
   });
 };
+
+// Mock sending an email
+export const mockSendEmail = async (emailData) => {
+  return new Promise((resolve, reject) => {
+    // Simulate API call latency
+    setTimeout(() => {
+      // Validate basic requirements
+      if (!emailData.to || emailData.to.length === 0) {
+        reject({ success: false, message: 'At least one recipient is required' });
+      } else if (!emailData.subject && !emailData.body) {
+        reject({ success: false, message: 'Subject or body must be provided' });
+      } else {
+        // Generate mock response with ID and timestamp
+        resolve({
+          success: true,
+          message: 'Email sent successfully',
+          data: {
+            id: `email_${Math.random().toString(36).substr(2, 9)}`,
+            sent: new Date().toISOString(),
+            recipients: emailData.to.length + 
+                       (emailData.cc ? emailData.cc.length : 0) + 
+                       (emailData.bcc ? emailData.bcc.length : 0),
+            status: 'sent'
+          }
+        });
+
+        // Update mock status
+        mockEmailStatus.sent += 1;
+      }
+    }, 800); // Simulate network delay
+  });
+};
+
+// Get email status statistics
+export const getEmailStats = async () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        success: true,
+        data: { ...mockEmailStatus }
+      });
+    }, 500);
+  });
+};

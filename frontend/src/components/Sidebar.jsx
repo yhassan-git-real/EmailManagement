@@ -99,8 +99,7 @@ const Sidebar = (props) => {
       return true;
     }
     return currentPath === path || currentPath.startsWith(`${path}/`);
-  };
-  return (
+  };  return (
     <>
       {/* Mobile sidebar backdrop */}
       {isMobile && isMobileOpen && (
@@ -109,15 +108,15 @@ const Sidebar = (props) => {
           onClick={() => setIsMobileOpen(false)}
         />
       )}
-    
-      <aside 
-        className={`fixed md:static h-full min-h-screen bg-white border-r border-gray-200 shadow-sm flex flex-col transition-all duration-300 z-40
-          ${isCollapsed ? 'w-20' : 'w-64'} 
+
+      <aside
+        className={`fixed md:static h-full min-h-screen bg-white border-r border-gray-200 shadow-sm flex flex-col transition-all duration-300 z-30
+          ${isCollapsed ? 'w-20' : 'w-60'} 
           ${isMobile ? (isMobileOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
         `}
       >        {/* Toggle button for mobile */}        <button 
           onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="md:hidden fixed left-4 top-20 z-50 bg-white text-primary-600 p-2 rounded-full shadow-lg border border-gray-200 hover:bg-primary-50 transition-colors"
+          className="md:hidden fixed left-4 top-20 z-[120] bg-white text-primary-600 p-2 rounded-full shadow-lg border border-gray-200 hover:bg-primary-50 transition-colors"
         >
           {isMobileOpen ? (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
@@ -129,30 +128,34 @@ const Sidebar = (props) => {
             </svg>
           )}
         </button>
-      
-        {/* Sidebar Header with Logo */}        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3.5'}`}><div className="bg-gradient-to-r from-secondary-500 to-primary-600 p-2 rounded-lg shadow-md">
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              viewBox="0 0 24 24" 
-              fill="currentColor" 
-              className="w-6 h-6 text-white"
-            >
-              <path d="M11.25 4.533A9.707 9.707 0 006 3a9.735 9.735 0 00-3.25.555.75.75 0 00-.5.707v14.25a.75.75 0 001 .707A8.237 8.237 0 016 18.75c1.995 0 3.823.707 5.25 1.886V4.533zM12.75 20.636A8.214 8.214 0 0118 18.75c.966 0 1.89.166 2.75.47a.75.75 0 001-.708V4.262a.75.75 0 00-.5-.707A9.735 9.735 0 0018 3a9.707 9.707 0 00-5.25 1.533v16.103z" />
-            </svg>
+        {/* Sidebar Header with Logo */}        <div className="p-2.5 border-b border-gray-100 flex items-center justify-between relative">
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
+            <div className="bg-gradient-to-r from-secondary-500 to-primary-600 p-2 rounded-lg shadow-md">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24" 
+                fill="currentColor" 
+                className="w-6 h-6 text-white"
+              >
+                <path d="M11.25 4.533A9.707 9.707 0 006 3a9.735 9.735 0 00-3.25.555.75.75 0 00-.5.707v14.25a.75.75 0 001 .707A8.237 8.237 0 016 18.75c1.995 0 3.823.707 5.25 1.886V4.533zM12.75 20.636A8.214 8.214 0 0118 18.75c.966 0 1.89.166 2.75.47a.75.75 0 001-.708V4.262a.75.75 0 00-.5-.707A9.735 9.735 0 0018 3a9.707 9.707 0 00-5.25 1.533v16.103z" />
+              </svg>
+            </div>            {!isCollapsed && (
+              <div>
+                <h1 className="text-sm font-medium text-primary-600">
+                  Control Panel
+                </h1>
+                <p className="text-xs text-gray-500">Email Services</p>
+              </div>
+            )}
           </div>
-          {!isCollapsed && (
-            <div>              <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-secondary-600">
-                Control Panel
-              </h1>
-              <p className="text-xs text-gray-500 mt-0.5">Email Services</p></div>
-          )}
-            {/* Collapse toggle button (only on desktop) */}          {!isMobile && (
+            {/* Collapse toggle button (only on desktop) */}          
+          {!isMobile && (            
             <button 
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="absolute -right-3 top-5 w-6 h-6 rounded-full bg-white hover:bg-primary-50 text-gray-500 hover:text-primary-600 flex items-center justify-center transition-colors shadow-md border border-gray-200"
+              className="absolute -right-4 top-6 w-6 h-6 rounded-full bg-white hover:bg-primary-50 text-gray-500 hover:text-primary-600 flex items-center justify-center transition-colors shadow-md border border-gray-200 z-[120]"
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >{isCollapsed ? (
+            >
+              {isCollapsed ? (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
@@ -160,16 +163,14 @@ const Sidebar = (props) => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                 </svg>
-              )}
-            </button>
+              )}            </button>
           )}
-        </div>
-      </div>
-
-      {/* Navigation Links */}      <nav className="flex-1 overflow-y-auto p-3">
+        </div>      {/* Navigation Links */}
+      <nav className="flex-1 overflow-y-auto p-2.5 mt-1">
         <ul className="space-y-3 mt-2">
           {navItems.map(item => (
-            <li key={item.id}>              <Link 
+            <li key={item.id}>
+              <Link 
                 to={item.path}
                 className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} p-3 rounded-lg transition-all duration-200 ${
                   isActive(item.path)
@@ -192,7 +193,8 @@ const Sidebar = (props) => {
             </li>
           ))}
         </ul>
-      </nav>      {/* Bottom Section (Optional) */}      <div className="p-3 border-t border-gray-100">
+      </nav>{/* Bottom Section (Optional) */}
+      <div className="p-3 border-t border-gray-100">
         <div className={`text-xs text-gray-400 ${isCollapsed ? 'text-center' : ''}`}>
           {isCollapsed ? (
             <span className="inline-block mt-1">•••</span>
@@ -204,7 +206,7 @@ const Sidebar = (props) => {
           )}
         </div>
       </div>
-    </aside>
+      </aside>
     </>
   );
 };

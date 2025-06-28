@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+// Import both mock and real API
 import { fetchEmailStatus } from '../utils/mockApi';
+// TODO: When backend API for email status is ready, update to use:
+// import { fetchEmailStatus } from '../utils/apiClient';
 import EmailStatusCard from './EmailStatusCard';
 
 const StatusSummary = () => {

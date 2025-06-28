@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
-from .routers import db
+from .routers import db, email
 from .config import settings
 
 # Configure logging
@@ -29,6 +29,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(db.router)
+app.include_router(email.router, prefix="/api/email", tags=["email"])
 
 
 @app.get("/")

@@ -1,23 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-// Import both mock and real API
-import { fetchEmailStatus } from '../utils/mockApi';
-// TODO: When backend API for email status is ready, update to use:
-// import { fetchEmailStatus } from '../utils/apiClient';
+// Import real API client and session utilities
+import { fetchEmailStatus } from '../utils/apiClient';
+import { saveEmailStatusToSession, loadEmailStatusFromSession, isEmailStatusStale } from '../utils/sessionUtils';
 import EmailStatusCard from './EmailStatusCard';
 
 const StatusSummary = () => {
   const [statusData, setStatusData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  const loadStatusData = async () => {
+  const loadStatusData = async (forceRefresh = false) => {
     setLoading(true);
+    
     try {
+      // Check if we have cached data and it's not stale
+      if (!forceRefresh) {
+        const { statusData: cachedData, lastUpdated: cachedTimestamp } = loadEmailStatusFromSession();
+        if (cachedData && !isEmailStatusStale(5)) { // 5 minutes max age
+          setStatusData(cachedData);
+          setLastUpdated(new Date(cachedTimestamp).toLocaleString());
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Fetch fresh data from API
       const data = await fetchEmailStatus();
       setStatusData(data);
+      
+      // Update session storage with new data
+      saveEmailStatusToSession(data);
+      
+      // Update last updated timestamp
+      const now = new Date();
+      setLastUpdated(now.toLocaleString());
     } catch (error) {
       toast.error('Failed to load email status data');
       console.error(error);
+      
+      // Try to use cached data even if it's stale
+      const { statusData: cachedData, lastUpdated: cachedTimestamp } = loadEmailStatusFromSession();
+      if (cachedData) {
+        setStatusData(cachedData);
+        setLastUpdated(`${new Date(cachedTimestamp).toLocaleString()} (cached)`);
+        toast.warning('Showing cached data. Could not refresh from server.');
+      }
     } finally {
       setLoading(false);
     }
@@ -29,7 +57,7 @@ const StatusSummary = () => {
   }, []);
 
   const handleRefresh = () => {
-    loadStatusData();
+    loadStatusData(true); // Force refresh from server
     toast.info('Refreshing email status data...');
   };  return (
     <div className="card-glass max-w-5xl mx-auto shadow-xl">
@@ -50,7 +78,9 @@ const StatusSummary = () => {
               </div>
               <div>
                 <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-700 to-secondary-700">Email Status Report</h2>
-                <p className="text-gray-600 mt-2">Real-time overview of email delivery performance</p>
+                {lastUpdated && (
+                  <p className="text-sm text-gray-500">Last updated: {lastUpdated}</p>
+                )}
               </div>
             </div>
           </div>
@@ -86,7 +116,7 @@ const StatusSummary = () => {
           <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
             <EmailStatusCard 
               title="Sent" 
-              count={statusData?.sent || 0}
+              count={statusData?.success || 0}
               color="border-green-500"
               description="Successfully delivered emails"
               icon={

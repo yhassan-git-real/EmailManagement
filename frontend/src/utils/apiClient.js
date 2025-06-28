@@ -79,3 +79,63 @@ export const connectToDatabase = async (credentials) => {
     throw error;
   }
 };
+
+/**
+ * Fetch email status summary from the API
+ * @returns {Promise} - Promise with email status data
+ */
+export const fetchEmailStatus = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/email/status-summary`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch email status');
+    }
+    
+    const data = await response.json();
+    
+    return {
+      total: data.total || 0,
+      pending: data.pending || 0,
+      success: data.success || 0,
+      sent: data.success || 0, // Added sent as an alias for success for the UI
+      failed: data.failed || 0,
+      lastUpdated: data.last_updated
+    };
+  } catch (error) {
+    console.error('Error fetching email status:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch email records from the API
+ * @param {Object} options - Filter options like status
+ * @returns {Promise} - Promise with email records
+ */
+export const fetchEmailRecords = async (options = {}) => {
+  try {
+    let url = `${API_BASE_URL}/api/email/records`;
+    
+    // Add query parameters if options provided
+    if (Object.keys(options).length > 0) {
+      url += '?';
+      const params = [];
+      if (options.status) params.push(`status=${options.status}`);
+      if (options.limit) params.push(`limit=${options.limit}`);
+      if (options.offset) params.push(`offset=${options.offset}`);
+      url += params.join('&');
+    }
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch email records');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching email records:', error);
+    throw error;
+  }
+};

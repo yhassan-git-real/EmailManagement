@@ -26,3 +26,11 @@ class Settings(BaseSettings):
 
 # Create a global settings instance to be imported and used by other modules
 settings = Settings()
+
+
+def get_settings():
+    """
+    Get the application settings.
+    This function is provided for dependency injection in FastAPI.
+    """
+    return settings

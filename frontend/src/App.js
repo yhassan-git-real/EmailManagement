@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -8,8 +8,22 @@ import ComposePage from './pages/ComposePage';
 import AutomatePage from './pages/AutomatePage';
 
 function App() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [connectionInfo, setConnectionInfo] = useState(null);
+  // Initialize state from sessionStorage if available
+  const [isConnected, setIsConnected] = useState(() => {
+    const saved = sessionStorage.getItem('isConnected');
+    return saved ? JSON.parse(saved) : false;
+  });
+  
+  const [connectionInfo, setConnectionInfo] = useState(() => {
+    const saved = sessionStorage.getItem('connectionInfo');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  // Update sessionStorage when connection state changes
+  useEffect(() => {
+    sessionStorage.setItem('isConnected', JSON.stringify(isConnected));
+    sessionStorage.setItem('connectionInfo', JSON.stringify(connectionInfo));
+  }, [isConnected, connectionInfo]);
 
   const handleConnect = (connected, info) => {
     setIsConnected(connected);
@@ -19,6 +33,9 @@ function App() {
   const handleDisconnect = () => {
     setIsConnected(false);
     setConnectionInfo(null);
+    // Clear session storage on disconnect
+    sessionStorage.removeItem('isConnected');
+    sessionStorage.removeItem('connectionInfo');
   };
 
   // Protected route component

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import { connectToDatabase, testDatabaseConnection } from '../utils/mockApi';
+import { connectToDatabase, testDatabaseConnection } from '../utils/apiClient';
 
 const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
   const navigate = useNavigate();

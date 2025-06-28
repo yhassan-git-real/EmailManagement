@@ -1,13 +1,9 @@
 import pyodbc
 from typing import Dict, Any, Tuple, Optional
 import logging
-from .config import settings
+from ..core.config import get_settings
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 
@@ -28,6 +24,8 @@ def get_connection_string(server: Optional[str] = None,
     Returns:
         Connection string for pyodbc
     """
+    settings = get_settings()
+    
     # Use provided values or fallback to environment settings
     db_server = server or settings.DB_SERVER
     db_name = database or settings.DB_NAME
@@ -59,6 +57,8 @@ def test_connection(connection_params: Optional[Dict[str, Any]] = None) -> Tuple
     Returns:
         Tuple of (success: bool, message: str)
     """
+    settings = get_settings()
+    
     try:
         # Extract parameters if provided
         server = connection_params.get("server") if connection_params else None
@@ -125,3 +125,9 @@ def test_connection(connection_params: Optional[Dict[str, Any]] = None) -> Tuple
         # Handle unexpected exceptions
         logger.error(f"Unexpected error during database connection: {str(e)}")
         return False, f"Connection failed due to an unexpected error: {str(e)}"
+
+
+def get_db_connection():
+    """Create and return a connection to the database."""
+    conn_str = get_connection_string()
+    return pyodbc.connect(conn_str)

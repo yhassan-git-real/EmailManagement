@@ -1,16 +1,13 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from datetime import datetime
-from app.models.email import EmailRecordCreate, EmailRecord, EmailTemplateCreate, EmailTemplate, EmailStatus
-from app.email_utils import (
+
+from ...models.email import EmailRecordCreate, EmailRecord, EmailStatus
+from ...services.email_service import (
     get_email_records, 
     get_email_record_by_id, 
     create_email_record, 
     update_email_status,
-    get_email_templates,
-    get_email_template_by_id,
-    create_email_template,
-    update_email_template,
     get_email_status_summary
 )
 import logging
@@ -18,7 +15,7 @@ import logging
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Email Records Endpoints
+
 @router.get("/records", response_model=List[EmailRecord])
 async def read_email_records(
     status: Optional[EmailStatus] = None,
@@ -35,6 +32,7 @@ async def read_email_records(
         logger.error(f"Error retrieving email records: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve email records")
 
+
 @router.get("/records/{email_id}", response_model=EmailRecord)
 async def read_email_record(email_id: int):
     """
@@ -44,6 +42,7 @@ async def read_email_record(email_id: int):
     if not record:
         raise HTTPException(status_code=404, detail=f"Email record {email_id} not found")
     return record
+
 
 @router.post("/records", response_model=EmailRecord)
 async def create_email_record_endpoint(record: EmailRecordCreate):
@@ -60,6 +59,7 @@ async def create_email_record_endpoint(record: EmailRecordCreate):
     except Exception as e:
         logger.error(f"Error creating email record: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to create email record")
+
 
 @router.put("/records/{email_id}/status")
 async def update_record_status(
@@ -86,77 +86,7 @@ async def update_record_status(
         logger.error(f"Error updating email status: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to update email status")
 
-# Email Templates Endpoints
-@router.get("/templates", response_model=List[EmailTemplate])
-async def read_email_templates(
-    is_active: Optional[bool] = True,
-    category: Optional[str] = None,
-    limit: int = Query(100, ge=1, le=1000),
-    offset: int = Query(0, ge=0)
-):
-    """
-    Retrieve a list of email templates with optional filtering.
-    """
-    try:
-        templates = get_email_templates(is_active, category, limit, offset)
-        return templates
-    except Exception as e:
-        logger.error(f"Error retrieving email templates: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve email templates")
 
-@router.get("/templates/{template_id}", response_model=EmailTemplate)
-async def read_email_template(template_id: int):
-    """
-    Retrieve a specific email template by ID.
-    """
-    template = get_email_template_by_id(template_id)
-    if not template:
-        raise HTTPException(status_code=404, detail=f"Email template {template_id} not found")
-    return template
-
-@router.post("/templates", response_model=EmailTemplate)
-async def create_email_template_endpoint(template: EmailTemplateCreate):
-    """
-    Create a new email template.
-    """
-    try:
-        template_dict = template.model_dump()
-        template_id = create_email_template(template_dict)
-        
-        # Get the created template to return
-        created_template = get_email_template_by_id(template_id)
-        return created_template
-    except Exception as e:
-        logger.error(f"Error creating email template: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to create email template")
-
-@router.put("/templates/{template_id}", response_model=EmailTemplate)
-async def update_email_template_endpoint(template_id: int, template: EmailTemplateCreate):
-    """
-    Update an existing email template.
-    """
-    try:
-        # Check if template exists
-        existing = get_email_template_by_id(template_id)
-        if not existing:
-            raise HTTPException(status_code=404, detail=f"Email template {template_id} not found")
-        
-        template_dict = template.model_dump()
-        success = update_email_template(template_id, template_dict)
-        
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to update email template")
-        
-        # Get the updated template to return
-        updated_template = get_email_template_by_id(template_id)
-        return updated_template
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error updating email template: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to update email template")
-
-# Email Status Summary Endpoint
 @router.get("/status-summary")
 async def get_status_summary():
     """

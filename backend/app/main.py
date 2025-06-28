@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
-from .routers import db, email
-from .config import settings
+from .api.endpoints import database, emails
+from .core.config import settings
 
 # Configure logging
 logging.basicConfig(
@@ -28,8 +28,8 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(db.router)
-app.include_router(email.router, prefix="/api/email", tags=["email"])
+app.include_router(database.router, prefix="/api/database", tags=["database"])
+app.include_router(emails.router, prefix="/api/email", tags=["email"])
 
 
 @app.get("/")

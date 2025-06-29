@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import Sidebar from '../components/Sidebar';
 import DatabaseConnector from '../components/DatabaseConnector';
 import StatusSummary from '../components/StatusSummary';
 import Alert from '../components/Alert';
@@ -11,7 +10,6 @@ import BackgroundIllustration from '../components/BackgroundIllustration';
 
 const Dashboard = ({ isConnected, connectionInfo, onConnected, onConnectionInfoUpdate, onDisconnect }) => {
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const localIsConnected = isConnected === undefined ? false : isConnected;  // Handle successful connection
   const handleConnected = (connected) => {
     if (connected) {
@@ -28,11 +26,6 @@ const Dashboard = ({ isConnected, connectionInfo, onConnected, onConnectionInfoU
     }
   };
 
-  // Toggle sidebar open state
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
   return (
     <div className="flex flex-col min-h-screen relative">
       {/* Background decoration */}
@@ -42,19 +35,11 @@ const Dashboard = ({ isConnected, connectionInfo, onConnected, onConnectionInfoU
         connectionInfo={connectionInfo} 
         onDisconnect={handleLocalDisconnect} 
       />
-        {/* Main container with conditional sidebar */}
+        {/* Main container */}
       <div className="flex flex-row flex-grow relative">
-        {/* Sidebar - only shown when connected */}
-        {localIsConnected && (
-          <Sidebar 
-            isOpen={sidebarOpen} 
-            onClose={toggleSidebar} 
-          />
-        )}
-        
         {/* Main content */}
-        <main className={`flex-grow py-12 px-4 sm:px-8 lg:px-16 bg-gradient-to-b from-gray-50 to-gray-100 w-full ${localIsConnected ? 'md:ml-20' : ''}`}>
-          <div className={`${localIsConnected ? 'max-w-5xl' : 'max-w-7xl'} mx-auto`}>
+        <main className="flex-grow py-12 px-4 sm:px-8 lg:px-16 bg-gradient-to-b from-gray-50 to-gray-100 w-full">
+          <div className="max-w-7xl mx-auto">
             {!localIsConnected ? (
             <div className="animate-fadeIn transition-all duration-500">
               {/* Two-column layout for welcome + connection form */}
@@ -93,16 +78,7 @@ const Dashboard = ({ isConnected, connectionInfo, onConnected, onConnectionInfoU
           </div>
         </main>
 
-        {/* Mobile sidebar toggle button */}
-        {localIsConnected && (
-          <button 
-            onClick={toggleSidebar} 
-            className="lg:hidden fixed bottom-4 right-4 bg-blue-600 text-white p-3 rounded-full shadow-md hover:bg-blue-700 transition-all duration-300"
-            aria-label="Toggle sidebar"
-          >
-            {sidebarOpen ? 'Close Menu' : 'Open Menu'}
-          </button>
-        )}
+        {/* Mobile menu is now handled in HeaderNav component */}
       </div>
 
       <Footer />

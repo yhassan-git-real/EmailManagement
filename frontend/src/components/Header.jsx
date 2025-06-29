@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import HeaderNav from './HeaderNav';
 
 const Header = ({ connectionInfo, onDisconnect }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -18,7 +19,7 @@ const Header = ({ connectionInfo, onDisconnect }) => {
     });
   };
   return (
-    <header className="bg-white bg-opacity-90 backdrop-blur-md shadow-md sticky top-0 z-50 w-full">
+    <header className="bg-white bg-opacity-90 backdrop-blur-md shadow-sm sticky top-0 z-50 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center">
@@ -115,6 +116,8 @@ const Header = ({ connectionInfo, onDisconnect }) => {
           </div>
         </div>
       </div>
+      {/* Add HeaderNav component below the header content */}
+      <HeaderNav />
     </header>
   );
 };

@@ -7,7 +7,6 @@ import StatusBadge from '../components/StatusBadge';
 import EmailLogViewer from '../components/EmailLogViewer';
 import SchedulerSettings from '../components/SchedulerSettings';
 import { CogIcon, PlayIcon, StopIcon, ArrowPathIcon, DocumentTextIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { toast } from 'react-toastify';
 import { 
   getEmailAutomationSettings, 
   saveEmailAutomationSettings,
@@ -56,12 +55,9 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
         // Log status change for debugging
         console.log(`Status changed: ${previousStatusRef.current} -> ${newStatus}`);
         
-        // Show a toast notification when automation completes
+        // Automation completion handling (removed toast notification)
         if ((previousStatusRef.current === 'running' || previousStatusRef.current === 'restarting') && 
             newStatus === 'idle') {
-          const { successful, failed } = response.data.summary;
-          toast.info(`Email automation completed! ${successful} successful, ${failed} failed emails.`);
-          
           // Stop polling when automation is finished
           stopPolling();
           console.log("Detected automation completion - stopping polling");
@@ -145,7 +141,7 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
         }
       } catch (error) {
         console.error('Error loading automation data:', error);
-        toast.error('Failed to load automation data');
+        // Removed toast notification as per requirement
       }
     };
     
@@ -164,11 +160,11 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
       if (response.success) {
         setAutomationSettings(response.data);
         setShowSettingsModal(false);
-        toast.success('Email settings saved successfully');
+        // Removed toast notification as per requirement
       }
     } catch (error) {
       console.error('Error saving email settings:', error);
-      toast.error('Failed to save email settings');
+      // Removed toast notification as per requirement
     }
   };
   
@@ -184,14 +180,14 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
         // Update the previous status reference
         previousStatusRef.current = response.data.status;
         
-        toast.success('Email automation started successfully');
+        // Removed toast notification as per requirement
         
         // Start polling for status updates when automation starts
         startPolling();
       }
     } catch (error) {
       console.error('Error starting automation:', error);
-      toast.error('Failed to start email automation');
+      // Removed toast notification as per requirement
     } finally {
       setIsLoading({ ...isLoading, start: false });
     }
@@ -204,14 +200,14 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
       const response = await stopAutomation();
       if (response.success) {
         setAutomationStatus(response.data);
-        toast.success('Email automation stopped successfully');
+        // Removed toast notification as per requirement
         
         // Stop polling when automation is manually stopped
         stopPolling();
       }
     } catch (error) {
       console.error('Error stopping automation:', error);
-      toast.error('Failed to stop email automation');
+      // Removed toast notification as per requirement
     } finally {
       setIsLoading({ ...isLoading, stop: false });
     }
@@ -224,14 +220,14 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
       const response = await restartFailedEmails();
       if (response.success) {
         setAutomationStatus(response.data);
-        toast.success('Restarting failed emails');
+        // Removed toast notification as per requirement
         
         // Start polling since automation will be running after restart
         startPolling();
       }
     } catch (error) {
       console.error('Error restarting failed emails:', error);
-      toast.error('Failed to restart failed emails');
+      // Removed toast notification as per requirement
     } finally {
       setIsLoading({ ...isLoading, restart: false });
     }
@@ -247,11 +243,11 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
       
       if (response.success) {
         setAutomationSettings(response.data);
-        toast.success(`Auto retry ${enabled ? 'enabled' : 'disabled'}`);
+        // Removed toast notification as per requirement
       }
     } catch (error) {
       console.error('Error updating retry settings:', error);
-      toast.error('Failed to update retry settings');
+      // Removed toast notification as per requirement
     }
   };
   
@@ -265,11 +261,11 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
       
       if (response.success) {
         setAutomationSettings(response.data);
-        toast.success(`Retry interval updated to ${interval}`);
+        // Removed toast notification as per requirement
       }
     } catch (error) {
       console.error('Error updating retry interval:', error);
-      toast.error('Failed to update retry interval');
+      // Removed toast notification as per requirement
     }
   };
   
@@ -279,13 +275,17 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
     try {
       const response = await updateAutomationTemplate(template.id);
       if (response.success) {
-        setAutomationSettings(response.data);
+        // Make sure the templateId is correctly updated in automationSettings
+        setAutomationSettings(prevSettings => ({
+          ...prevSettings,
+          templateId: template.id
+        }));
         setShowTemplateSelector(false);
-        toast.success(`Automation template set to "${template.name}"`);
+        // Removed toast notification as per requirement
       }
     } catch (error) {
       console.error('Error updating automation template:', error);
-      toast.error('Failed to update automation template');
+      // Removed toast notification as per requirement
     } finally {
       setIsLoading({ ...isLoading, template: false });
     }
@@ -296,10 +296,10 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
     setIsLoading({ ...isLoading, refresh: true });
     try {
       await fetchAutomationStatus();
-      toast.success('Status refreshed');
+      // Removed toast notification as per requirement
     } catch (error) {
       console.error('Error refreshing status:', error);
-      toast.error('Failed to refresh status');
+      // Removed toast notification as per requirement
     } finally {
       setIsLoading({ ...isLoading, refresh: false });
     }
@@ -317,17 +317,17 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
         // Check if data exists and then access the property safely
         if (response.data) {
           const count = response.data.filesDeleted || response.filesDeleted || 0;
-          toast.success(`Archive cleaned up successfully. ${count} files removed.`);
+          // Removed toast notification as per requirement
         } else {
           // Fallback if data structure is different than expected
-          toast.success(response.message || 'Archive cleaned up successfully.');
+          // Removed toast notification as per requirement
         }
       } else {
-        toast.error(response.message || 'Failed to clean up email archive');
+        // Removed toast notification as per requirement
       }
     } catch (error) {
       console.error('Error cleaning up archive:', error);
-      toast.error('Failed to clean up email archive');
+      // Removed toast notification as per requirement
     } finally {
       setIsLoading({ ...isLoading, archive: false });
     }
@@ -452,21 +452,19 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
 
                 {/* Template Settings */}
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 mt-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-700">Current template:</span>
-                      <span className="ml-2 text-sm font-medium text-primary-600">
-                        {automationSettings.templateId === 'default' ? 'Default Template' : 
-                         automationSettings.templateId === 'followup' ? 'Follow-up Template' :
-                         automationSettings.templateId === 'escalation' ? 'Escalation Template' :
-                         automationSettings.templateId === 'reminder' ? 'Payment Reminder' :
-                         'Custom Template'}
-                      </span>
-                    </div>
+                  <div className="flex items-center">
+                    <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-2" />
+                    <span className="text-sm text-gray-700">Current template:</span>
+                    <span className="ml-2 text-sm font-medium text-primary-600">
+                      {automationSettings.templateId === 'default' ? 'Default Template' : 
+                       automationSettings.templateId === 'followup' ? 'Follow-up Template' :
+                       automationSettings.templateId === 'escalation' ? 'Escalation Template' :
+                       automationSettings.templateId === 'reminder' ? 'Payment Reminder Template' :
+                       'Custom Template'}
+                    </span>
                     <button 
                       onClick={() => setShowTemplateSelector(true)}
-                      className="text-xs text-primary-600 hover:text-primary-800"
+                      className="ml-3 px-2 py-0.5 text-xs bg-blue-50 border border-blue-200 rounded text-primary-600 hover:text-primary-800 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-300"
                     >
                       Change
                     </button>

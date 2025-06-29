@@ -110,7 +110,7 @@ export const updateRetrySettings = async (settings) => {
 // Update automation template
 export const updateAutomationTemplate = async (templateId) => {
   try {
-    const response = await apiClient.post(`${API_BASE}/template`, { templateId });
+    const response = await apiClient.post(`${API_BASE}/template/${templateId}`);
     return response;
   } catch (error) {
     console.error('API Error:', error);

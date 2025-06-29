@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getScheduleSettings, updateScheduleSettings } from '../utils/automationApi';
-import { toast } from 'react-toastify';
 import { ClockIcon } from '@heroicons/react/24/outline';
 
 const SchedulerSettings = ({ onSettingsChange }) => {
@@ -26,7 +25,7 @@ const SchedulerSettings = ({ onSettingsChange }) => {
         }
       } catch (error) {
         console.error('Error fetching schedule settings:', error);
-        toast.error('Failed to load scheduler settings');
+        // Removed toast notification as per requirement
       } finally {
         setLoading(false);
       }
@@ -45,7 +44,7 @@ const SchedulerSettings = ({ onSettingsChange }) => {
       
       if (response.success) {
         setSettings(response.data);
-        toast.success(`Scheduler ${enabled ? 'enabled' : 'disabled'}`);
+        // Removed toast notification for toggling scheduler - improves UX
         
         if (onSettingsChange) {
           onSettingsChange(response.data);
@@ -53,7 +52,7 @@ const SchedulerSettings = ({ onSettingsChange }) => {
       }
     } catch (error) {
       console.error('Error updating scheduler settings:', error);
-      toast.error('Failed to update scheduler settings');
+      // Removed toast notification as per requirement
     } finally {
       setLoading(false);
     }
@@ -85,7 +84,7 @@ const SchedulerSettings = ({ onSettingsChange }) => {
       }
     } catch (error) {
       console.error('Error updating scheduler frequency:', error);
-      toast.error('Failed to update scheduler frequency');
+      // Removed toast notification as per requirement
     } finally {
       setLoading(false);
     }
@@ -108,7 +107,7 @@ const SchedulerSettings = ({ onSettingsChange }) => {
       }
     } catch (error) {
       console.error('Error updating scheduler time:', error);
-      toast.error('Failed to update scheduler time');
+      // Removed toast notification as per requirement
     } finally {
       setLoading(false);
     }
@@ -128,7 +127,9 @@ const SchedulerSettings = ({ onSettingsChange }) => {
       
       // Ensure at least one day is selected
       if (newDays.length === 0) {
-        toast.error('Please select at least one day');
+        // Removed toast notification as per requirement
+        // Still return early to prevent invalid state
+        setLoading(false);
         return;
       }
       
@@ -144,7 +145,7 @@ const SchedulerSettings = ({ onSettingsChange }) => {
       }
     } catch (error) {
       console.error('Error updating scheduler days:', error);
-      toast.error('Failed to update scheduler days');
+      // Removed toast notification as per requirement
     } finally {
       setLoading(false);
     }
@@ -155,135 +156,144 @@ const SchedulerSettings = ({ onSettingsChange }) => {
     if (!dateString) return 'Not scheduled';
     
     const date = new Date(dateString);
-    return date.toLocaleString();
+    const options = { 
+      weekday: 'short',
+      month: 'short', 
+      day: 'numeric', 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    };
+    return date.toLocaleString(undefined, options);
   };
 
   return (
-    <div className="bg-white rounded-lg p-4 border border-gray-200">
-      <h3 className="text-sm font-medium text-gray-700 mb-3">Email Automation Scheduler</h3>
+    <div className="bg-white rounded-lg p-3.5 border border-gray-200 shadow-sm">
+      <div className="flex items-center mb-3.5">
+        <input
+          type="checkbox"
+          id="schedulerEnabled"
+          checked={settings.enabled}
+          onChange={(e) => handleToggleScheduler(e.target.checked)}
+          disabled={loading}
+          className="h-4 w-4 text-primary-600 focus:ring-primary-400 focus:ring-offset-0 focus:ring-1 border-gray-300 rounded shadow-sm"
+        />
+        <label htmlFor="schedulerEnabled" className="ml-2 text-sm font-semibold text-gray-800 tracking-tight">
+          Enable automated scheduling
+        </label>
+      </div>
       
-      <div className="flex flex-col gap-4">
-        {/* Enable/Disable Toggle */}
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="schedulerEnabled"
-            checked={settings.enabled}
-            onChange={(e) => handleToggleScheduler(e.target.checked)}
-            disabled={loading}
-            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-          />
-          <label htmlFor="schedulerEnabled" className="ml-2 block text-sm text-gray-700">
-            Enable automated scheduling
-          </label>
-        </div>
-
-        {/* Schedule Settings */}
-        <div className={settings.enabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {/* Frequency Selector */}
-            <div>
-              <label htmlFor="frequency" className="block text-xs font-medium text-gray-700 mb-1">
-                Frequency
-              </label>
+      <div className={`transition-opacity duration-200 ${settings.enabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+        <div className="flex flex-wrap md:flex-nowrap gap-3 items-end">
+          {/* Frequency Selector - Compact Fixed Width */}
+          <div className="w-full md:w-[150px] transition-all duration-200">
+            <label htmlFor="frequency" className="block text-xs font-semibold text-gray-700 mb-1 tracking-tight">
+              Frequency
+            </label>
+            <div className="relative">
               <select
                 id="frequency"
                 value={settings.frequency}
                 onChange={(e) => handleFrequencyChange(e.target.value)}
                 disabled={loading || !settings.enabled}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                className="block w-full pl-3 pr-8 py-1.5 text-sm font-medium border border-gray-300 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200 rounded-md shadow-sm bg-white appearance-none text-gray-800"
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
               </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-primary-500">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
             </div>
+          </div>
 
-            {/* Time Selector */}
-            <div>
-              <label htmlFor="time" className="block text-xs font-medium text-gray-700 mb-1">
-                Time (24-hour format)
-              </label>
+          {/* Time Selector - Compact Fixed Width */}
+          <div className="w-full md:w-[120px] transition-all duration-200">
+            <label htmlFor="time" className="block text-xs font-semibold text-gray-700 mb-1 tracking-tight">
+              Time
+            </label>
+            <div className="relative">
               <input
                 type="time"
                 id="time"
                 value={settings.time}
                 onChange={(e) => handleTimeChange(e.target.value)}
                 disabled={loading || !settings.enabled}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                className="block w-full pl-3 pr-8 py-1.5 text-sm font-medium border border-gray-300 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200 rounded-md shadow-sm text-gray-800"
               />
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-primary-500">
+                <ClockIcon className="h-4 w-4" />
+              </div>
             </div>
           </div>
-
-          {/* Weekly Day Selector */}
-          {settings.frequency === 'weekly' && (
-            <div className="mt-4">
-              <label className="block text-xs font-medium text-gray-700 mb-2">
-                Days of the Week
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, index) => (
-                  <div key={day} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={`day-${index}`}
-                      checked={(settings.days || []).includes(index)}
-                      onChange={(e) => handleDayChange(index, e.target.checked)}
-                      disabled={loading || !settings.enabled}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor={`day-${index}`} className="ml-2 block text-xs text-gray-700">
-                      {day}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Monthly Day Selector */}
-          {settings.frequency === 'monthly' && (
-            <div className="mt-4">
-              <label className="block text-xs font-medium text-gray-700 mb-2">
-                Days of the Month
-              </label>
-              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 border border-gray-200 rounded">
-                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                  <div key={day} className="flex items-center w-12">
-                    <input
-                      type="checkbox"
-                      id={`monthly-day-${day}`}
-                      checked={(settings.days || []).includes(day)}
-                      onChange={(e) => handleDayChange(day, e.target.checked)}
-                      disabled={loading || !settings.enabled}
-                      className="h-3 w-3 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor={`monthly-day-${day}`} className="ml-1 block text-xs text-gray-700">
-                      {day}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Next Run Information */}
-          {settings.enabled && settings.nextRun && (
-            <div className="mt-4 bg-blue-50 p-3 rounded-md border border-blue-100 flex items-start">
-              <ClockIcon className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
-              <div>
-                <div className="text-xs font-medium text-blue-700">Next scheduled run:</div>
-                <div className="text-sm text-blue-800">{formatDate(settings.nextRun)}</div>
-                
-                {settings.lastRun && (
-                  <div className="text-xs text-blue-600 mt-1">
-                    Last run: {formatDate(settings.lastRun)}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          
+          {/* Spacer for the right side */}
+          <div className="hidden md:block flex-grow"></div>
         </div>
+
+        {/* Weekly Day Selector - Enhanced UI */}
+        {settings.frequency === 'weekly' && (
+          <div className="mt-3.5 w-full md:w-[290px] animate-fadeIn">
+            <label className="block text-xs font-semibold text-gray-700 mb-2 tracking-tight">
+              Days of the Week
+            </label>
+            <div className="flex justify-between gap-1.5">
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                <div key={index} 
+                  className={`w-8 h-8 flex items-center justify-center rounded-full cursor-pointer text-xs font-medium transition-all duration-150
+                    ${(settings.days || []).includes(index) 
+                      ? 'bg-primary-100 border border-primary-300 text-primary-700 shadow-sm font-semibold' 
+                      : 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300'}`}
+                  onClick={() => !loading && settings.enabled && handleDayChange(index, !(settings.days || []).includes(index))}>
+                  {day}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Monthly Day Selector - Enhanced Grid UI */}
+        {settings.frequency === 'monthly' && (
+          <div className="mt-3.5 animate-fadeIn">
+            <label className="block text-xs font-semibold text-gray-700 mb-2 tracking-tight">
+              Days of the Month
+            </label>
+            <div className="grid grid-cols-7 gap-1 max-h-[130px] overflow-y-auto p-1.5 bg-gray-50 rounded-md border border-gray-200">
+              {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                <div key={day}
+                  className={`w-7 h-7 flex items-center justify-center rounded-md cursor-pointer text-xs font-medium transition-all duration-150
+                    ${(settings.days || []).includes(day) 
+                      ? 'bg-primary-100 border border-primary-300 text-primary-700 shadow-sm font-semibold' 
+                      : 'bg-white border border-gray-100 text-gray-600 hover:bg-gray-100'}`}
+                  onClick={() => !loading && settings.enabled && handleDayChange(day, !(settings.days || []).includes(day))}>
+                  {day}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Next Run Information - Enhanced UI */}
+        {settings.enabled && settings.nextRun && (
+          <div className="mt-3 bg-primary-50 p-2 rounded-md border border-primary-100 shadow-sm flex items-start">
+            <div className="bg-primary-100 rounded-full p-1 mr-2 flex-shrink-0">
+              <ClockIcon className="h-3.5 w-3.5 text-primary-600" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-primary-800 leading-tight">
+                Next run: <span className="text-primary-700">{formatDate(settings.nextRun)}</span>
+              </p>
+              {settings.lastRun && (
+                <p className="text-2xs font-medium text-primary-600 mt-0.5 opacity-80">
+                  Last run: {formatDate(settings.lastRun)}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

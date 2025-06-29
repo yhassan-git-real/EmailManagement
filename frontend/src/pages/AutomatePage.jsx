@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EmailSettingsModal from '../components/EmailSettingsModal';
@@ -30,24 +30,114 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
     start: false,
     stop: false,
     restart: false,
-    template: false
+    template: false,
+    refresh: false
   });
+  
+  // References for polling and previous status tracking
+  const statusPollingRef = useRef(null);
+  const previousStatusRef = useRef('idle');
+  
+  // Function to fetch automation status
+  const fetchAutomationStatus = async () => {
+    try {
+      const response = await getAutomationStatus();
+      if (response.success) {
+        // Get the current status from response
+        const newStatus = response.data.status;
+        
+        // Update the status
+        setAutomationStatus(response.data);
+        
+        // Log status change for debugging
+        console.log(`Status changed: ${previousStatusRef.current} -> ${newStatus}`);
+        
+        // Show a toast notification when automation completes
+        if ((previousStatusRef.current === 'running' || previousStatusRef.current === 'restarting') && 
+            newStatus === 'idle') {
+          const { successful, failed } = response.data.summary;
+          toast.info(`Email automation completed! ${successful} successful, ${failed} failed emails.`);
+          
+          // Stop polling when automation is finished
+          stopPolling();
+          console.log("Detected automation completion - stopping polling");
+        }
+        
+        // Update previous status reference
+        previousStatusRef.current = newStatus;
+      }
+    } catch (error) {
+      console.error('Error fetching automation status:', error);
+    }
+  };
+  
+  // Start polling for status updates
+  const startPolling = () => {
+    // Clear any existing polling first
+    stopPolling();
+    
+    // Set up new polling (every 5 seconds)
+    statusPollingRef.current = setInterval(fetchAutomationStatus, 5000);
+    console.log('Status polling started - interval ID:', statusPollingRef.current);
+  };
+  
+  // Stop polling for status updates
+  const stopPolling = () => {
+    if (statusPollingRef.current !== null) {
+      console.log('Stopping polling interval ID:', statusPollingRef.current);
+      window.clearInterval(statusPollingRef.current);
+      statusPollingRef.current = null;
+      console.log('Status polling stopped');
+    }
+  };
   
   // Load automation settings and status
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Try to load settings from localStorage first
+        const savedSettings = localStorage.getItem('emailSettings');
+        let localSettings = null;
+        
+        if (savedSettings) {
+          try {
+            localSettings = JSON.parse(savedSettings);
+          } catch (e) {
+            console.error('Error parsing saved email settings', e);
+          }
+        }
+        
         const [settingsResponse, statusResponse] = await Promise.all([
           getEmailAutomationSettings(),
           getAutomationStatus()
         ]);
         
         if (settingsResponse.success) {
-          setAutomationSettings(settingsResponse.data);
+          // Merge backend settings with locally stored email settings
+          const mergedSettings = {
+            ...settingsResponse.data,
+            ...(localSettings || {})
+          };
+          setAutomationSettings(mergedSettings);
+        } else if (localSettings) {
+          // Fall back to local settings if backend request fails
+          setAutomationSettings(localSettings);
         }
         
         if (statusResponse.success) {
           setAutomationStatus(statusResponse.data);
+          
+          // Update previous status reference
+          previousStatusRef.current = statusResponse.data.status;
+          
+          // Only set up polling if automation is running or restarting
+          if (statusResponse.data.status === 'running' || statusResponse.data.status === 'restarting') {
+            console.log("Setting up initial polling - automation is running");
+            startPolling();
+          } else {
+            console.log("Initial status is not running, no polling needed");
+            stopPolling(); // Make sure polling is stopped
+          }
         }
       } catch (error) {
         console.error('Error loading automation data:', error);
@@ -57,19 +147,10 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
     
     loadData();
     
-    // Set up polling interval to refresh status
-    const intervalId = setInterval(async () => {
-      try {
-        const response = await getAutomationStatus();
-        if (response.success) {
-          setAutomationStatus(response.data);
-        }
-      } catch (error) {
-        console.error('Error refreshing automation status:', error);
-      }
-    }, 5000);
-    
-    return () => clearInterval(intervalId);
+    // Cleanup the interval on unmount
+    return () => {
+      stopPolling();
+    };
   }, []);
   
   // Handle saving email settings
@@ -93,8 +174,16 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
     try {
       const response = await startAutomation();
       if (response.success) {
+        // Update the status
         setAutomationStatus(response.data);
+        
+        // Update the previous status reference
+        previousStatusRef.current = response.data.status;
+        
         toast.success('Email automation started successfully');
+        
+        // Start polling for status updates when automation starts
+        startPolling();
       }
     } catch (error) {
       console.error('Error starting automation:', error);
@@ -112,6 +201,9 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
       if (response.success) {
         setAutomationStatus(response.data);
         toast.success('Email automation stopped successfully');
+        
+        // Stop polling when automation is manually stopped
+        stopPolling();
       }
     } catch (error) {
       console.error('Error stopping automation:', error);
@@ -129,6 +221,9 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
       if (response.success) {
         setAutomationStatus(response.data);
         toast.success('Restarting failed emails');
+        
+        // Start polling since automation will be running after restart
+        startPolling();
       }
     } catch (error) {
       console.error('Error restarting failed emails:', error);
@@ -189,6 +284,20 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
       toast.error('Failed to update automation template');
     } finally {
       setIsLoading({ ...isLoading, template: false });
+    }
+  };
+  
+  // Handle manual refresh of automation status
+  const handleRefreshStatus = async () => {
+    setIsLoading({ ...isLoading, refresh: true });
+    try {
+      await fetchAutomationStatus();
+      toast.success('Status refreshed');
+    } catch (error) {
+      console.error('Error refreshing status:', error);
+      toast.error('Failed to refresh status');
+    } finally {
+      setIsLoading({ ...isLoading, refresh: false });
     }
   };
   
@@ -270,6 +379,15 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
                   >
                     <DocumentTextIcon className="h-5 w-5 mr-2" />
                     Use Template
+                  </button>
+                  
+                  <button
+                    onClick={handleRefreshStatus}
+                    disabled={isLoading.refresh}
+                    className={`inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                  >
+                    <ArrowPathIcon className="h-5 w-5 mr-2" />
+                    {isLoading.refresh ? 'Refreshing...' : 'Refresh Status'}
                   </button>
                 </div>
                 

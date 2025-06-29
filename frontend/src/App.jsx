@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, createRoutesFromElements } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Dashboard from './pages/Dashboard';
@@ -9,7 +9,9 @@ import AutomatePage from './pages/AutomatePage';
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionInfo, setConnectionInfo] = useState(null);  const handleConnect = (connected, info) => {
+  const [connectionInfo, setConnectionInfo] = useState(null);
+  
+  const handleConnect = (connected, info) => {
     setIsConnected(connected);
     if (info) {
       setConnectionInfo(info);
@@ -30,7 +32,7 @@ function App() {
   };
 
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="min-h-screen">
         <Routes>          <Route 
             path="/" 

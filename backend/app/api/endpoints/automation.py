@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Body
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
+from datetime import datetime
+from enum import Enum
 
 from ...services.automation_service import (
     start_automation,
@@ -34,6 +36,33 @@ class RetrySettings(BaseModel):
     retryInterval: str
 
 
+class ScheduleFrequency(str, Enum):
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    WEEKDAY = "weekday"
+    MONTHLY = "monthly"
+    CUSTOM = "custom"
+
+
+class ScheduleSettings(BaseModel):
+    enabled: bool
+    frequency: ScheduleFrequency
+    time: str  # Format: HH:MM in 24-hour format
+    days: Optional[List[int]] = None  # For weekly: 0-6 (Sun-Sat); For monthly: 1-31
+    lastRun: Optional[datetime] = None
+    nextRun: Optional[datetime] = None
+
+
+class EmailLogEntry(BaseModel):
+    timestamp: datetime
+    email_id: int
+    recipient: str
+    subject: str
+    status: str
+    file_name: Optional[str] = None
+    error_message: Optional[str] = None
+
+
 class SMTPValidationRequest(BaseModel):
     smtpServer: str
     port: int 
@@ -63,12 +92,14 @@ async def get_status():
 async def start():
     """
     Start the email automation process.
+    This endpoint only processes emails with status 'Pending',
+    never affecting failed or successful emails.
     """
     try:
         status = start_automation()
         return {
             "success": True,
-            "message": "Email automation started successfully",
+            "message": "Email automation started successfully (pending emails only)",
             "data": status
         }
     except Exception as e:
@@ -96,13 +127,17 @@ async def stop():
 @router.post("/restart-failed")
 async def restart_failed():
     """
-    Restart processing of failed emails.
+    Restart processing of failed emails only.
+    This endpoint only affects emails with status 'Failed',
+    never affecting pending or successful emails.
     """
     try:
+        # We'll use the existing restart_failed_emails but ensure
+        # it only processes emails with status 'Failed'
         status = restart_failed_emails()
         return {
             "success": True,
-            "message": "Restarting failed emails",
+            "message": "Restarting failed emails only",
             "data": status
         }
     except Exception as e:
@@ -262,6 +297,80 @@ async def validate_smtp(settings: SMTPValidationRequest):
         }
 
 
+@router.get("/templates")
+async def get_templates():
+    """
+    Get all available email templates.
+    """
+    from ...services.template_service import get_email_templates
+    
+    try:
+        templates = get_email_templates()
+        return {
+            "success": True,
+            "data": templates
+        }
+    except Exception as e:
+        logger.error(f"Error getting email templates: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get email templates")
+
+
+@router.get("/templates/{template_id}")
+async def get_template(template_id: str):
+    """
+    Get a specific template by ID.
+    """
+    from ...services.template_service import get_template_by_id
+    
+    try:
+        template = get_template_by_id(template_id)
+        if not template:
+            raise HTTPException(status_code=404, detail=f"Template {template_id} not found")
+            
+        return {
+            "success": True,
+            "data": template
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting template {template_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get template {template_id}")
+
+
+class TemplateData(BaseModel):
+    name: Optional[str] = None
+    body: str
+    
+    
+@router.post("/templates/{template_id}")
+async def update_template(template_id: str, data: TemplateData):
+    """
+    Update a specific template by ID.
+    """
+    from ...services.template_service import update_email_template
+    
+    try:
+        template_data = {"body": data.body}
+        if data.name:
+            template_data["name"] = data.name
+            
+        success = update_email_template(template_id, template_data)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Template {template_id} not found")
+            
+        return {
+            "success": True,
+            "message": f"Template {template_id} updated successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating template {template_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update template {template_id}")
+
+
 @router.get("/debug-env")
 async def debug_env():
     """Debug endpoint to check environment variables"""
@@ -273,7 +382,8 @@ async def debug_env():
         "EMAIL_PASSWORD": os.getenv("EMAIL_PASSWORD", "Not set"),
         "SMTP_TLS": os.getenv("SMTP_TLS", "Not set"),
         "SENDER_EMAIL": os.getenv("SENDER_EMAIL", "Not set"),
-        "EMAIL_ARCHIVE_PATH": os.getenv("EMAIL_ARCHIVE_PATH", "Not set")
+        "EMAIL_ARCHIVE_PATH": os.getenv("EMAIL_ARCHIVE_PATH", "Not set"),
+        "DEFAULT_EMAIL_TEMPLATE_PATH": os.getenv("DEFAULT_EMAIL_TEMPLATE_PATH", "Not set")
     }
     
     # Mask password for security
@@ -284,3 +394,132 @@ async def debug_env():
         "success": True,
         "data": env_vars
     }
+
+
+@router.get("/logs")
+async def get_logs(limit: int = 100, filter_status: Optional[str] = None):
+    """
+    Get the most recent email automation logs.
+    
+    Args:
+        limit: Maximum number of log entries to return
+        filter_status: Filter logs by status (success, failed, pending)
+        
+    Returns:
+        List of log entries
+    """
+    try:
+        from ...utils.email_logger import email_logger
+        logs = email_logger.get_recent_logs(limit, filter_status)
+        
+        return {
+            "success": True,
+            "data": logs
+        }
+    except Exception as e:
+        logger.error(f"Error retrieving logs: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve logs")
+
+
+@router.post("/logs/clear")
+async def clear_logs():
+    """
+    Clear the email automation logs.
+    
+    Returns:
+        Success message
+    """
+    try:
+        from ...utils.email_logger import email_logger
+        email_logger.clear_logs()
+        
+        return {
+            "success": True,
+            "message": "Logs cleared successfully"
+        }
+    except Exception as e:
+        logger.error(f"Error clearing logs: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to clear logs")
+
+
+@router.post("/archive/cleanup")
+async def cleanup_archive():
+    """
+    Clean up the email archive by removing old .zip files.
+    
+    Returns:
+        Number of files deleted
+    """
+    try:
+        import os
+        from ...services.email_sender import get_archive_path
+        from pathlib import Path
+        
+        archive_path = get_archive_path()
+        count = 0
+        
+        # Ensure the archive path exists
+        if os.path.exists(archive_path):
+            for file_path in Path(archive_path).glob('*.zip'):
+                try:
+                    os.remove(file_path)
+                    count += 1
+                except Exception as e:
+                    logger.error(f"Error deleting file {file_path}: {str(e)}")
+        
+        return {
+            "success": True,
+            "message": f"Archive cleaned up successfully. {count} files removed.",
+            "filesDeleted": count
+        }
+    except Exception as e:
+        logger.error(f"Error cleaning up archive: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to clean up archive")
+
+
+@router.post("/schedule")
+async def update_schedule(settings: ScheduleSettings):
+    """
+    Update the automation schedule settings.
+    
+    Args:
+        settings: New schedule settings
+        
+    Returns:
+        Updated schedule settings
+    """
+    try:
+        from ...services.automation_service import update_schedule_settings
+        updated_settings = update_schedule_settings(settings.dict())
+        
+        return {
+            "success": True,
+            "data": updated_settings
+        }
+    except Exception as e:
+        logger.error(f"Error updating schedule settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update schedule settings")
+
+
+@router.get("/schedule")
+async def get_schedule():
+    """
+    Get the current automation schedule settings.
+    
+    Returns:
+        Current schedule settings
+    """
+    try:
+        from ...services.automation_service import get_schedule_settings
+        settings = get_schedule_settings()
+        
+        return {
+            "success": True,
+            "data": settings
+        }
+    except Exception as e:
+        logger.error(f"Error getting schedule settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get schedule settings")
+
+
+

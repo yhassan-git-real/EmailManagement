@@ -63,7 +63,7 @@ export const getAutomationStatus = async () => {
   }
 };
 
-// Start email automation
+// Start email automation - only processes pending emails (never failed)
 export const startAutomation = async () => {
   try {
     const response = await apiClient.post(`${API_BASE}/start`);
@@ -85,7 +85,7 @@ export const stopAutomation = async () => {
   }
 };
 
-// Restart failed emails
+// Restart failed emails - only processes emails with status 'Failed'
 export const restartFailedEmails = async () => {
   try {
     const response = await apiClient.post(`${API_BASE}/restart-failed`);
@@ -99,7 +99,7 @@ export const restartFailedEmails = async () => {
 // Update retry settings
 export const updateRetrySettings = async (settings) => {
   try {
-    const response = await apiClient.post(`${API_BASE}/retry-settings`, settings);
+    const response = await apiClient.post(`${API_BASE}/retry`, settings);
     return response;
   } catch (error) {
     console.error('API Error:', error);
@@ -110,7 +110,99 @@ export const updateRetrySettings = async (settings) => {
 // Update automation template
 export const updateAutomationTemplate = async (templateId) => {
   try {
-    const response = await apiClient.post(`${API_BASE}/template/${templateId}`);
+    const response = await apiClient.post(`${API_BASE}/template`, { templateId });
+    return response;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Get automation logs
+export const getAutomationLogs = async (limit = 100, filterStatus = null) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (limit) queryParams.append('limit', limit);
+    if (filterStatus) queryParams.append('filter_status', filterStatus);
+    
+    const response = await apiClient.get(`${API_BASE}/logs?${queryParams.toString()}`);
+    return response;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Clear automation logs
+export const clearAutomationLogs = async () => {
+  try {
+    const response = await apiClient.post(`${API_BASE}/logs/clear`);
+    return response;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Clean up email archive
+export const cleanupEmailArchive = async () => {
+  try {
+    const response = await apiClient.post(`${API_BASE}/archive/cleanup`);
+    return response;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Get automation schedule settings
+export const getScheduleSettings = async () => {
+  try {
+    const response = await apiClient.get(`${API_BASE}/schedule`);
+    return response;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Update automation schedule settings
+export const updateScheduleSettings = async (settings) => {
+  try {
+    const response = await apiClient.post(`${API_BASE}/schedule`, settings);
+    return response;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Get email templates
+export const getEmailTemplates = async () => {
+  try {
+    const response = await apiClient.get(`${API_BASE}/templates`);
+    return response;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Get a specific email template
+export const getEmailTemplate = async (templateId) => {
+  try {
+    const response = await apiClient.get(`${API_BASE}/templates/${templateId}`);
+    return response;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Update an email template
+export const updateTemplate = async (templateId, templateData) => {
+  try {
+    const response = await apiClient.post(`${API_BASE}/templates/${templateId}`, templateData);
     return response;
   } catch (error) {
     console.error('API Error:', error);
@@ -119,15 +211,9 @@ export const updateAutomationTemplate = async (templateId) => {
 };
 
 // Validate SMTP credentials
-export const validateSMTPCredentials = async (smtpSettings) => {
+export const validateSMTPCredentials = async (credentials) => {
   try {
-    const response = await apiClient.post(`${API_BASE}/validate-smtp`, {
-      smtpServer: smtpSettings.smtpServer,
-      port: parseInt(smtpSettings.port, 10),
-      username: smtpSettings.username,
-      password: smtpSettings.password,
-      useTLS: smtpSettings.useTLS
-    });
+    const response = await apiClient.post(`${API_BASE}/validate-smtp`, credentials);
     return response;
   } catch (error) {
     console.error('API Error:', error);

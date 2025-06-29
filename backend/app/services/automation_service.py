@@ -3,7 +3,7 @@ import logging
 import threading
 import time
 from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime
+from datetime import datetime, timedelta
 import queue
 
 from ..core.config import get_settings
@@ -38,8 +38,20 @@ _automation_state = {
         "retry_interval": "15min",
         "template_id": "default"
     },
+    # New schedule settings
+    "schedule": {
+        "enabled": False, 
+        "frequency": "daily",
+        "time": "09:00",  # 24-hour format
+        "days": [],  # For weekly/monthly schedules
+        "lastRun": None,
+        "nextRun": None
+    },
     # Queue for processing emails - will be initialized when needed
-    "email_queue": None
+    "email_queue": None,
+    # Scheduler thread
+    "scheduler_thread": None,
+    "scheduler_running": False
 }
 
 def _interval_to_seconds(interval: str) -> int:
@@ -106,11 +118,11 @@ def _process_email_queue():
     # Get template
     template = None
     template_id = _automation_state["settings"]["template_id"]
-    if template_id and template_id != "default":
+    if template_id:
         try:
-            template = get_template_by_id(int(template_id))
-        except:
-            logger.warning(f"Could not find template with ID {template_id}, using default body text")
+            template = get_template_by_id(template_id)
+        except Exception as e:
+            logger.warning(f"Could not find template with ID {template_id}, using default template: {str(e)}")
             
     # Get SMTP settings
     smtp_settings = _get_smtp_settings()
@@ -256,12 +268,10 @@ def _update_summary():
         from .email_service import get_email_status_summary
         summary = get_email_status_summary()
         
-        _automation_state["summary"]["pending"] = summary["pending"]
-        
-        # Only update other counts if we're not running (to avoid overwriting our real-time counts)
-        if _automation_state["status"] != "running":
-            _automation_state["summary"]["successful"] = summary["success"]
-            _automation_state["summary"]["failed"] = summary["failed"]
+        # Always update all counts from the database for accuracy
+        _automation_state["summary"]["pending"] = summary["Pending"]
+        _automation_state["summary"]["successful"] = summary["Success"]
+        _automation_state["summary"]["failed"] = summary["Failed"]
             
     except Exception as e:
         # Just log at debug level since this is called frequently by polling
@@ -269,9 +279,51 @@ def _update_summary():
         logger.debug(f"Error updating summary counts: {str(e)}")
 
 
+def _load_emails_by_status(status):
+    """
+    Load email records from the database by status
+    
+    Args:
+        status: EmailStatus value to filter by
+    
+    Returns:
+        List of email records with the specified status
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        settings = get_settings()
+        
+        query = f"""
+            SELECT Email_ID, Company_Name, Email, Subject, File_Path, 
+                   Email_Send_Date, Email_Status, Date, Reason 
+            FROM {settings.EMAIL_TABLE}
+            WHERE Email_Status = ?
+            ORDER BY Email_Send_Date
+        """
+        
+        cursor.execute(query, [status])
+        
+        columns = [column[0] for column in cursor.description]
+        results = []
+        
+        for row in cursor.fetchall():
+            results.append(dict(zip(columns, row)))
+            
+        return results
+    except Exception as e:
+        logger.error(f"Error loading emails with status '{status}': {str(e)}")
+        return []
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+
 def start_automation() -> Dict[str, Any]:
     """
-    Start the email automation process
+    Start the email automation process for PENDING emails only.
+    This function will only process emails with 'Pending' status,
+    never affecting failed or successful emails.
     
     Returns:
         Current automation state
@@ -287,26 +339,8 @@ def start_automation() -> Dict[str, Any]:
     _automation_state["stop_requested"] = False
     
     try:
-        # Get pending emails
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        settings = get_settings()
-        
-        query = f"""
-            SELECT Email_ID, Company_Name, Email, Subject, File_Path, 
-                   Email_Send_Date, Email_Status, Date, Reason 
-            FROM {settings.EMAIL_TABLE}
-            WHERE Email_Status = ?
-            ORDER BY Email_Send_Date
-        """
-        
-        cursor.execute(query, [EmailStatus.PENDING.value])
-        
-        columns = [column[0] for column in cursor.description]
-        emails_to_process = []
-        
-        for row in cursor.fetchall():
-            emails_to_process.append(dict(zip(columns, row)))
+        # Get only pending emails
+        emails_to_process = _load_emails_by_status(EmailStatus.PENDING.value)
         
         # Update pending count
         _automation_state["summary"]["pending"] = len(emails_to_process)
@@ -324,13 +358,14 @@ def start_automation() -> Dict[str, Any]:
         
         # Start processing thread
         _automation_state["is_running"] = True
+        _automation_state["status"] = "running"  # Explicitly set to running
         _automation_state["automation_thread"] = threading.Thread(
             target=_process_email_queue,
             daemon=True
         )
         _automation_state["automation_thread"].start()
         
-        logger.info(f"Started email automation with {len(emails_to_process)} emails to process")
+        logger.info(f"Started email automation with {len(emails_to_process)} pending emails to process")
         return get_automation_status()
         
     except Exception as e:
@@ -366,7 +401,9 @@ def stop_automation() -> Dict[str, Any]:
 
 def restart_failed_emails() -> Dict[str, Any]:
     """
-    Restart processing of failed emails
+    Restart processing of FAILED emails only.
+    This function will only process emails with 'Failed' status,
+    never affecting pending or successful emails.
     
     Returns:
         Current automation status
@@ -379,12 +416,30 @@ def restart_failed_emails() -> Dict[str, Any]:
         return get_automation_status()
     
     try:
-        # Get failed emails
+        # Get failed emails only
         conn = get_db_connection()
         cursor = conn.cursor()
         settings = get_settings()
         
-        # First, update status back to pending
+        # First, get the count of failed emails only
+        check_query = f"""
+            SELECT COUNT(*) FROM {settings.EMAIL_TABLE}
+            WHERE Email_Status = ?
+        """
+        
+        cursor.execute(check_query, [EmailStatus.FAILED.value])
+        failed_count = cursor.fetchone()[0]
+        
+        if failed_count == 0:
+            logger.info("No failed emails to restart")
+            return get_automation_status()
+            
+        logger.info(f"Found {failed_count} failed emails to restart")
+        
+        # Get all failed emails
+        failed_emails = _load_emails_by_status(EmailStatus.FAILED.value)
+        
+        # Update status back to pending for only the failed emails
         update_query = f"""
             UPDATE {settings.EMAIL_TABLE}
             SET Email_Status = ?
@@ -394,22 +449,33 @@ def restart_failed_emails() -> Dict[str, Any]:
         cursor.execute(update_query, [EmailStatus.PENDING.value, EmailStatus.FAILED.value])
         conn.commit()
         
-        num_updated = cursor.rowcount
+        # Create a queue specifically for these emails
+        _automation_state["email_queue"] = queue.Queue()
         
-        if num_updated > 0:
-            logger.info(f"Set {num_updated} failed emails back to pending status")
-            
-            # Update summary counts
-            _update_summary()
-            
-            # Start automation
-            return start_automation()
-        else:
-            logger.info("No failed emails to restart")
-            return get_automation_status()
+        # Put all previously failed (now pending) emails into the queue
+        for email in failed_emails:
+            # Update the status in our local copy to match what we just did in the database
+            email["Email_Status"] = EmailStatus.PENDING.value
+            _automation_state["email_queue"].put(email)
+        
+        # Update summary counts
+        _update_summary()
+        
+        # Start processing thread
+        _automation_state["is_running"] = True
+        _automation_state["status"] = "restarting"
+        _automation_state["automation_thread"] = threading.Thread(
+            target=_process_email_queue,
+            daemon=True
+        )
+        _automation_state["automation_thread"].start()
+        
+        logger.info(f"Started reprocessing of {len(failed_emails)} previously failed emails")
+        return get_automation_status()
             
     except Exception as e:
         logger.error(f"Error restarting failed emails: {str(e)}")
+        _automation_state["status"] = "error"
         return get_automation_status()
     finally:
         if 'conn' in locals():
@@ -530,3 +596,323 @@ def _load_default_template() -> str:
     except Exception as e:
         logger.error(f"Error loading default template: {str(e)}")
         return ""
+
+def _schedule_next_run():
+    """Schedule the next run time based on current settings"""
+    global _automation_state
+    
+    if not _automation_state["schedule"]["enabled"]:
+        return
+    
+    try:
+        frequency = _automation_state["schedule"]["frequency"]
+        current_time = datetime.now()
+        next_run = None
+        
+        if frequency == "minute":
+            next_run = current_time + timedelta(minutes=int(_automation_state["schedule"]["interval"]))
+        elif frequency == "hour":
+            next_run = current_time + timedelta(hours=int(_automation_state["schedule"]["interval"]))
+        elif frequency == "daily":
+            next_run = current_time.replace(hour=int(_automation_state["schedule"]["time"].split(":")[0]), 
+                                             minute=int(_automation_state["schedule"]["time"].split(":")[1]), 
+                                             second=0, microsecond=0)
+            # If the time has already passed today, schedule for tomorrow
+            if next_run < current_time:
+                next_run += timedelta(days=1)
+        elif frequency == "weekly":
+            # Schedule for the next specified day of the week
+            today = current_time.weekday()  # Monday is 0, Sunday is 6
+            days_ahead = (_automation_state["schedule"]["days"][(current_time.weekday() + 1) % 7] - today) % 7
+            if days_ahead == 0:
+                # If the day is today, schedule for the next hour
+                next_run = current_time.replace(hour=int(_automation_state["schedule"]["time"].split(":")[0]), 
+                                                 minute=int(_automation_state["schedule"]["time"].split(":")[1]), 
+                                                 second=0, microsecond=0)
+                # If the time has already passed, schedule for next week
+                if next_run < current_time:
+                    next_run += timedelta(weeks=1)
+            else:
+                next_run = current_time + timedelta(days=days_ahead)
+        elif frequency == "monthly":
+            # Schedule for the next month on the same day
+            next_run = current_time.replace(day=1) + timedelta(days=32)  # Go to next month
+            next_run = next_run.replace(day=int(_automation_state["schedule"]["time"]))
+            # If the day is in the past, schedule for next month
+            if next_run < current_time:
+                next_run = next_run + timedelta(days=32)
+        
+        _automation_state["schedule"]["nextRun"] = next_run
+        logger.info(f"Next run scheduled at {next_run}")
+        
+    except Exception as e:
+        logger.error(f"Error scheduling next run: {str(e)}")
+
+
+def _scheduler_thread():
+    """Thread function for the scheduler"""
+    global _automation_state
+    
+    while _automation_state["scheduler_running"]:
+        try:
+            # Check if it's time to run the automation
+            current_time = datetime.now()
+            
+            if _automation_state["schedule"]["nextRun"] and current_time >= _automation_state["schedule"]["nextRun"]:
+                logger.info("Scheduled time reached, starting automation")
+                start_automation()
+                
+                # Schedule the next run
+                _schedule_next_run()
+            else:
+                # Sleep for a while before checking again
+                time.sleep(10)
+        
+        except Exception as e:
+            logger.error(f"Error in scheduler thread: {str(e)}")
+            time.sleep(60)  # Wait before retrying
+
+
+def start_scheduler() -> Dict[str, Any]:
+    """
+    Start the scheduler for automated email processing
+    
+    Returns:
+        Current automation state
+    """
+    global _automation_state
+    
+    if _automation_state["scheduler_running"]:
+        logger.info("Scheduler is already running")
+        return get_automation_status()
+    
+    # Set the scheduler to running
+    _automation_state["scheduler_running"] = True
+    
+    # Start the scheduler thread
+    _automation_state["scheduler_thread"] = threading.Thread(
+        target=_scheduler_thread,
+        daemon=True
+    )
+    _automation_state["scheduler_thread"].start()
+    
+    logger.info("Started email automation scheduler")
+    return get_automation_status()
+
+
+def stop_scheduler() -> Dict[str, Any]:
+    """
+    Stop the scheduler for automated email processing
+    
+    Returns:
+        Current automation state
+    """
+    global _automation_state
+    
+    if not _automation_state["scheduler_running"]:
+        logger.info("Scheduler is not running")
+        return get_automation_status()
+    
+    # Set the scheduler to not running
+    _automation_state["scheduler_running"] = False
+    
+    logger.info("Stopped email automation scheduler")
+    return get_automation_status()
+
+
+def update_schedule_settings(schedule_settings: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Update the automation schedule settings
+    
+    Args:
+        schedule_settings: New schedule settings
+        
+    Returns:
+        Updated schedule settings
+    """
+    global _automation_state
+    
+    # Update only valid keys
+    for key, value in schedule_settings.items():
+        if key in _automation_state["schedule"]:
+            _automation_state["schedule"][key] = value
+            
+    # Calculate next run time if schedule is enabled
+    if _automation_state["schedule"]["enabled"]:
+        _calculate_next_run()
+        
+        # Start the scheduler if it's not already running
+        if not _automation_state.get("scheduler_running", False):
+            _start_scheduler()
+    else:
+        # Stop the scheduler if it's running
+        _stop_scheduler()
+    
+    return get_schedule_settings()
+
+
+def get_schedule_settings() -> Dict[str, Any]:
+    """
+    Get the current schedule settings
+    
+    Returns:
+        Dictionary with current schedule settings
+    """
+    return _automation_state["schedule"]
+
+
+def _calculate_next_run() -> None:
+    """Calculate the next run time based on current schedule settings"""
+    global _automation_state
+    
+    now = datetime.now()
+    frequency = _automation_state["schedule"]["frequency"]
+    time_str = _automation_state["schedule"]["time"]
+    
+    try:
+        # Parse the time string (HH:MM)
+        hour, minute = map(int, time_str.split(":"))
+        
+        if frequency == "daily":
+            # Set next run to today at the specified time
+            next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            
+            # If that time has already passed today, set to tomorrow
+            if next_run <= now:
+                next_run += timedelta(days=1)
+                
+        elif frequency == "weekly":
+            # Get the target days of the week (0-6, where 0 is Monday in our case)
+            days = _automation_state["schedule"]["days"]
+            
+            if not days:
+                # Default to Monday if no days specified
+                days = [0]
+                
+            # Find the next occurrence from the list of days
+            current_weekday = now.weekday()
+            days_ahead = 7
+            
+            for day in days:
+                # Calculate days until the next occurrence of this weekday
+                days_until = (day - current_weekday) % 7
+                
+                # If it's today but the time has passed, add a week
+                if days_until == 0 and now >= now.replace(hour=hour, minute=minute, second=0, microsecond=0):
+                    days_until = 7
+                    
+                days_ahead = min(days_ahead, days_until)
+            
+            next_run = now + timedelta(days=days_ahead)
+            next_run = next_run.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            
+        elif frequency == "monthly":
+            # Get the target days of the month (1-31)
+            days = _automation_state["schedule"]["days"]
+            
+            if not days:
+                # Default to the 1st of the month if no days specified
+                days = [1]
+                
+            # Find the next occurrence from the list of days
+            current_day = now.day
+            
+            # Sort days in ascending order
+            days.sort()
+            
+            # Find the next day in the current month
+            next_day = None
+            for day in days:
+                if day > current_day:
+                    next_day = day
+                    break
+            
+            if next_day is None:
+                # If no days remain in this month, go to next month
+                if now.month == 12:
+                    next_month = 1
+                    next_year = now.year + 1
+                else:
+                    next_month = now.month + 1
+                    next_year = now.year
+                    
+                next_day = days[0]  # Use the first day in the list for next month
+                next_run = datetime(next_year, next_month, next_day, hour, minute)
+            else:
+                # Use the found day in the current month
+                next_run = now.replace(day=next_day, hour=hour, minute=minute, second=0, microsecond=0)
+        else:
+            # Default to daily if unknown frequency
+            next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            if next_run <= now:
+                next_run += timedelta(days=1)
+        
+        _automation_state["schedule"]["nextRun"] = next_run
+        
+    except Exception as e:
+        logger.error(f"Error calculating next run time: {str(e)}")
+        # Set a default next run time (1 hour from now)
+        _automation_state["schedule"]["nextRun"] = now + timedelta(hours=1)
+
+
+def _start_scheduler() -> None:
+    """Start the scheduler thread"""
+    global _automation_state
+    
+    if _automation_state.get("scheduler_running", False):
+        return
+        
+    logger.info("Starting email automation scheduler")
+    
+    _automation_state["scheduler_running"] = True
+    _automation_state["scheduler_thread"] = threading.Thread(
+        target=_run_scheduler,
+        daemon=True
+    )
+    _automation_state["scheduler_thread"].start()
+
+
+def _stop_scheduler() -> None:
+    """Stop the scheduler thread"""
+    global _automation_state
+    
+    logger.info("Stopping email automation scheduler")
+    _automation_state["scheduler_running"] = False
+
+
+def _run_scheduler() -> None:
+    """Run the scheduler loop"""
+    global _automation_state
+    
+    while _automation_state.get("scheduler_running", False):
+        try:
+            # Check if scheduler is enabled
+            if not _automation_state["schedule"]["enabled"]:
+                break
+                
+            now = datetime.now()
+            next_run = _automation_state["schedule"].get("nextRun")
+            
+            if next_run and now >= next_run:
+                # It's time to run the automation
+                logger.info("Scheduled automation starting")
+                
+                # Update last run time
+                _automation_state["schedule"]["lastRun"] = now
+                
+                # Start the automation
+                if not _automation_state["is_running"]:
+                    start_automation()
+                
+                # Calculate the next run time
+                _calculate_next_run()
+                
+                # Log the next scheduled run
+                logger.info(f"Next scheduled run: {_automation_state['schedule']['nextRun']}")
+        except Exception as e:
+            logger.error(f"Error in scheduler loop: {str(e)}")
+            
+        # Sleep for a minute before checking again
+        time.sleep(60)
+    
+    logger.info("Scheduler thread stopped")

@@ -4,7 +4,9 @@ import Footer from '../components/Footer';
 import EmailSettingsModal from '../components/EmailSettingsModal';
 import TemplateSelector from '../components/TemplateSelector';
 import StatusBadge from '../components/StatusBadge';
-import { CogIcon, PlayIcon, StopIcon, ArrowPathIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import EmailLogViewer from '../components/EmailLogViewer';
+import SchedulerSettings from '../components/SchedulerSettings';
+import { CogIcon, PlayIcon, StopIcon, ArrowPathIcon, DocumentTextIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import { 
   getEmailAutomationSettings, 
@@ -14,7 +16,8 @@ import {
   stopAutomation,
   restartFailedEmails,
   updateRetrySettings,
-  updateAutomationTemplate
+  updateAutomationTemplate,
+  cleanupEmailArchive
 } from '../utils/automationApi';
 
 const AutomatePage = ({ connectionInfo, onDisconnect }) => {
@@ -31,7 +34,8 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
     stop: false,
     restart: false,
     template: false,
-    refresh: false
+    refresh: false,
+    archive: false
   });
   
   // References for polling and previous status tracking
@@ -301,6 +305,34 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
     }
   };
   
+  // Handle email archive cleanup
+  const handleCleanupArchive = async () => {
+    setIsLoading({ ...isLoading, archive: true });
+    try {
+      const response = await cleanupEmailArchive();
+      
+      console.log('Archive cleanup response:', response); // Debug log
+      
+      if (response.success) {
+        // Check if data exists and then access the property safely
+        if (response.data) {
+          const count = response.data.filesDeleted || response.filesDeleted || 0;
+          toast.success(`Archive cleaned up successfully. ${count} files removed.`);
+        } else {
+          // Fallback if data structure is different than expected
+          toast.success(response.message || 'Archive cleaned up successfully.');
+        }
+      } else {
+        toast.error(response.message || 'Failed to clean up email archive');
+      }
+    } catch (error) {
+      console.error('Error cleaning up archive:', error);
+      toast.error('Failed to clean up email archive');
+    } finally {
+      setIsLoading({ ...isLoading, archive: false });
+    }
+  };
+  
   return (
     <div className="flex flex-col min-h-screen">
       <Header connectionInfo={connectionInfo} onDisconnect={onDisconnect} />
@@ -334,22 +366,24 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
                         ? 'bg-gray-100 text-gray-500 cursor-not-allowed' 
                         : 'text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
                     }`}
+                    title="Process only pending emails, never emails with status 'Failed' or 'Success'"
                   >
                     <PlayIcon className="h-5 w-5 mr-2" />
-                    {isLoading.start ? 'Starting...' : 'Start Automation'}
+                    {isLoading.start ? 'Starting...' : 'Start Pending Emails'}
                   </button>
                   
                   <button
                     onClick={handleRestartFailed}
-                    disabled={isLoading.restart || automationStatus.status === 'restarting' || automationStatus.summary.failed === 0}
+                    disabled={isLoading.restart || automationStatus.status === 'restarting'}
                     className={`inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-md shadow-sm ${
-                      automationStatus.status === 'restarting' || automationStatus.summary.failed === 0
+                      automationStatus.status === 'restarting'
                         ? 'bg-gray-100 text-gray-500 cursor-not-allowed' 
                         : 'text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500'
                     }`}
+                    title="Process only emails with status 'Failed', never pending emails"
                   >
                     <ArrowPathIcon className="h-5 w-5 mr-2" />
-                    {isLoading.restart ? 'Restarting...' : `Restart Failed (${automationStatus.summary.failed})`}
+                    {isLoading.restart ? 'Restarting...' : `Restart Failed${automationStatus.summary.failed > 0 ? ` (${automationStatus.summary.failed})` : ''}`}
                   </button>
                   
                   <button
@@ -413,80 +447,60 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
                     <div className="mt-1 text-2xl font-semibold text-blue-700">{automationStatus.summary.pending}</div>
                   </div>
                 </div>
-                  {/* Additional Settings */}
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Additional Settings</h3>
-                  
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          id="retryOnFailure"
-                          checked={automationSettings.retryOnFailure || false}
-                          onChange={(e) => handleToggleRetry(e.target.checked)}
-                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="retryOnFailure" className="ml-2 block text-sm text-gray-700">
-                          Auto retry on failure
-                        </label>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <label htmlFor="retryInterval" className="block text-sm text-gray-700 mr-2">
-                          Retry interval:
-                        </label>
-                        <select
-                          id="retryInterval"
-                          value={automationSettings.retryInterval || '15min'}
-                          onChange={(e) => handleRetryIntervalChange(e.target.value)}
-                          disabled={!automationSettings.retryOnFailure}
-                          className="mt-1 block w-full pl-3 pr-10 py-1 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                        >
-                          <option value="5min">5 minutes</option>
-                          <option value="15min">15 minutes</option>
-                          <option value="30min">30 minutes</option>
-                          <option value="1hr">1 hour</option>
-                          <option value="3hr">3 hours</option>
-                        </select>
-                      </div>
+                  {/* Scheduler Settings */}
+                <SchedulerSettings onSettingsChange={(updatedSettings) => console.log("Scheduler settings updated:", updatedSettings)} />
+
+                {/* Template Settings */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 mt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-700">Current template:</span>
+                      <span className="ml-2 text-sm font-medium text-primary-600">
+                        {automationSettings.templateId === 'default' ? 'Default Template' : 
+                         automationSettings.templateId === 'followup' ? 'Follow-up Template' :
+                         automationSettings.templateId === 'escalation' ? 'Escalation Template' :
+                         automationSettings.templateId === 'reminder' ? 'Payment Reminder' :
+                         'Custom Template'}
+                      </span>
                     </div>
-                    
-                    <div className="border-t border-gray-200 pt-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <DocumentTextIcon className="h-4 w-4 text-gray-500 mr-2" />
-                          <span className="text-sm text-gray-700">Current template:</span>
-                          <span className="ml-2 text-sm font-medium text-primary-600">
-                            {automationSettings.templateId === 'default' ? 'Default Template' : 
-                             automationSettings.templateId === 'followup' ? 'Follow-up Template' :
-                             automationSettings.templateId === 'escalation' ? 'Escalation Template' :
-                             automationSettings.templateId === 'reminder' ? 'Payment Reminder' :
-                             'Custom Template'}
-                          </span>
-                        </div>
-                        <button 
-                          onClick={() => setShowTemplateSelector(true)}
-                          className="text-xs text-primary-600 hover:text-primary-800"
-                        >
-                          Change
-                        </button>
-                      </div>
-                    </div>
+                    <button 
+                      onClick={() => setShowTemplateSelector(true)}
+                      className="text-xs text-primary-600 hover:text-primary-800"
+                    >
+                      Change
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Email Archive Management */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 mt-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Email Archive Management</h3>
+                  <div className="flex items-center">
+                    <button
+                      onClick={handleCleanupArchive}
+                      disabled={isLoading.archive}
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                    >
+                      <TrashIcon className="h-4 w-4 mr-2" />
+                      {isLoading.archive ? 'Cleaning up...' : 'Cleanup Archive'}
+                    </button>
+                    <span className="ml-3 text-xs text-gray-500">
+                      Removes all old .zip files in the Email_Archive folder
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Last Run Info */}
-            {automationStatus.lastRun && (
-              <div className="bg-white rounded-lg shadow p-4 mb-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Last Automation Run</h3>
-                <p className="text-sm text-gray-600">
-                  Started: {new Date(automationStatus.lastRun).toLocaleString()}
-                </p>
-              </div>
-            )}
+            {/* Email Log Viewer */}
+            <div className="mb-4">
+              <EmailLogViewer 
+                maxHeight="300px" 
+                autoRefresh={true} 
+                isActive={automationStatus.status === 'running' || automationStatus.status === 'restarting'}
+              />
+            </div>
           </div>
         </main>
       </div>

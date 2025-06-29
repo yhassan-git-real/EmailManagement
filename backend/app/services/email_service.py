@@ -165,7 +165,12 @@ def get_email_status_summary() -> Dict[str, int]:
         
         cursor.execute(query)
         
-        results = {}
+        results = {
+            "Success": 0,
+            "Pending": 0,
+            "Failed": 0
+        }
+        
         for row in cursor.fetchall():
             # Make sure we handle case sensitivity correctly for status values
             status_key = row[0]
@@ -176,12 +181,10 @@ def get_email_status_summary() -> Dict[str, int]:
             elif status_key.lower() == "failed":
                 results["Failed"] = row[1]
             else:
+                # For any other status, log it for debugging
+                logger.debug(f"Found unexpected status: {status_key}")
+                # Add it to the results dictionary anyway
                 results[status_key] = row[1]
-        
-        # Ensure all statuses are present
-        for status in ["Pending", "Success", "Failed"]:
-            if status not in results:
-                results[status] = 0
                 
         return results
     except Exception as e:

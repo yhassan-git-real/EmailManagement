@@ -1,0 +1,33 @@
+<html>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; color: #333333;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#f7f7f7">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table width="600" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff" style="border-radius: 5px; box-shadow: 0px 3px 10px rgba(0,0,0,0.1);">
+                    <!-- Email Content -->
+                    <tr>
+                        <td style="padding: 30px;">
+                            <p style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">Dear Sir/Madam,</p>
+                            
+                            <p style="margin-top: 0; margin-bottom: 20px; font-size: 16px;">I'm writing to follow up on the document shared with you on [DATE].</p>
+                            
+                            <p style="margin-top: 0; margin-bottom: 20px; font-size: 16px;">Has the information provided been helpful? If you require any clarification or have questions regarding the content, please let me know.</p>
+                            
+                            <p style="margin-top: 0; margin-bottom: 20px; font-size: 16px;">
+                                As a reminder, for any technical issues or support, please create a ticket at 
+                                <a href="http://helpdesk.freshdesk.com/" style="color: #0066cc; text-decoration: underline;">http://helpdesk.freshdesk.com/</a> 
+                                for prompt assistance.
+                            </p>
+                            
+                            <p style="margin-top: 30px; margin-bottom: 5px; font-size: 16px;">
+                                Thanks & Regards,<br>
+                                <strong>Support Team</strong>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

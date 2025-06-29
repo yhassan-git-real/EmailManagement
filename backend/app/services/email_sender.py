@@ -21,6 +21,22 @@ logger = logging.getLogger(__name__)
 GMAIL_MAX_SIZE = 25 * 1024 * 1024  # 25MB
 SAFE_MAX_SIZE = 20 * 1024 * 1024   # 20MB (conservative limit to account for email headers)
 
+def get_archive_path() -> str:
+    """
+    Get the path where email attachments are archived as zip files
+    
+    Returns:
+        String path to the archive directory
+    """
+    settings = get_settings()
+    default_path = os.path.join(os.getcwd(), "Email_Archive")
+    archive_path = os.getenv("EMAIL_ARCHIVE_PATH", default_path)
+    
+    # Create the directory if it doesn't exist
+    os.makedirs(archive_path, exist_ok=True)
+    
+    return archive_path
+
 class EmailSender:
     """Service class for sending emails with attachments"""
     

@@ -38,6 +38,10 @@ module.exports = {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },
+      fontSize: {
+        '2xs': ['0.65rem', { lineHeight: '0.9rem' }],
+        'xs': ['0.75rem', { lineHeight: '1rem', letterSpacing: '-0.01em' }],
+      },
       animation: {
         'fadeIn': 'fadeIn 0.5s ease-out forwards',
         'number': 'number 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',

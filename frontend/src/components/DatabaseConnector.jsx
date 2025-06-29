@@ -152,14 +152,14 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
         message: response.message,
         details: response.details
       });
-      toast.success(response.message);
+      // Removed toast notification as per requirement
     } catch (err) {
       setError(err.message || 'Failed to test database connection');
       setTestConnectionResult({
         success: false,
         message: err.message || 'Failed to test database connection'
       });
-      toast.error(err.message || 'Failed to test database connection');
+      // Removed toast notification as per requirement
     } finally {
       setTestingConnection(false);
     }
@@ -225,7 +225,7 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to connect to database');
-      toast.error(err.message || 'Failed to connect to database');
+      // Removed toast notification as per requirement
     } finally {
       setLoading(false);
     }};

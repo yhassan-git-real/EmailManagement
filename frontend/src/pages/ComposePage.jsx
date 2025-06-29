@@ -7,7 +7,6 @@ import SelectionPreview from '../components/SelectionPreview';
 import FilePreviewer from '../components/FilePreviewer';
 import TemplateSelector from '../components/TemplateSelector';
 import { EnvelopeIcon, PencilSquareIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
-import { toast } from 'react-toastify';
 import { mockSendEmail, fetchEmailTableData, emailTemplates } from '../utils/mockApi';
 
 const ComposePage = ({ connectionInfo, onDisconnect }) => {
@@ -54,7 +53,7 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
         setTotalRows(response.data.total);
       }
     } catch (error) {
-      toast.error('Failed to load table data');
+      // Removed toast notification as per requirement
       console.error('Error loading table data:', error);
     } finally {
       setIsLoading(false);
@@ -145,22 +144,21 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
       });
       
       setShowComposer(true);
-      toast.warning('Using basic template due to loading error.');
+      // Removed toast notification as per requirement
     }
   };
   
   // Handle sending email
   const handleSendEmail = async (emailData) => {
     try {
-      // Show sending toast
-      toast.info('Sending email...', { autoClose: 2000 });
+      // Removed toast notification for sending email as per requirement
       
       // Call mock API to simulate sending
       const response = await mockSendEmail(emailData);
       
       // Handle successful response
       console.log('Email sent successfully:', response);
-      toast.success(`Email sent to ${emailData.to.length} recipient(s)`);
+      // Removed toast notification as per requirement
       
       // Close the composer
       setShowComposer(false);
@@ -176,7 +174,7 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
       
     } catch (error) {
       console.error('Error sending email:', error);
-      toast.error(error.message || 'Failed to send email. Please try again.');
+      // Removed toast notification as per requirement
     }
   };
 
@@ -229,7 +227,7 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
                         setShowTemplateSelector(true);
                       } catch (error) {
                         console.error('Error showing template selector:', error);
-                        toast.error('Failed to open template selector. Using default template.');
+                        // Removed toast notification as per requirement
                         setShowComposer(true);
                       }
                     }}

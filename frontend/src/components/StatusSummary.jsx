@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
 // Import real API client and session utilities
 import { fetchEmailStatus } from '../utils/apiClient';
 import { saveEmailStatusToSession, loadEmailStatusFromSession, isEmailStatusStale } from '../utils/sessionUtils';
@@ -36,7 +35,6 @@ const StatusSummary = () => {
       const now = new Date();
       setLastUpdated(now.toLocaleString());
     } catch (error) {
-      toast.error('Failed to load email status data');
       console.error(error);
       
       // Try to use cached data even if it's stale
@@ -44,7 +42,6 @@ const StatusSummary = () => {
       if (cachedData) {
         setStatusData(cachedData);
         setLastUpdated(`${new Date(cachedTimestamp).toLocaleString()} (cached)`);
-        toast.warning('Showing cached data. Could not refresh from server.');
       }
     } finally {
       setLoading(false);
@@ -58,7 +55,7 @@ const StatusSummary = () => {
 
   const handleRefresh = () => {
     loadStatusData(true); // Force refresh from server
-    toast.info('Refreshing email status data...');
+    // Removed toast notification as per requirement
   };  return (
     <div className="card-glass max-w-5xl mx-auto shadow-xl">
       {/* Card header with accent line */}

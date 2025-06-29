@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { 
+  BrowserRouter as Router, 
+  Routes, 
+  Route, 
+  Navigate 
+} from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Dashboard from './pages/Dashboard';
 import StatusPage from './pages/StatusPage';
 import ComposePage from './pages/ComposePage';
 import AutomatePage from './pages/AutomatePage';
+
+// Silence React Router warnings for future version
+const originalConsoleWarn = console.warn;
+console.warn = function(msg) {
+  if (msg && msg.includes && msg.includes('react-router-dom')) {
+    // Suppress React Router migration warnings
+    return;
+  }
+  originalConsoleWarn.apply(console, arguments);
+};
 
 function App() {
   // Initialize state from sessionStorage if available

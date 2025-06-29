@@ -60,6 +60,20 @@ def get_email_templates(
             conn.close()
 
 
+def get_template_by_id(template_id: int) -> Optional[Dict[str, Any]]:
+    """
+    Retrieve a specific template by its ID.
+    Alias for get_email_template_by_id for backwards compatibility.
+    
+    Args:
+        template_id: ID of the template to retrieve
+    
+    Returns:
+        Template dictionary or None if not found
+    """
+    return get_email_template_by_id(template_id)
+
+
 def get_email_template_by_id(template_id: int) -> Dict[str, Any]:
     """
     Retrieve a specific email template by its ID.

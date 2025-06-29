@@ -24,6 +24,16 @@ class Settings(BaseSettings):
     EMAIL_TABLE: str
     TEMPLATE_TABLE: str
     
+    # Email configuration settings
+    SMTP_SERVER: Optional[str] = None
+    SMTP_PORT: Optional[str] = "587"
+    EMAIL_USERNAME: Optional[str] = None
+    EMAIL_PASSWORD: Optional[str] = None
+    SMTP_TLS: Optional[str] = "True"
+    SENDER_EMAIL: Optional[str] = None
+    EMAIL_ARCHIVE_PATH: Optional[str] = "Email_Archive"
+    DEFAULT_EMAIL_TEMPLATE_PATH: Optional[str] = "./templates/default_template.txt"
+    
     # API settings
     API_PREFIX: str = "/api"
     

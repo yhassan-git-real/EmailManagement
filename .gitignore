@@ -67,3 +67,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Project specific
+logs/
+Email_Archive/

@@ -23,9 +23,14 @@ body {
   @apply rounded-xl shadow-card bg-white bg-opacity-70 backdrop-blur-md border border-white border-opacity-20 p-8 transition-all duration-300 hover:shadow-card-hover;
 }
 
-/* Sidebar specific styles */
-aside {
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* Header Navigation styles */
+.nav-link {
+  @apply relative transition duration-200 ease-in-out;
+}
+
+.nav-link.active::after {
+  content: '';
+  @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary-500 rounded-full;
 }
 
 aside nav ul li a {

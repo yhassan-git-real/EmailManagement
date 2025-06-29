@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
 import EmailSettingsModal from '../components/EmailSettingsModal';
 import TemplateSelector from '../components/TemplateSelector';
@@ -197,9 +196,7 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
     <div className="flex flex-col min-h-screen">
       <Header connectionInfo={connectionInfo} onDisconnect={onDisconnect} />
         <div className="flex flex-row flex-grow relative">
-        <Sidebar />
-        
-        <main className="flex-grow py-3 px-1 bg-gradient-to-b from-gray-50 to-gray-100 w-full md:ml-14 md:px-4 overflow-x-hidden">
+        <main className="flex-grow py-3 px-4 bg-gradient-to-b from-gray-50 to-gray-100 w-full overflow-x-hidden">
           <div className="max-w-7xl mx-auto w-full relative">
             <h1 className="text-sm font-medium mb-2 text-primary-600 pl-1 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">

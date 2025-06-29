@@ -1,0 +1,29 @@
+<html>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; color: #333333;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#f7f7f7">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table width="600" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff" style="border-radius: 5px; box-shadow: 0px 3px 10px rgba(0,0,0,0.1);">
+                    <!-- Email Content -->
+                    <tr>
+                        <td style="padding: 30px;">
+                            <p style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">Dear Client,</p>
+                            
+                            <p style="margin-top: 0; margin-bottom: 20px; font-size: 16px;">This email serves as a reminder regarding the pending payment for invoice #[INVOICE_NUMBER].</p>
+                            
+                            <p style="margin-top: 0; margin-bottom: 20px; font-size: 16px;">Please process the payment at your earliest convenience to avoid any service interruptions.</p>
+                            
+                            <p style="margin-top: 0; margin-bottom: 20px; font-size: 16px;">For payment-related queries, contact our finance department or reply to this email.</p>
+                            
+                            <p style="margin-top: 30px; margin-bottom: 5px; font-size: 16px;">
+                                Thanks & Regards,<br>
+                                <strong>Finance Department</strong>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

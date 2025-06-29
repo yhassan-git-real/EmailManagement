@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { fetchEmailTemplates } from '../utils/mockApi';
-import { XMarkIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, DocumentTextIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { getEmailTemplates } from '../utils/automationApi';
+import TemplateEditor from './TemplateEditor';
 
 const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'default' }) => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId);
   const [isLoading, setIsLoading] = useState(true);
+  const [showEditor, setShowEditor] = useState(false);
+  const [templateToEdit, setTemplateToEdit] = useState(null);
 
   // Load templates on component mount
   useEffect(() => {
     const loadTemplates = async () => {
       setIsLoading(true);
       try {
-        const response = await fetchEmailTemplates();
+        // Use real API instead of mock API
+        const response = await getEmailTemplates();
         if (response.success) {
           setTemplates(response.data);
           // If no initialTemplateId is provided or it doesn't exist, select the first template
@@ -41,6 +45,47 @@ const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'defa
       onSelectTemplate(selectedTemplate);
     }
   };
+  
+  // Handle opening the template editor
+  const handleEditTemplate = (template) => {
+    setTemplateToEdit(template);
+    setShowEditor(true);
+  };
+  
+  // Handle saving template from editor
+  const handleSaveTemplate = async (updatedTemplate) => {
+    try {
+      // Save the template to the server
+      const { updateTemplate, getEmailTemplates } = await import('../utils/automationApi');
+      
+      // Save template
+      await updateTemplate(updatedTemplate.id, {
+        name: updatedTemplate.name,
+        body: updatedTemplate.body
+      });
+      
+      // Reload templates from the server
+      const response = await getEmailTemplates();
+      if (response.success) {
+        setTemplates(response.data);
+      }
+      
+      setShowEditor(false);
+      
+      // Select the edited template
+      setSelectedTemplateId(updatedTemplate.id);
+      
+      // Show success toast using React-Toastify
+      const { toast } = await import('react-toastify');
+      toast.success(`Template "${updatedTemplate.name}" saved successfully`);
+    } catch (error) {
+      console.error('Failed to save template:', error);
+      
+      // Show error toast
+      const { toast } = await import('react-toastify');
+      toast.error('Failed to save template');
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -65,34 +110,46 @@ const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'defa
           ) : (
             <div className="space-y-2">
               {templates.map((template) => (
-                <button
+                <div
                   key={template.id}
-                  onClick={() => handleTemplateChange(template.id)}
                   className={`w-full text-left p-3 rounded-md flex items-start ${
                     selectedTemplateId === template.id 
                       ? 'bg-primary-50 border border-primary-300' 
                       : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
                   }`}
                 >
-                  <DocumentTextIcon className={`h-5 w-5 mt-0.5 mr-3 ${
-                    selectedTemplateId === template.id ? 'text-primary-600' : 'text-gray-500'
-                  }`} />
-                  <div>
-                    <div className={`font-medium ${
-                      selectedTemplateId === template.id ? 'text-primary-700' : 'text-gray-700'
-                    }`}>
-                      {template.name}
-                    </div>
-                    {template.subject && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        Subject prefix: {template.subject}
+                  <div className="flex-grow cursor-pointer" onClick={() => handleTemplateChange(template.id)}>
+                    <div className="flex items-center">
+                      <DocumentTextIcon className={`h-5 w-5 mr-3 ${
+                        selectedTemplateId === template.id ? 'text-primary-600' : 'text-gray-500'
+                      }`} />
+                      <div>
+                        <div className={`font-medium ${
+                          selectedTemplateId === template.id ? 'text-primary-700' : 'text-gray-700'
+                        }`}>
+                          {template.name}
+                        </div>
+                        {template.subject && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Subject prefix: {template.subject}
+                          </div>
+                        )}
+                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                          {template.body ? template.body.substring(0, 100) + '...' : 'No preview available'}
+                        </div>
                       </div>
-                    )}
-                    <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                      {template.body.substring(0, 100)}...
                     </div>
                   </div>
-                </button>
+                  
+                  {/* Edit button */}
+                  <button 
+                    onClick={() => handleEditTemplate(template)}
+                    className="ml-2 p-1 text-gray-500 hover:text-primary-600 rounded-full hover:bg-gray-100 flex-shrink-0"
+                    title="Edit template"
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -115,6 +172,15 @@ const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'defa
           </button>
         </div>
       </div>
+      
+      {/* Template Editor Modal */}
+      {showEditor && (
+        <TemplateEditor 
+          initialTemplate={templateToEdit}
+          onSave={handleSaveTemplate}
+          onClose={() => setShowEditor(false)}
+        />
+      )}
     </div>
   );
 };

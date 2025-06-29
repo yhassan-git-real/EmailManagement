@@ -1,0 +1,35 @@
+<html>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; color: #333333;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#f7f7f7">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table width="600" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff" style="border-radius: 5px; box-shadow: 0px 3px 10px rgba(0,0,0,0.1); border-top: 4px solid #e63946;">
+                    <!-- Email Content -->
+                    <tr>
+                        <td style="padding: 30px;">
+                            <p style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">Dear Concerned Department,</p>
+                            
+                            <p style="margin-top: 0; margin-bottom: 20px; font-size: 16px; color: #e63946; font-weight: bold;">This is regarding an escalation for case #[CASE_NUMBER].</p>
+                            
+                            <p style="margin-top: 0; margin-bottom: 20px; font-size: 16px;">We request your urgent attention to this matter as it requires immediate resolution. All previous attempts to resolve this issue through standard channels have been unsuccessful.</p>
+                            
+                            <p style="margin-top: 0; margin-bottom: 20px; font-size: 16px;">Please review the attached documentation and provide your feedback at the earliest.</p>
+                            
+                            <div style="margin: 25px 0; padding: 15px; border-left: 4px solid #e63946; background-color: #fff8f8;">
+                                <p style="margin: 0; font-weight: bold; font-size: 16px; color: #e63946;">
+                                    IMPORTANT: For tracking purposes, please maintain the email thread and do not alter the subject line.
+                                </p>
+                            </div>
+                            
+                            <p style="margin-top: 30px; margin-bottom: 5px; font-size: 16px;">
+                                Thanks & Regards,<br>
+                                <strong>Escalation Team</strong>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

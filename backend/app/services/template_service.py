@@ -1,14 +1,23 @@
 import logging
+import os
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
 
-from ..utils.db_utils import get_db_connection
 from ..core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
+# Predefined templates with their file locations
+TEMPLATE_MAPPINGS = {
+    "default": "default_template.txt",
+    "followup": "followup_template.txt",
+    "escalation": "escalation_template.txt",
+    "reminder": "reminder_template.txt",
+    "custom": "custom_template.txt"
+}
 
-# Email Templates Functions
+
 def get_email_templates(
     is_active: bool = True, 
     category: Optional[str] = None,
@@ -16,171 +25,241 @@ def get_email_templates(
     offset: int = 0
 ) -> List[Dict[str, Any]]:
     """
-    Retrieve email templates with optional filters.
+    Get a list of available templates from the templates directory.
+    
+    Returns:
+        List of template dictionaries with id, name, and file path
     """
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        settings = get_settings()
+    templates = []
+    settings = get_settings()
+    template_dir = os.path.dirname(settings.DEFAULT_EMAIL_TEMPLATE_PATH)
+    
+    # Add predefined templates
+    for template_id, filename in TEMPLATE_MAPPINGS.items():
+        file_path = os.path.join(template_dir, filename)
+        template_exists = os.path.exists(file_path)
         
-        query = f"""
-            SELECT Template_ID, Template_Name, Subject_Template, Body_Template, 
-                   Created_Date, Modified_Date, Created_By, Is_Active, 
-                   Category, Description, Has_Attachments, Default_Attachment_Paths 
-            FROM {settings.TEMPLATE_TABLE}
-            WHERE 1=1
-        """
+        # Create template info
+        template = {
+            "id": template_id,
+            "name": _get_template_name(template_id),
+            "subject": _get_template_subject(template_id),
+            "body": _get_template_preview(file_path) if template_exists else "Template file not found",
+            "file_path": file_path,
+            "exists": template_exists,
+            "created_date": datetime.fromtimestamp(os.path.getctime(file_path)).isoformat() if template_exists else None,
+            "modified_date": datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat() if template_exists else None
+        }
         
-        params = []
-        if is_active is not None:
-            query += " AND Is_Active = ?"
-            params.append(1 if is_active else 0)
-        
-        if category:
-            query += " AND Category = ?"
-            params.append(category)
-        
-        query += " ORDER BY Template_Name OFFSET ? ROWS FETCH NEXT ? ROWS ONLY"
-        params.extend([offset, limit])
-        
-        cursor.execute(query, params)
-        
-        columns = [column[0] for column in cursor.description]
-        results = []
-        
-        for row in cursor.fetchall():
-            results.append(dict(zip(columns, row)))
-            
-        return results
-    except Exception as e:
-        logger.error(f"Error retrieving email templates: {str(e)}")
-        raise
-    finally:
-        if 'conn' in locals():
-            conn.close()
+        templates.append(template)
+    
+    # Apply filtering if needed
+    filtered_templates = templates
+    if category:
+        filtered_templates = [t for t in templates if category.lower() in t['name'].lower()]
+    
+    # Apply pagination
+    start_idx = min(offset, len(filtered_templates))
+    end_idx = min(start_idx + limit, len(filtered_templates))
+    
+    return filtered_templates[start_idx:end_idx]
 
 
-def get_template_by_id(template_id: int) -> Optional[Dict[str, Any]]:
+def get_template_by_id(template_id: str) -> Optional[Dict[str, Any]]:
     """
-    Retrieve a specific template by its ID.
-    Alias for get_email_template_by_id for backwards compatibility.
+    Get a template by its ID.
     
     Args:
-        template_id: ID of the template to retrieve
-    
+        template_id: ID of the template
+        
     Returns:
         Template dictionary or None if not found
     """
-    return get_email_template_by_id(template_id)
-
-
-def get_email_template_by_id(template_id: int) -> Dict[str, Any]:
-    """
-    Retrieve a specific email template by its ID.
-    """
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        settings = get_settings()
-        
-        query = f"""
-            SELECT Template_ID, Template_Name, Subject_Template, Body_Template, 
-                   Created_Date, Modified_Date, Created_By, Is_Active, 
-                   Category, Description, Has_Attachments, Default_Attachment_Paths 
-            FROM {settings.TEMPLATE_TABLE}
-            WHERE Template_ID = ?
-        """
-        
-        cursor.execute(query, [template_id])
-        
-        columns = [column[0] for column in cursor.description]
-        row = cursor.fetchone()
-        
-        if not row:
+    settings = get_settings()
+    template_dir = os.path.dirname(settings.DEFAULT_EMAIL_TEMPLATE_PATH)
+    
+    # If template_id is not in our predefined mappings, try to use default
+    if template_id not in TEMPLATE_MAPPINGS:
+        logger.warning(f"Template ID '{template_id}' not found in mappings, using default")
+        template_id = "default"
+    
+    # Get the appropriate template file
+    filename = TEMPLATE_MAPPINGS[template_id]
+    file_path = os.path.join(template_dir, filename)
+    
+    # Check if the file exists
+    if not os.path.exists(file_path):
+        # If the requested template doesn't exist, fall back to default
+        if template_id != "default":
+            logger.warning(f"Template {template_id} not found, falling back to default")
+            return get_template_by_id("default")
+        else:
+            logger.error(f"Default template not found at {file_path}")
             return None
-        
-        return dict(zip(columns, row))
+    
+    # Read the template content
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            body_template = file.read()
+            
+        return {
+            "id": template_id,
+            "name": _get_template_name(template_id),
+            "subject": _get_template_subject(template_id),
+            "body_template": body_template,
+            "file_path": file_path,
+            "created_date": datetime.fromtimestamp(os.path.getctime(file_path)).isoformat(),
+            "modified_date": datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()
+        }
     except Exception as e:
-        logger.error(f"Error retrieving email template {template_id}: {str(e)}")
-        raise
-    finally:
-        if 'conn' in locals():
-            conn.close()
+        logger.error(f"Error reading template file: {str(e)}")
+        return None
 
 
-def create_email_template(template_data: Dict[str, Any]) -> int:
+def create_email_template(template_data: Dict[str, Any]) -> str:
     """
-    Create a new email template.
+    Create a new custom email template.
+    
+    Args:
+        template_data: Dictionary with template data (name, body)
+        
+    Returns:
+        ID of the new template
     """
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
         settings = get_settings()
+        template_dir = os.path.dirname(settings.DEFAULT_EMAIL_TEMPLATE_PATH)
+        template_id = "custom"
+        file_path = os.path.join(template_dir, TEMPLATE_MAPPINGS[template_id])
         
-        columns = ["Template_Name", "Subject_Template", "Body_Template", 
-                  "Created_By", "Is_Active", "Category", 
-                  "Description", "Has_Attachments", "Default_Attachment_Paths"]
+        # Create directory if it doesn't exist
+        os.makedirs(template_dir, exist_ok=True)
         
-        values = [template_data.get(k.lower(), None) for k in columns]
+        # Write the template content
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write(template_data.get("body", ""))
         
-        placeholders = ", ".join(["?" for _ in columns])
-        columns_str = ", ".join(columns)
-        
-        query = f"""
-            INSERT INTO {settings.TEMPLATE_TABLE} ({columns_str})
-            VALUES ({placeholders});
-            SELECT SCOPE_IDENTITY();
-        """
-        
-        cursor.execute(query, values)
-        new_id = cursor.fetchval()
-        conn.commit()
-        
-        return new_id
+        return template_id
     except Exception as e:
         logger.error(f"Error creating email template: {str(e)}")
         raise
-    finally:
-        if 'conn' in locals():
-            conn.close()
 
 
-def update_email_template(template_id: int, template_data: Dict[str, Any]) -> bool:
+def update_email_template(template_id: str, template_data: Dict[str, Any]) -> bool:
     """
-    Update an existing email template.
+    Update an existing template file.
+    
+    Args:
+        template_id: ID of the template
+        template_data: Dictionary with template data (body)
+        
+    Returns:
+        True if update was successful
     """
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
         settings = get_settings()
+        template_dir = os.path.dirname(settings.DEFAULT_EMAIL_TEMPLATE_PATH)
         
-        # Set Modified_Date to current time
-        template_data["modified_date"] = datetime.now()
+        if template_id not in TEMPLATE_MAPPINGS:
+            logger.error(f"Invalid template ID: {template_id}")
+            return False
         
-        set_clauses = []
-        values = []
+        file_path = os.path.join(template_dir, TEMPLATE_MAPPINGS[template_id])
         
-        for key, value in template_data.items():
-            # Convert snake_case to PascalCase for SQL column names
-            column_name = "".join(word.capitalize() for word in key.split("_"))
-            set_clauses.append(f"{column_name} = ?")
-            values.append(value)
+        # Create directory if it doesn't exist
+        os.makedirs(template_dir, exist_ok=True)
         
-        values.append(template_id)
+        # Write the template content
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write(template_data.get("body", ""))
         
-        query = f"""
-            UPDATE {settings.TEMPLATE_TABLE}
-            SET {', '.join(set_clauses)}, Modified_Date = GETDATE()
-            WHERE Template_ID = ?
-        """
-        
-        cursor.execute(query, values)
-        conn.commit()
-        
-        return cursor.rowcount > 0
+        return True
     except Exception as e:
         logger.error(f"Error updating email template {template_id}: {str(e)}")
         raise
-    finally:
-        if 'conn' in locals():
-            conn.close()
+
+
+def load_template_content(template_id: str) -> str:
+    """
+    Load template content from file.
+    
+    Args:
+        template_id: ID of the template
+    
+    Returns:
+        String content of the template or empty string if not found
+    """
+    template = get_template_by_id(template_id)
+    
+    if template and "body_template" in template:
+        return template["body_template"]
+    
+    # If template not found, return empty string
+    return ""
+
+
+def _get_template_name(template_id: str) -> str:
+    """
+    Get a human-readable name for a template ID
+    
+    Args:
+        template_id: Template ID
+        
+    Returns:
+        Human-readable name
+    """
+    template_names = {
+        "default": "Default Template",
+        "followup": "Follow-up Template",
+        "escalation": "Escalation Template",
+        "reminder": "Payment Reminder Template",
+        "custom": "Custom Template"
+    }
+    
+    return template_names.get(template_id, f"Template {template_id}")
+
+
+def _get_template_subject(template_id: str) -> str:
+    """
+    Get the subject prefix for a template ID
+    
+    Args:
+        template_id: Template ID
+        
+    Returns:
+        Subject prefix
+    """
+    subject_prefixes = {
+        "default": "",
+        "followup": "Follow-up: ",
+        "escalation": "URGENT: ",
+        "reminder": "Payment Reminder: ",
+        "custom": "Custom: "
+    }
+    
+    return subject_prefixes.get(template_id, "")
+
+
+def _get_template_preview(file_path: str, max_length: int = 100) -> str:
+    """
+    Get a preview of the template content
+    
+    Args:
+        file_path: Path to the template file
+        max_length: Maximum length of the preview
+        
+    Returns:
+        Template preview
+    """
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as file:
+                content = file.read()
+                
+            if len(content) > max_length:
+                return content[:max_length] + "..."
+            return content
+    except Exception as e:
+        logger.error(f"Error reading template preview: {str(e)}")
+        
+    return "Error reading template"

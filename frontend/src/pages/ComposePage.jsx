@@ -78,21 +78,21 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
     
     try {
       const executeId = ++executeCountRef.current;
+      // Use the most current page from state at the moment of API call
       const pageToLoad = currentPage;
       
       if (shouldLog) {
-        console.log(`[Execute #${executeId}] Loading data for page ${pageToLoad}, status: ${activeStatus}`);
+        console.log(`[Execute #${executeId}] Loading data for page ${pageToLoad}, status: ${activeStatus}, offset: ${(pageToLoad - 1) * pageSize}`);
       }
       
+      // Make sure to pass the current page value to the API
       const response = await fetchEmailTableData(pageToLoad, pageSize, searchTerm, activeStatus);
       if (response.success) {
+        console.log(`Got ${response.data.rows.length} rows for page ${pageToLoad}`);
         setTableData(response.data.rows);
         setTotalRows(response.data.total);
-        
-        // Ensure currentPage state is maintained
-        if (pageToLoad !== currentPage) {
-          setCurrentPage(pageToLoad);
-        }
+      } else {
+        console.error('API call failed:', response);
       }
     } catch (error) {
       console.error('Error loading table data:', error);
@@ -129,17 +129,22 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
   
   // Handle page change - explicitly control when API is called
   const handlePageChange = (page) => {
-    // Store the page in state
+    // Store the page in state first
+    console.log(`Page changed to ${page}`);
     setCurrentPage(page);
     
-    // Execute button must be clicked to fetch new data
-    // Not calling loadTableData() here anymore
+    // Automatically execute the filter with the new page
+    // Use a small timeout to ensure state is updated before API call
+    setTimeout(() => {
+      console.log(`Loading data for new page ${page}`);
+      loadTableData(true);
+    }, 50);
   };
   
   // Handle execute button click - the ONLY place that triggers API calls
   const handleExecuteFilter = () => {
-    console.log('Execute button clicked - fetching data with filters');
-    loadTableData();
+    console.log(`Execute button clicked - fetching data with filters for page ${currentPage}`);
+    loadTableData(true);
   };
   
   // Handle search input change - only updates state, no API call

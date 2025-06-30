@@ -392,13 +392,13 @@ export const updateEmailRecordStatus = async (emailId, status, reason = null) =>
  */
 export const fetchEmailTableData = async (page = 1, pageSize = 5, searchTerm = '', status = null) => {
   try {
-    // Ensure page is a valid number
-    const currentPage = page || 1;
+    // Ensure page is a valid number and force to integer
+    const currentPage = parseInt(page, 10) || 1;
     
-    // Calculate offset for pagination
+    // Calculate offset for pagination - ensure it's an integer
     const offset = (currentPage - 1) * pageSize;
     
-    console.log(`API Call - Page: ${currentPage}, Offset: ${offset}, Status: ${status}`);
+    console.log(`API Call - Page: ${currentPage}, Offset: ${offset}, PageSize: ${pageSize}, Status: ${status}`);
     
     let url = `${API_BASE_URL}/api/email/records?limit=${pageSize}&offset=${offset}`;
     
@@ -428,13 +428,13 @@ export const fetchEmailTableData = async (page = 1, pageSize = 5, searchTerm = '
         data: {
           rows: responseData.data.rows || [],
           total: responseData.data.total || 0,
-          page: page,
+          page: currentPage,
           pageSize: pageSize,
           totalPages: Math.ceil((responseData.data.total || 0) / pageSize)
         }
       };
       
-      console.log(`API Response - Page: ${page}, Total: ${result.data.total}, Rows: ${result.data.rows.length}`);
+      console.log(`API Response - Page: ${currentPage}, Total: ${result.data.total}, Rows: ${result.data.rows.length}`);
       return result;
     } else {
       // Handle legacy format or unexpected response
@@ -445,7 +445,7 @@ export const fetchEmailTableData = async (page = 1, pageSize = 5, searchTerm = '
         data: {
           rows: formattedData,
           total: formattedData.length > pageSize ? 1000 : formattedData.length, // Estimate
-          page: page,
+          page: currentPage,
           pageSize: pageSize,
           totalPages: Math.ceil(formattedData.length / pageSize)
         }

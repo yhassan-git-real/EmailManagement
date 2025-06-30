@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { XMarkIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
-import { validateSMTPCredentials } from '../utils/automationApi';
+import { getSmtpConfig, updateSmtpConfig } from '../utils/apiClient';
+import { toast } from 'react-toastify';
 import DraggableWithRef from './DraggableWithRef';
 
 const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
@@ -50,6 +51,31 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
     }
   };
   
+  // Load current SMTP configuration when modal opens
+  useEffect(() => {
+    const loadSmtpConfig = async () => {
+      try {
+        const response = await getSmtpConfig();
+        
+        if (response.success) {
+          setFormData({
+            senderEmail: response.data.sender_email || '',
+            smtpServer: response.data.smtp_server || '',
+            port: response.data.smtp_port || '587',
+            authType: 'login', // Default auth type
+            username: response.data.smtp_username || '',
+            password: '', // Password is not returned for security reasons
+            useTLS: response.data.use_tls !== false
+          });
+        }
+      } catch (error) {
+        console.error('Error loading SMTP config:', error);
+      }
+    };
+    
+    loadSmtpConfig();
+  }, []);
+  
   const handleValidateSmtp = async () => {
     setValidationStatus({
       isValidating: true,
@@ -58,7 +84,18 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
     });
     
     try {
-      const response = await validateSMTPCredentials(formData);
+      // We'll use our update function to validate
+      // In a real implementation, you might want a separate validation endpoint
+      const configData = {
+        smtp_server: formData.smtpServer,
+        smtp_port: parseInt(formData.port, 10),
+        smtp_username: formData.username,
+        smtp_password: formData.password,
+        sender_email: formData.senderEmail,
+        use_tls: formData.useTLS
+      };
+      
+      const response = await updateSmtpConfig(configData);
       
       if (response.success) {
         setValidationStatus({
@@ -82,11 +119,37 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
     }
   };
   
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Save to localStorage
-    localStorage.setItem('emailSettings', JSON.stringify(formData));
-    onSave(formData);
+    
+    try {
+      const configData = {
+        smtp_server: formData.smtpServer,
+        smtp_port: parseInt(formData.port, 10),
+        smtp_username: formData.username,
+        smtp_password: formData.password,
+        sender_email: formData.senderEmail,
+        use_tls: formData.useTLS
+      };
+      
+      const response = await updateSmtpConfig(configData);
+      
+      if (response.success) {
+        // Save to localStorage for convenience
+        localStorage.setItem('emailSettings', JSON.stringify(formData));
+        toast.success('SMTP configuration saved successfully');
+        
+        // Call the onSave prop
+        if (onSave) {
+          onSave(formData);
+        }
+      } else {
+        toast.error(`Failed to save SMTP configuration: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('Error saving SMTP config:', error);
+      toast.error(`Error saving configuration: ${error.message}`);
+    }
   };
   
   return (

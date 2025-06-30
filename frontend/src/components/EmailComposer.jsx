@@ -5,7 +5,7 @@ import './EmailComposer.css';
 import Draggable from 'react-draggable';
 import { XMarkIcon, PaperClipIcon, PaperAirplaneIcon, ArchiveBoxIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
-import { fetchEmailTemplates } from '../utils/mockApi';
+import { fetchEmailTemplates } from '../utils/apiClient';
 
 const EmailComposer = ({ onClose, onSend, preData = null, selectedTemplate = null }) => {
   const [to, setTo] = useState(preData?.to || []);
@@ -47,35 +47,59 @@ const EmailComposer = ({ onClose, onSend, preData = null, selectedTemplate = nul
   }, [selectedTemplate]);
   // Apply template immediately on mount if we have preData
   useEffect(() => {
-    // If preData includes a templateBody, use it directly
-    if (preData?.templateBody) {
-      setBody(preData.templateBody);
-    } 
-    // Otherwise check if we should fetch the default template
-    else if (preData?.useDefaultTemplate === true) {
-      const applyDefaultTemplate = async () => {
-        try {
-          const response = await fetchEmailTemplates();
-          if (response.success) {
-            const defaultTemplate = response.data.find(t => t.id === 'default');
-            if (defaultTemplate) {
-              setBody(defaultTemplate.body);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to load default template on mount:', error);
-          // If we can't fetch the template, use a simple default
-          setBody('<p>Please enter your message here.</p>');
-        }
-      };
+    // Initialize with predata
+    if (preData) {
+      // Handle subject from preData
+      if (preData.subject) {
+        setSubject(preData.subject);
+      }
       
-      applyDefaultTemplate();
+      // If preData includes a templateBody, use it directly
+      if (preData.templateBody) {
+        console.log('Using templateBody from preData:', preData.templateBody);
+        setBody(preData.templateBody);
+        return; // Exit early as we already have the template body
+      }
+      
+      // If useDefaultTemplate is true and we have a templateId
+      if (preData.useDefaultTemplate === true && preData.templateId) {
+        console.log('Loading template with ID:', preData.templateId);
+        
+        const applyTemplate = async () => {
+          try {
+            const response = await fetchEmailTemplates();
+            if (response.success) {
+              console.log('Templates loaded:', response.data);
+              const template = response.data.find(t => t.id === preData.templateId);
+              
+              if (template) {
+                console.log('Template found, applying:', template);
+                // Apply template content
+                setBody(template.body);
+                
+                // Apply subject if it wasn't set and template has a subject
+                if (!preData.subject && template.subject) {
+                  setSubject(template.subject);
+                }
+              } else {
+                console.log('Template not found, using default empty body');
+                setBody('<p>Please enter your message here.</p>');
+              }
+            }
+          } catch (error) {
+            console.error('Failed to load template:', error);
+            setBody('<p>Please enter your message here.</p>');
+          }
+        };
+        
+        applyTemplate();
+      }
+      // For "Compose New Email", keep the body completely empty
+      else if (preData.useDefaultTemplate === false) {
+        setBody('<p></p>');
+      }
     }
-    // For "Compose New Email", keep the body completely empty
-    else if (preData && preData.useDefaultTemplate === false) {
-      setBody('<p></p>');
-    }
-  }, [preData]);// Load templates on component mount
+  }, [preData]);  // Load templates on component mount - FIXED: only runs once and doesn't reapply templates
   useEffect(() => {
     const loadTemplates = async () => {
       try {
@@ -93,17 +117,16 @@ const EmailComposer = ({ onClose, onSend, preData = null, selectedTemplate = nul
             return; // Exit early, don't apply any template
           }
           
-          // If a template was pre-selected or default is set, apply it
-          if (selectedTemplate || selectedTemplateId) {
+          // Only apply template on initial load when body is empty
+          if ((selectedTemplate || selectedTemplateId) && (!body || body === '<p></p>' || body === '<p>Please enter your message here.</p>')) {
             const templateToUse = response.data.find(t => t.id === (selectedTemplate || selectedTemplateId));
             if (templateToUse) {
               // Apply template if it exists and body is empty or just contains default content
-              if (!body || body === '<p></p>' || body === '<p>Please enter your message here.</p>') {
-                setBody(templateToUse.body);
-              }
-              // Only prepend subject template if there's a prefix and subject is either empty or came from preData
-              if (templateToUse.subject && (subject === '' || subject === preData?.subject)) {
-                setSubject(subject ? `${templateToUse.subject}${subject}` : templateToUse.subject);
+              setBody(templateToUse.body);
+              
+              // Only prepend subject template if there's a prefix and subject is empty
+              if (templateToUse.subject && subject === '') {
+                setSubject(templateToUse.subject);
               }
             } else {
               // If selected template is not found, use a default empty template
@@ -130,25 +153,37 @@ const EmailComposer = ({ onClose, onSend, preData = null, selectedTemplate = nul
     };
     
     loadTemplates();
-  }, [selectedTemplate, selectedTemplateId, body, subject, preData]);
-  // Handle template selection - no longer needed in UI but kept for API
+    // FIXED: Only depend on initial props, not on state variables that change during editing
+  }, []);
+  // Handle template selection - completely replaces content with template
   const handleTemplateChange = (templateId) => {
     const selectedTemplate = templates.find(t => t.id === templateId);
     if (selectedTemplate) {
       setSelectedTemplateId(templateId);
-      setBody(selectedTemplate.body);
       
-      // Only adjust subject if template has a subject prefix
-      if (selectedTemplate.subject) {
-        // If current subject starts with another template prefix, replace it
-        let newSubject = subject;
-        for (const template of templates) {
-          if (template.subject && subject.startsWith(template.subject)) {
-            newSubject = subject.substring(template.subject.length);
-            break;
+      // Ask for confirmation before overwriting user content
+      if (body && body !== '<p></p>' && body !== '<p>Please enter your message here.</p>') {
+        if (window.confirm('Applying this template will replace your current email content. Continue?')) {
+          setBody(selectedTemplate.body);
+          
+          // Only replace subject if template has a subject and user confirms
+          if (selectedTemplate.subject) {
+            if (subject && subject !== '') {
+              if (window.confirm('Replace the current subject with template subject?')) {
+                setSubject(selectedTemplate.subject);
+              }
+            } else {
+              // No subject yet, just apply template subject
+              setSubject(selectedTemplate.subject);
+            }
           }
         }
-        setSubject(selectedTemplate.subject + newSubject);
+      } else {
+        // Empty content, just apply the template
+        setBody(selectedTemplate.body);
+        if (selectedTemplate.subject) {
+          setSubject(selectedTemplate.subject);
+        }
       }
     }
   };
@@ -288,9 +323,9 @@ const EmailComposer = ({ onClose, onSend, preData = null, selectedTemplate = nul
       localStorage.setItem('emailDraft', JSON.stringify(draftData));
       setDraftSaved(true);
       
-      // Only show toast notification when manually saving
+      // Only show visual indication without toast notification
       if (showNotification) {
-        toast.info('Draft saved', { autoClose: 2000 });
+        // Removed toast notification - use the draftSaved state for UI indicator only
       }
       
       // Reset the timer

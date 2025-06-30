@@ -15,36 +15,63 @@ def get_email_records(
     offset: int = 0
 ) -> List[Dict[str, Any]]:
     """
-    Retrieve email records with optional status filter.
+    Retrieve email records with optional status filter using the stored procedure.
     """
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         settings = get_settings()
         
-        query = f"""
-            SELECT Email_ID, Company_Name, Email, Subject, File_Path, 
-                   Email_Send_Date, Email_Status, Date, Reason 
-            FROM {settings.EMAIL_TABLE}
-        """
+        # Use the stored procedure from the .env file
+        stored_procedure = settings.SP_EMAIL_RECORDS_BY_STATUS
         
-        params = []
-        if status:
-            query += " WHERE Email_Status = ?"
-            params.append(status)
+        # Execute the stored procedure with parameters
+        cursor.execute(
+            f"EXEC {settings.DB_SCHEMA}.{stored_procedure} @EmailStatus = ?, @Offset = ?, @Limit = ?", 
+            [status if status and status != 'All' else None, offset, limit]
+        )
         
-        query += " ORDER BY Email_Send_Date DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY"
-        params.extend([offset, limit])
-        
-        cursor.execute(query, params)
-        
+        # Get the results from the first resultset
         columns = [column[0] for column in cursor.description]
-        results = []
+        rows = cursor.fetchall()
         
-        for row in cursor.fetchall():
-            results.append(dict(zip(columns, row)))
+        # Create a mapping from DB column names to model field names (camel case to snake case)
+        column_mapping = {
+            'Email_ID': 'email_id',
+            'Company_Name': 'company_name',
+            'Email': 'email',
+            'Subject': 'subject',
+            'File_Path': 'file_path',
+            'Email_Send_Date': 'email_send_date',
+            'Email_Status': 'email_status',
+            'Date': 'date',
+            'Reason': 'reason'
+        }
+        
+        # Transform the results
+        results = []
+        for row in rows:
+            # Create a row dict with original column names
+            row_dict = dict(zip(columns, row))
             
-        return results
+            # Create a new dict with snake_case keys for the model
+            transformed_dict = {}
+            for key, value in row_dict.items():
+                transformed_key = column_mapping.get(key, key.lower())
+                transformed_dict[transformed_key] = value
+                
+            # Add the id field for frontend compatibility
+            transformed_dict['id'] = transformed_dict['email_id']
+                
+            results.append(transformed_dict)
+            
+        # Get total count from the second resultset
+        if cursor.nextset():
+            total_count = cursor.fetchone()[0]
+        else:
+            total_count = len(results)
+            
+        return results, total_count
     except Exception as e:
         logger.error(f"Error retrieving email records: {str(e)}")
         raise
@@ -189,6 +216,71 @@ def get_email_status_summary() -> Dict[str, int]:
         return results
     except Exception as e:
         logger.error(f"Error getting email status summary: {str(e)}")
+        raise
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+
+def get_email_records_by_status(
+    status: Optional[str] = None, 
+    limit: int = 100, 
+    offset: int = 0
+) -> Dict[str, Any]:
+    """
+    Retrieve email records with optional status filter using stored procedure.
+    Returns both the records and total count.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        settings = get_settings()
+        
+        # Call the stored procedure
+        cursor.execute(
+            "{CALL GetEmailRecordsByStatus(?, ?, ?)}",
+            (status if status and status != 'All' else None, offset, limit)
+        )
+        
+        # Get the result set with records
+        columns = [column[0] for column in cursor.description]
+        results = []
+        
+        # Create a mapping from DB column names to model field names (camel case to snake case)
+        column_mapping = {
+            'Email_ID': 'email_id',
+            'Company_Name': 'company_name',
+            'Email': 'email',
+            'Subject': 'subject',
+            'File_Path': 'file_path',
+            'Email_Send_Date': 'email_send_date',
+            'Email_Status': 'email_status',
+            'Date': 'date',
+            'Reason': 'reason'
+        }
+        
+        for row in cursor.fetchall():
+            # Create a row dict with original column names
+            row_dict = dict(zip(columns, row))
+            
+            # Create a new dict with snake_case keys for the model
+            transformed_dict = {}
+            for key, value in row_dict.items():
+                transformed_key = column_mapping.get(key, key.lower())
+                transformed_dict[transformed_key] = value
+                
+            results.append(transformed_dict)
+        
+        # Move to the next result set to get total count
+        cursor.nextset()
+        total_count = cursor.fetchone()[0]
+        
+        return {
+            "rows": results,
+            "total": total_count
+        }
+    except Exception as e:
+        logger.error(f"Error retrieving email records by status: {str(e)}")
         raise
     finally:
         if 'conn' in locals():

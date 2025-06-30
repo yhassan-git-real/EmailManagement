@@ -36,7 +36,6 @@ backend/
    DB_PASSWORD=your_password
    DB_DRIVER=ODBC Driver 17 for SQL Server
    EMAIL_TABLE=EmailRecords
-   TEMPLATE_TABLE=EmailTemplates
    ```
 
 3. Run the application:

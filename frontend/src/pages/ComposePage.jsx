@@ -3,15 +3,17 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import EmailComposer from '../components/EmailComposer';
 import DataTable from '../components/DataTable';
-import SelectionPreview from '../components/SelectionPreview';
 import FilePreviewer from '../components/FilePreviewer';
 import TemplateSelector from '../components/TemplateSelector';
-import { EnvelopeIcon, PencilSquareIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
-import { mockSendEmail, fetchEmailTableData, emailTemplates } from '../utils/mockApi';
+import EmailSettingsModal from '../components/EmailSettingsModal';
+import { EnvelopeIcon, PencilSquareIcon, DocumentTextIcon, Cog8ToothIcon } from '@heroicons/react/24/outline';
+import { sendManualEmail, fetchEmailTableData, fetchEmailTemplates, updateEmailRecordStatus } from '../utils/apiClient';
+import { toast } from 'react-toastify';
 
 const ComposePage = ({ connectionInfo, onDisconnect }) => {
   const [showComposer, setShowComposer] = useState(false);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showEmailSettings, setShowEmailSettings] = useState(false);
   const [tableData, setTableData] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,48 +21,94 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
   const [totalRows, setTotalRows] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedFile, setSelectedFile] = useState(null);const [emailPreData, setEmailPreData] = useState({
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [emailPreData, setEmailPreData] = useState({
     to: [],
     subject: '',
     templateId: 'default'
   });
   
+  const [activeStatus, setActiveStatus] = useState('All');
+  
   // Define table columns
   const columns = [
-    { key: 'Company_Name', label: 'Company', width: 'w-40' },
-    { key: 'Email', label: 'Email', width: 'w-48' },
-    { key: 'Subject', label: 'Subject', width: 'w-64' },
-    { key: 'File_Path', label: 'File', type: 'file', width: 'w-40' },
-    { key: 'Email_send_Date', label: 'Send Date', type: 'datetime', width: 'w-40' },
-    { key: 'Email_Status', label: 'Status', type: 'status', width: 'w-28',
-      filterOptions: ['Sent', 'Failed', 'Pending', 'Draft'] },
-    { key: 'Date', label: 'Created', type: 'date', width: 'w-32' },
-    { key: 'Reason', label: 'Reason', width: 'w-48' }
+    { key: 'company_name', label: 'Company', width: 'w-40' },
+    { key: 'email', label: 'Email', width: 'w-48' },
+    { key: 'subject', label: 'Subject', width: 'w-64' },
+    { key: 'file_path', label: 'File', type: 'file', width: 'w-40' },
+    { key: 'email_send_date', label: 'Send Date', type: 'datetime', width: 'w-40' },
+    { key: 'email_status', label: 'Status', type: 'status', width: 'w-28',
+      filterOptions: ['Success', 'Failed', 'Pending'] },
+    { key: 'date', label: 'Created', type: 'date', width: 'w-32' },
+    { key: 'reason', label: 'Reason', width: 'w-48' }
   ];
   
-  // Load table data
-  useEffect(() => {
-    loadTableData();
-  }, [currentPage, pageSize, searchTerm]);
+  // Use ref to track if we should reload data to prevent infinite loops
+  const shouldLoadRef = React.useRef(true);
+  const loadingRef = React.useRef(false);
+  const executeCountRef = React.useRef(0);
+  const isInitialRender = React.useRef(true);
   
-  // Load table data with pagination and search
-  const loadTableData = async () => {
+  // Load table data only on initial render
+  useEffect(() => {
+    // Only load data once on component mount
+    if (shouldLoadRef.current && !loadingRef.current && isInitialRender.current) {
+      isInitialRender.current = false; // Mark initial render as complete
+      shouldLoadRef.current = false; // Prevent further automatic loads
+      
+      // Deliberately delay initial load to avoid React 18 double-render issues
+      const timer = setTimeout(() => {
+        loadTableData(false); // Initial load without logging
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, []); // Empty dependency array - only run once
+  
+  // Load table data with pagination, search, and status filter
+  const loadTableData = async (shouldLog = true) => {
+    // Prevent concurrent API calls
+    if (loadingRef.current) {
+      console.log('Already loading data, skipping request');
+      return;
+    }
+    
+    loadingRef.current = true;
     setIsLoading(true);
+    
     try {
-      const response = await fetchEmailTableData(currentPage, pageSize, searchTerm);
+      const executeId = ++executeCountRef.current;
+      const pageToLoad = currentPage;
+      
+      if (shouldLog) {
+        console.log(`[Execute #${executeId}] Loading data for page ${pageToLoad}, status: ${activeStatus}`);
+      }
+      
+      const response = await fetchEmailTableData(pageToLoad, pageSize, searchTerm, activeStatus);
       if (response.success) {
         setTableData(response.data.rows);
         setTotalRows(response.data.total);
+        
+        // Ensure currentPage state is maintained
+        if (pageToLoad !== currentPage) {
+          setCurrentPage(pageToLoad);
+        }
       }
     } catch (error) {
-      // Removed toast notification as per requirement
       console.error('Error loading table data:', error);
     } finally {
       setIsLoading(false);
+      loadingRef.current = false;
     }
   };
   
-  // Handle row selection
+  // Handle status filter change - only update state, no API call
+  const handleStatusFilterChange = (status) => {
+    setActiveStatus(status);
+    // Status changes do NOT trigger API calls, only updates the UI filter selection
+  };
+  
+  // Handle row selection (simplified - no auto-compose)
   const handleRowSelect = (row, isSelected, selectAll = false) => {
     if (selectAll) {
       if (isSelected) {
@@ -76,105 +124,110 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
     } else {
       setSelectedRows(prev => prev.filter(item => item.id !== row.id));
     }
+    // No longer triggers email composition when rows are selected
   };
   
-  // Handle page change
+  // Handle page change - explicitly control when API is called
   const handlePageChange = (page) => {
+    // Store the page in state
     setCurrentPage(page);
+    
+    // Execute button must be clicked to fetch new data
+    // Not calling loadTableData() here anymore
   };
   
-  // Handle search
+  // Handle execute button click - the ONLY place that triggers API calls
+  const handleExecuteFilter = () => {
+    console.log('Execute button clicked - fetching data with filters');
+    loadTableData();
+  };
+  
+  // Handle search input change - only updates state, no API call
   const handleSearch = (term) => {
     setSearchTerm(term);
-    setCurrentPage(1); // Reset to first page when searching
+    // Search term changes do NOT trigger API calls
   };
   
   // Handle file preview
   const handleFilePreview = (filePath) => {
     setSelectedFile(filePath);
   };
-    // Handle submit button click from the data table
-  const handleSubmit = (tableSelectedRows) => {
-    if (tableSelectedRows.length === 0) return;
-    // Update our selected rows with the ones from the table
-    setSelectedRows(tableSelectedRows);
-    // Then call the compose function
-    handleComposeWithSelected();
-  };  
-  
-  // Handle compose with selected rows
-  const handleComposeWithSelected = async () => {
-    if (selectedRows.length === 0) return;
+  // Handle compose new email - always opens a blank composer (no connection to selected rows)
+  const handleComposeNew = () => {
+    // Always use a completely blank email form
+    setEmailPreData({
+      to: [], 
+      subject: '',
+      templateId: '', // No template
+      useDefaultTemplate: false, // Flag to indicate not to use default template
+      templateBody: '<p></p>' // Empty body
+    });
     
-    // Extract emails and subject
-    const emails = selectedRows.map(row => row.Email);
-    
-    // Set subject from first selected row or empty if multiple rows selected
-    let subject = '';
-    if (selectedRows.length === 1 && selectedRows[0].Subject) {
-      subject = selectedRows[0].Subject;
-    }
-    
-    // For row selection, use the default template
-    try {
-      const response = await fetchEmailTemplates();
-      const defaultTemplate = response.success ? 
-        response.data.find(t => t.id === 'default') : null;
-      
-      // Set pre-populated data with default template
-      setEmailPreData({
-        to: emails,
-        subject: subject,
-        templateId: 'default', // Use default template ID
-        useDefaultTemplate: true, // Flag to indicate use default template
-        templateBody: defaultTemplate?.body || '<p>Please enter your message here.</p>' // Include the actual template body
-      });
-      
-      // Skip template selector and open composer directly with default template
-      setShowComposer(true);
-    } catch (error) {
-      console.error('Error preparing email composer:', error);
-      
-      // Set basic data with flag to use default template even if we couldn't fetch it
-      setEmailPreData({
-        to: emails,
-        subject: subject,
-        templateId: 'default',
-        useDefaultTemplate: true
-      });
-      
-      setShowComposer(true);
-      // Removed toast notification as per requirement
-    }
+    // Open composer with empty form
+    setShowComposer(true);
   };
   
   // Handle sending email
   const handleSendEmail = async (emailData) => {
     try {
-      // Removed toast notification for sending email as per requirement
+      // Show a loading toast
+      const toastId = toast.loading('Sending email...');
       
-      // Call mock API to simulate sending
-      const response = await mockSendEmail(emailData);
+      // Call real API to send email
+      const response = await sendManualEmail(emailData);
       
-      // Handle successful response
-      console.log('Email sent successfully:', response);
-      // Removed toast notification as per requirement
-      
-      // Close the composer
-      setShowComposer(false);
-      
-      // Clear draft from localStorage if it exists
-      localStorage.removeItem('emailDraft');
-      
-      // Clear selected rows
-      setSelectedRows([]);
-      
-      // Reload table data to reflect changes
-      loadTableData();
-      
+      if (response.success) {
+        // Update toast to success
+        toast.update(toastId, { 
+          render: 'Email sent successfully', 
+          type: 'success', 
+          isLoading: false,
+          autoClose: 3000
+        });
+        
+        // Close the composer
+        setShowComposer(false);
+        
+        // Clear draft from localStorage if it exists
+        localStorage.removeItem('emailDraft');
+        
+        // Clear selected rows
+        setSelectedRows([]);
+        
+        // Reload table data to reflect changes
+        loadTableData();
+      } else {
+        // Update toast to error
+        toast.update(toastId, { 
+          render: `Failed to send email: ${response.message}`, 
+          type: 'error', 
+          isLoading: false,
+          autoClose: 5000
+        });
+      }
     } catch (error) {
       console.error('Error sending email:', error);
-      // Removed toast notification as per requirement
+      toast.error(`Error sending email: ${error.message}`);
+    }
+  };
+
+  // Handle status change - removed unnecessary toast notifications
+  const handleStatusChange = async (emailId, newStatus) => {
+    try {
+      const response = await updateEmailRecordStatus(emailId, newStatus);
+      
+      if (response.success) {
+        // Only show toast for important status changes
+        if (newStatus === 'Failed') {
+          toast.error(`Email status marked as ${newStatus}`);
+        }
+        // Reload table data to reflect changes
+        loadTableData();
+      } else {
+        console.error(`Failed to update status: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
     }
   };
 
@@ -191,26 +244,19 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
             <div className="bg-white rounded-lg shadow p-3 mb-4 relative overflow-hidden">              <div className="flex flex-col items-start">
                 <h2 className="text-base font-medium text-gray-800">Create New Email</h2>
                 <p className="text-gray-600 max-w-md text-xs mb-3">
-                  Compose and send emails with our modern email composer. 
+                  Compose and send emails using file-based templates. 
                   Add recipients, attachments, and use the rich text editor for formatting.
                 </p>
-                <div className="flex space-x-2">                  <button
-                    onClick={() => {
-                      // For "Compose New Email" don't use any template - start with completely empty body
-                      // Clear any selected rows to ensure this is truly independent
-                      setSelectedRows([]);
-                      
-                      setEmailPreData({ 
-                        to: [], 
-                        subject: '', 
-                        templateId: '', // No template
-                        useDefaultTemplate: false, // Flag to indicate not to use default template
-                        templateBody: '<p></p>' // Empty body
-                      });
-                      
-                      // Open composer directly with empty body
-                      setShowComposer(true);
-                    }}
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setShowEmailSettings(true)}
+                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary-500 mr-2"
+                  >
+                    <Cog8ToothIcon className="mr-1 h-4 w-4" />
+                    Email Configuration
+                  </button>
+                  <button
+                    onClick={handleComposeNew}
                     className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   >
                     <PencilSquareIcon className="mr-1 h-4 w-4" />
@@ -240,20 +286,14 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
               </div>
             </div>
             
-            {/* Selection Preview - Only shown when rows are selected */}
-            {selectedRows.length > 0 && (
-              <SelectionPreview
-                selectedRows={selectedRows}
-                onClose={() => setSelectedRows([])}
-                onComposeWithSelected={handleComposeWithSelected}
-              />
-            )}
+            {/* Selection Preview removed - no auto-compose functionality */}
               {/* Data Table Section */}
             <div className="bg-white rounded-lg shadow mb-4 relative overflow-x-hidden">
               <div className="p-3 border-b border-gray-200">
                 <h2 className="text-sm font-medium text-gray-700">Database Email Records</h2>
                 <p className="text-xs text-gray-500">
-                  Select rows to compose emails from database records. The system will auto-fill recipient and subject information.
+                  View and filter email records from the database.
+                  <span className="ml-1 text-primary-600 font-medium">Click "Execute" after selecting filters to load data.</span>
                 </p>
               </div>
               
@@ -272,7 +312,8 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
                   onSearchChange={handleSearch}
                   selectedRows={selectedRows}
                   compact={true}
-                  onSubmit={handleSubmit} // Pass handleSubmit to DataTable
+                  onStatusChange={handleStatusFilterChange}
+                  onExecute={handleExecuteFilter} // New handler for Execute button
                 />
               </div>            </div>
           </div>
@@ -281,10 +322,13 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
         <TemplateSelector
           initialTemplateId={emailPreData.templateId}
           onSelectTemplate={(template) => {
+            console.log('Selected template:', template);
+            
             // Update template ID and body in preData
             setEmailPreData(prev => ({
               ...prev,
               templateId: template.id,
+              subject: template.subject || prev.subject, // Use template subject
               templateBody: template.body,
               useDefaultTemplate: true // Consider any selected template as "use default"
             }));
@@ -315,6 +359,17 @@ const ComposePage = ({ connectionInfo, onDisconnect }) => {
         <FilePreviewer
           filePath={selectedFile}
           onClose={() => setSelectedFile(null)}
+        />
+      )}
+      
+      {/* Email Settings Modal */}
+      {showEmailSettings && (
+        <EmailSettingsModal 
+          onClose={() => setShowEmailSettings(false)}
+          onSave={() => {
+            setShowEmailSettings(false);
+            // Optionally reload table data or show a success message
+          }}
         />
       )}
       

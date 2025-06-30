@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
 from functools import lru_cache
+from pydantic import validator
 
 
 class Settings(BaseSettings):
@@ -22,7 +23,6 @@ class Settings(BaseSettings):
     
     # Table names
     EMAIL_TABLE: str
-    TEMPLATE_TABLE: str
     
     # Email configuration settings
     SMTP_SERVER: Optional[str] = None
@@ -37,11 +37,37 @@ class Settings(BaseSettings):
     # API settings
     API_PREFIX: str = "/api"
     
-    # CORS settings
-    CORS_ORIGINS: list[str] = ["*"]  # For development; restrict in production
+    # Stored Procedures
+    SP_EMAIL_RECORDS_BY_STATUS: str = "GetEmailRecordsByStatus" 
+    DB_SCHEMA: str = "dbo"
+    
+    # CORS settings - accepting string or list inputs
+    CORS_ORIGINS: list[str] = ["*"]
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list[str] = ["*"]
     CORS_ALLOW_HEADERS: list[str] = ["*"]
+    
+    @validator('CORS_ORIGINS', 'CORS_ALLOW_METHODS', 'CORS_ALLOW_HEADERS', pre=True)
+    def parse_cors_settings(cls, v):
+        # Handle string inputs for CORS settings
+        if isinstance(v, str):
+            # Handle quoted JSON array format: '["*"]'
+            if v.startswith('[') and v.endswith(']'):
+                try:
+                    import json
+                    return json.loads(v)
+                except Exception:
+                    pass
+                    
+            # Handle single asterisk or quoted asterisk
+            if v == "*" or v == '"*"':
+                return ["*"]
+                
+            # Handle comma-separated values
+            return [item.strip() for item in v.split(",") if item.strip()]
+            
+        # Handle list/sequence input
+        return v
     
     class Config:
         env_file = ".env"
@@ -56,7 +82,16 @@ def get_settings() -> Settings:
     This function is provided for dependency injection in FastAPI.
     Uses lru_cache for performance optimization.
     """
-    return Settings()
+    try:
+        print("Loading settings...")
+        settings = Settings()
+        print(f"CORS_ORIGINS: {settings.CORS_ORIGINS}")
+        print(f"CORS_ALLOW_METHODS: {settings.CORS_ALLOW_METHODS}")
+        print(f"CORS_ALLOW_HEADERS: {settings.CORS_ALLOW_HEADERS}")
+        return settings
+    except Exception as e:
+        print(f"Error loading settings: {str(e)}")
+        raise
 
 
 # For backwards compatibility and to avoid breaking existing imports

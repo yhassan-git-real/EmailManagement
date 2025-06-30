@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon, FunnelIcon, ArrowPathIcon, DocumentArrowDownIcon, PencilIcon, TrashIcon, PlusIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon, ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 const DataTable = ({
   data = [],
@@ -13,12 +13,12 @@ const DataTable = ({
   onSearch,
   selectedRows = [],
   onSearchChange,
-  onSubmit,
   compact = true,
+  onStatusChange,
+  onExecute, // New prop for Execute button
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState({});
+  const [activeStatus, setActiveStatus] = useState('All');
   
   // Calculate total pages
   const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
@@ -30,25 +30,27 @@ const DataTable = ({
     }
   };
 
-  // Handle search
+  // Handle search form submit - only updates the searchTerm state
   const handleSearch = (e) => {
     e.preventDefault();
     if (onSearch) {
       onSearch(searchTerm);
     }
+    // No longer triggers API calls directly
   };
 
-  // Handle submit action
-  const handleSubmit = () => {
-    if (onSubmit && selectedRows.length > 0) {
-      onSubmit(selectedRows);
-    }
-  };
-
-  // Debounced search input
+  // Debounced search input - only updates state, doesn't trigger API
   useEffect(() => {
+    // Skip the first render to prevent initial search
+    const skipFirstRender = searchTerm === '';
+    
+    if (skipFirstRender) {
+      return;
+    }
+    
     const delayDebounceFn = setTimeout(() => {
       if (onSearchChange) {
+        // Only update search term state, don't trigger API call
         onSearchChange(searchTerm);
       }
     }, 500);
@@ -68,8 +70,9 @@ const DataTable = ({
     return selectedRows.some(selectedRow => selectedRow.id === row.id);
   };
 
-  // Handle row click for selection
+  // Handle row click for selection only (no auto-compose)
   const handleRowClick = (row) => {
+    // Only toggle selection status, no longer triggers email composition
     handleRowSelect(row, !isRowSelected(row));
   };
   
@@ -82,17 +85,20 @@ const DataTable = ({
     } else if (column.type === 'datetime' && value) {
       return new Date(value).toLocaleString();
     } else if (column.type === 'status') {
+      // For status columns, just show the status badge, no dropdown
       return (
-        <span 
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-            ${value === 'Sent' ? 'bg-green-100 text-green-800' : 
-             value === 'Failed' ? 'bg-red-100 text-red-800' : 
-             value === 'Draft' ? 'bg-gray-100 text-gray-800' : 
-             value === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
-             'bg-blue-100 text-blue-800'}`}
-        >
-          {value}
-        </span>
+        <div className="relative inline-block text-left">
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+              ${value === 'Success' ? 'bg-green-100 text-green-800' : 
+              value === 'Failed' ? 'bg-red-100 text-red-800' : 
+              value === 'Draft' ? 'bg-gray-100 text-gray-800' : 
+              value === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
+              'bg-blue-100 text-blue-800'}`}
+          >
+            {value}
+          </span>
+        </div>
       );
     } else if (column.type === 'file') {
       return value ? (
@@ -104,6 +110,19 @@ const DataTable = ({
     
     return value;
   };
+  
+  // Handle status filter change - only updates UI, doesn't fetch data
+  const handleStatusChange = (status) => {
+    setActiveStatus(status);
+    if (onStatusChange) {
+      onStatusChange(status);
+    }
+    // No longer triggers API calls directly
+  };
+  
+  // Handle updating status variable
+  const [updatingStatus, setUpdatingStatus] = useState(null);
+  
   return (
     <div className="w-full bg-white rounded-lg shadow overflow-hidden relative">
       {/* Table Controls */}
@@ -131,70 +150,38 @@ const DataTable = ({
             </button>
           </form>
           
-          {/* Filter Button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary-500"
-          >
-            <FunnelIcon className="h-3.5 w-3.5 mr-1" />
-            Filter
-          </button>
-          
-          {/* DML Operations */}
-          <div className="flex items-center space-x-1 border-l border-gray-300 ml-1 pl-1">
-            {/* Add New */}
-            <button
-              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-1 focus:ring-primary-500"
-              title="Add New Record"
-            >
-              <PlusIcon className="h-3.5 w-3.5" />
-            </button>
-            
-            {/* Edit Selected */}
-            <button
-              className={`inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-1 focus:ring-primary-500 ${selectedRows.length !== 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={selectedRows.length !== 1}
-              title="Edit Selected Record"
-            >
-              <PencilIcon className="h-3.5 w-3.5" />
-            </button>
-            
-            {/* Delete Selected */}
-            <button
-              className={`inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-primary-500 ${selectedRows.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={selectedRows.length === 0}
-              title="Delete Selected Records"
-            >
-              <TrashIcon className="h-3.5 w-3.5" />
-            </button>
+          {/* Status Filter Buttons */}
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+            {['All', 'Pending', 'Success', 'Failed'].map((status) => (
+              <button
+                key={status}
+                onClick={() => handleStatusChange(status)}
+                className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                  activeStatus === status
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
           </div>
           
-          {/* Reload Button */}
+          {/* Execute Button - The ONLY trigger for API calls */}
           <button
-            onClick={() => onPageChange && onPageChange(1)}
-            className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            onClick={() => {
+              // Explicitly call onExecute to trigger API fetch with current filters
+              if (onExecute) {
+                onExecute(searchTerm, activeStatus);
+              }
+            }}
+            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-500"
           >
             <ArrowPathIcon className="h-3.5 w-3.5 mr-1" />
-            Reload
+            Execute
           </button>
-            {/* Export Button */}
-          <button
-            className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-primary-500"
-          >
-            <DocumentArrowDownIcon className="h-3.5 w-3.5 mr-1" />
-            Export
-          </button>
-          
-          {/* Submit Button - Next to Export */}
-          {selectedRows.length > 0 && (
-            <button
-              onClick={handleSubmit}
-              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-1 focus:ring-primary-500"
-            >
-              <CheckIcon className="h-3.5 w-3.5 mr-1" />
-              Submit
-            </button>
-          )}
+
+          {/* Submit button removed */}
         </div>
         
         <div className="flex items-center space-x-2">
@@ -206,43 +193,6 @@ const DataTable = ({
           )}
         </div>
       </div>
-      
-      {/* Filter Panel - Shown only when filters are active */}
-      {showFilters && (
-        <div className="bg-gray-50 p-2 border-b border-gray-200">
-          <div className="text-xs font-medium text-gray-700 mb-1">Filter by:</div>
-          <div className="flex flex-wrap gap-2">
-            {columns.map(column => (
-              <div key={column.key} className="flex items-center">
-                <label className="text-xs text-gray-600 mr-1">{column.label}:</label>
-                <select 
-                  className="text-xs border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                  value={selectedFilters[column.key] || ''}
-                  onChange={(e) => setSelectedFilters({
-                    ...selectedFilters,
-                    [column.key]: e.target.value || undefined
-                  })}
-                >
-                  <option value="">Any</option>
-                  {column.filterOptions?.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </div>
-            ))}
-            {/* Reset Filters Button */}
-            <button
-              onClick={() => {
-                setSelectedFilters({});
-                if (onSearch) onSearch('');
-              }}
-              className="text-xs text-primary-600 hover:text-primary-800"
-            >
-              Reset Filters
-            </button>
-          </div>
-        </div>
-      )}
       
       {/* Table Container with both horizontal and vertical scrolling */}
       <div className="overflow-x-auto max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
@@ -322,7 +272,7 @@ const DataTable = ({
                       style={{ maxWidth: column.width ? undefined : '150px' }}
                       title={row[column.key]}
                     >
-                      {formatCellContent(column, row[column.key])}
+                      {formatCellContent({...column, row}, row[column.key])}
                     </td>
                   ))}
                 </tr>
@@ -406,7 +356,7 @@ const DataTable = ({
               </button>
             </nav>
           </div>
-        </div>          {/* We've moved the Submit button to the top controls */}
+        </div>
       </div>
     </div>
   );

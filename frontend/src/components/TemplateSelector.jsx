@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, DocumentTextIcon, PencilIcon } from '@heroicons/react/24/outline';
-import { getEmailTemplates } from '../utils/automationApi';
+import { fetchEmailTemplates } from '../utils/apiClient';
 import TemplateEditor from './TemplateEditor';
 
 const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'default' }) => {
@@ -15,8 +15,8 @@ const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'defa
     const loadTemplates = async () => {
       setIsLoading(true);
       try {
-        // Use real API instead of mock API
-        const response = await getEmailTemplates();
+        // Use the updated fetchEmailTemplates function from apiClient.js
+        const response = await fetchEmailTemplates(true); // Only get active templates
         if (response.success) {
           setTemplates(response.data);
           // If no initialTemplateId is provided or it doesn't exist, select the first template

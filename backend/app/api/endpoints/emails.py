@@ -4,7 +4,7 @@ from datetime import datetime
 
 from ...models.email import EmailRecordCreate, EmailRecord, EmailStatus
 from ...services.email_service import (
-    get_email_records, 
+    get_email_records,
     get_email_record_by_id, 
     create_email_record, 
     update_email_status,
@@ -16,18 +16,25 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-@router.get("/records", response_model=List[EmailRecord])
+@router.get("/records")
 async def read_email_records(
-    status: Optional[EmailStatus] = None,
+    status: Optional[str] = None,
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0)
 ):
     """
     Retrieve a list of email records with optional status filtering.
+    Returns both the records and total count for pagination.
     """
     try:
-        records = get_email_records(status.value if status else None, limit, offset)
-        return records
+        records, total_count = get_email_records(status, limit, offset)
+        return {
+            "success": True,
+            "data": {
+                "rows": records,
+                "total": total_count
+            }
+        }
     except Exception as e:
         logger.error(f"Error retrieving email records: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve email records")

@@ -4,9 +4,6 @@ import { XMarkIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 const SelectionPreview = ({ selectedRows = [], onClose, onComposeWithSelected }) => {
   if (!selectedRows || selectedRows.length === 0) return null;
   
-  const uniqueEmails = [...new Set(selectedRows.map(row => row.Email))];
-  const allSubjects = selectedRows.map(row => row.Subject);
-  
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-4 relative">
       <div className="flex justify-between items-center mb-2">
@@ -22,14 +19,6 @@ const SelectionPreview = ({ selectedRows = [], onClose, onComposeWithSelected })
         </button>
       </div>
         <div className="space-y-2 text-xs text-gray-600">
-        <div>
-          <span className="font-medium">Recipients:</span> {uniqueEmails.join(', ')}
-        </div>
-        
-        <div>
-          <span className="font-medium">Subject:</span> {selectedRows.length === 1 ? selectedRows[0].Subject : 'Multiple subjects selected'}
-        </div>
-        
         <div>
           <span className="font-medium">Selected rows:</span> {selectedRows.length}
         </div>

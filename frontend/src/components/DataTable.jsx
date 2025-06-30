@@ -61,6 +61,7 @@ const DataTable = ({
   // Handle pagination
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages && onPageChange) {
+      console.log(`DataTable - Going to page ${page}`);
       onPageChange(page);
     }
   };
@@ -302,7 +303,7 @@ const DataTable = ({
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
             <p className="text-xs text-gray-700">
-              Showing <span className="font-medium">{Math.min((currentPage - 1) * pageSize + 1, totalRows)}</span> to{' '}
+              Showing <span className="font-medium">{totalRows === 0 ? 0 : Math.min((currentPage - 1) * pageSize + 1, totalRows)}</span> to{' '}
               <span className="font-medium">{Math.min(currentPage * pageSize, totalRows)}</span> of{' '}
               <span className="font-medium">{totalRows}</span> results
             </p>

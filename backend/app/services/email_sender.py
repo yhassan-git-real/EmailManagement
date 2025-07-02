@@ -29,8 +29,15 @@ def get_archive_path() -> str:
         String path to the archive directory
     """
     settings = get_settings()
-    default_path = os.path.join(os.getcwd(), "Email_Archive")
-    archive_path = os.getenv("EMAIL_ARCHIVE_PATH", default_path)
+    
+    # Get the archive path from settings (loaded from .env)
+    env_path = settings.EMAIL_ARCHIVE_PATH
+    
+    # If env_path is a relative path, join it with the current working directory
+    if env_path and not os.path.isabs(env_path):
+        archive_path = os.path.join(os.getcwd(), env_path)
+    else:
+        archive_path = env_path or os.path.join(os.getcwd(), "Email_Archive")
     
     # Create the directory if it doesn't exist
     os.makedirs(archive_path, exist_ok=True)
@@ -64,8 +71,20 @@ class EmailSender:
         self.password = password
         self.use_tls = use_tls
         
+        # Get settings for default values from .env
+        settings = get_settings()
+        
+        # If no archive path provided, use the one from settings
+        if not archive_path:
+            archive_path = settings.EMAIL_ARCHIVE_PATH
+        
+        # Handle archive path - make it absolute if it's relative
+        if not os.path.isabs(archive_path):
+            self.archive_path = os.path.join(os.getcwd(), archive_path)
+        else:
+            self.archive_path = archive_path
+            
         # Create archive directory if it doesn't exist
-        self.archive_path = archive_path or os.path.join(os.getcwd(), "Email_Archive")
         os.makedirs(self.archive_path, exist_ok=True)
         
     def send_email(self, 

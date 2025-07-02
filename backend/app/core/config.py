@@ -34,6 +34,17 @@ class Settings(BaseSettings):
     EMAIL_ARCHIVE_PATH: Optional[str] = "Email_Archive"
     DEFAULT_EMAIL_TEMPLATE_PATH: Optional[str] = "./templates/default_template.txt"
     
+    @validator('EMAIL_ARCHIVE_PATH')
+    def validate_archive_path(cls, v):
+        """
+        Ensure the archive path is properly formatted.
+        If it's a relative path, it will be used relative to the current working directory
+        at runtime, rather than converted to absolute here.
+        """
+        if v and not v.strip():
+            return "Email_Archive"
+        return v
+    
     # API settings
     API_PREFIX: str = "/api"
     

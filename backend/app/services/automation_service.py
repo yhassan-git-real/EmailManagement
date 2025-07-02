@@ -79,23 +79,35 @@ def _get_smtp_settings() -> Dict[str, Any]:
     Returns:
         Dictionary with SMTP settings
     """
-    # Use environment variables for email settings
-    settings = {
-        "smtp_server": os.getenv("SMTP_SERVER", ""),
-        "port": int(os.getenv("SMTP_PORT", "587")),
-        "username": os.getenv("EMAIL_USERNAME", ""),
-        "password": os.getenv("EMAIL_PASSWORD", ""),
-        "use_tls": os.getenv("SMTP_TLS", "True").lower() == "true",
-        "sender_email": os.getenv("SENDER_EMAIL", ""),
-        "archive_path": os.getenv("EMAIL_ARCHIVE_PATH", os.path.join(os.getcwd(), "Email_Archive"))
+    # Get settings from .env via the settings object
+    settings = get_settings()
+    
+    # Get the archive path from settings (loaded from .env)
+    env_archive_path = settings.EMAIL_ARCHIVE_PATH
+    
+    # If env_archive_path is a relative path, join it with the current working directory
+    if env_archive_path and not os.path.isabs(env_archive_path):
+        archive_path = os.path.join(os.getcwd(), env_archive_path)
+    else:
+        archive_path = env_archive_path
+    
+    # Use settings object for email configuration (from .env)
+    smtp_settings = {
+        "smtp_server": settings.SMTP_SERVER,
+        "port": int(settings.SMTP_PORT),
+        "username": settings.EMAIL_USERNAME,
+        "password": settings.EMAIL_PASSWORD,
+        "use_tls": settings.SMTP_TLS.lower() == "true",
+        "sender_email": settings.SENDER_EMAIL,
+        "archive_path": archive_path
     }
     
     # Print diagnostic info
-    logger.info(f"SMTP Settings: Server={settings['smtp_server']}, Username={settings['username']}, "
-                f"Password={'*' * (len(settings['password']) if settings['password'] else 0)}, "
-                f"Port={settings['port']}, TLS={settings['use_tls']}")
+    logger.info(f"SMTP Settings: Server={smtp_settings['smtp_server']}, Username={smtp_settings['username']}, "
+                f"Password={'*' * (len(smtp_settings['password']) if smtp_settings['password'] else 0)}, "
+                f"Port={smtp_settings['port']}, TLS={smtp_settings['use_tls']}")
     
-    return settings
+    return smtp_settings
 
 
 def _process_email_queue():
@@ -374,8 +386,8 @@ def start_automation() -> Dict[str, Any]:
         _automation_state["is_running"] = False
         return get_automation_status()
     finally:
-        if 'conn' in locals():
-            conn.close()
+        # Connection should be closed if it was opened in this function
+        pass
 
 
 def stop_automation() -> Dict[str, Any]:

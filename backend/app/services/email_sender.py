@@ -15,11 +15,21 @@ from ..utils.db_utils import get_db_connection
 from ..models.email import EmailStatus
 from ..utils.email_logger import email_logger
 
+# Import the Google Drive service
+try:
+    from .gdrive_service import GoogleDriveService
+    GDRIVE_AVAILABLE = True
+    email_logger.log_info("Google Drive service is available for large file uploads.")
+except ImportError:
+    GDRIVE_AVAILABLE = False
+    email_logger.log_warning("Google Drive service not available. Large file uploads will not be possible.")
+
 logger = logging.getLogger(__name__)
 
 # Gmail's attachment size limit in bytes (25MB)
 GMAIL_MAX_SIZE = 25 * 1024 * 1024  # 25MB
 SAFE_MAX_SIZE = 20 * 1024 * 1024   # 20MB (conservative limit to account for email headers)
+GDRIVE_UPLOAD_THRESHOLD = 20 * 1024 * 1024  # 20MB - when to use Google Drive instead of email attachment
 
 def get_archive_path() -> str:
     """
@@ -115,15 +125,15 @@ class EmailSender:
             msg['To'] = recipient
             msg['Subject'] = subject
             
-            # Attach email body as properly formatted HTML
-            html_part = MIMEText(body, 'html')
-            html_part.add_header('Content-Type', 'text/html; charset=utf-8')
-            msg.attach(html_part)
+            # Modified email body (may be updated later if we use Google Drive)
+            email_body = body
             
             # Handle folder attachment if provided
             attachment_path = None
             original_size = None
             compressed_size = None
+            used_gdrive = False
+            gdrive_link = None
             
             if folder_path and os.path.exists(folder_path):
                 # Get original folder size
@@ -132,8 +142,80 @@ class EmailSender:
                 # Compress the folder
                 attachment_path, compressed_size = self._compress_folder(folder_path)
                 
-                # Check attachment size before sending
-                if attachment_path:
+                # If file exists and is larger than threshold, try to use Google Drive
+                if attachment_path and compressed_size > GDRIVE_UPLOAD_THRESHOLD:
+                    try:
+                        # Use personal Google Drive account
+                        if GDRIVE_AVAILABLE:
+                            # Initialize Google Drive service
+                            gdrive = GoogleDriveService()
+                            logger.info("Using Google Drive account for file upload")
+                        else:
+                            raise ImportError("Google Drive service not available")
+                        
+                        # Upload file to Google Drive and get shareable link
+                        upload_success, drive_link, error_msg = gdrive.upload_and_get_link(attachment_path)
+                        
+                        if upload_success and drive_link:
+                            # If successful, add the link to the email body
+                            gdrive_link = drive_link
+                            used_gdrive = True
+                            
+                            # Append download link information to the email body
+                            file_name = os.path.basename(attachment_path)
+                            link_html = f"""
+                            <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">
+                                <p><strong>Large File Attachment Notice:</strong></p>
+                                <p>The file <strong>{file_name}</strong> was too large to send as an email attachment.</p>
+                                <p>It has been uploaded to Google Drive for your convenience.</p>
+                                <p><a href="{gdrive_link}" style="display: inline-block; padding: 10px 20px; background-color: #4285F4; color: white; text-decoration: none; border-radius: 4px;">Download File</a></p>
+                                <p style="font-size: 12px; color: #666;">This link will be available for 30 days.</p>
+                            </div>
+                            """
+                            
+                            # Add link to email body
+                            email_body += link_html
+                            
+                            email_logger.log_info(f"File {file_name} uploaded to Google Drive instead of email attachment (size: {compressed_size} bytes)")
+                        else:
+                            # If Google Drive upload failed, fall back to regular attachment if possible
+                            email_logger.log_warning(f"Google Drive upload failed: {error_msg}. Attempting regular attachment.")
+                            if compressed_size > SAFE_MAX_SIZE:
+                                reason = f"Attachment too large: {compressed_size} bytes exceeds safe limit of {SAFE_MAX_SIZE} bytes and Google Drive upload failed: {error_msg}"
+                                email_logger.log_email_transaction(
+                                    email_id=email_id,
+                                    email=recipient,
+                                    subject=subject,
+                                    file_path=folder_path,
+                                    status="Failed",
+                                    reason=reason,
+                                    original_size=original_size,
+                                    compressed_size=compressed_size
+                                )
+                                return False, reason
+                    except Exception as e:
+                        # Log error but continue with regular attachment if possible
+                        error_message = f"Error using Google Drive for large file: {str(e)}"
+                        email_logger.log_error(error_message)
+                        
+                        # Check if file is too large for regular email
+                        if compressed_size > SAFE_MAX_SIZE:
+                            reason = f"Attachment too large: {compressed_size} bytes exceeds safe limit of {SAFE_MAX_SIZE} bytes and Google Drive integration failed"
+                            email_logger.log_email_transaction(
+                                email_id=email_id,
+                                email=recipient,
+                                subject=subject,
+                                file_path=folder_path,
+                                status="Failed",
+                                reason=reason,
+                                original_size=original_size,
+                                compressed_size=compressed_size
+                            )
+                            return False, reason
+                
+                # If we didn't use Google Drive and the file exists, attach it to the email
+                if attachment_path and not used_gdrive:
+                    # Double check size for regular attachment
                     if compressed_size > SAFE_MAX_SIZE:
                         reason = f"Attachment too large: {compressed_size} bytes exceeds safe limit of {SAFE_MAX_SIZE} bytes"
                         email_logger.log_email_transaction(
@@ -156,6 +238,12 @@ class EmailSender:
                         attach.add_header('Content-Disposition', f'attachment; filename="{filename}"')
                         msg.attach(attach)
             
+            # Attach email body as properly formatted HTML
+            # Note: This is now done after potential modification with Google Drive link
+            html_part = MIMEText(email_body, 'html')
+            html_part.add_header('Content-Type', 'text/html; charset=utf-8')
+            msg.attach(html_part)
+            
             # Connect to SMTP server and send email
             with smtplib.SMTP(self.smtp_server, self.port) as server:
                 if self.use_tls:
@@ -164,7 +252,11 @@ class EmailSender:
                 server.send_message(msg)
                 
             # Log successful email with meaningful success reason
-            success_reason = f"Email successfully sent to {recipient}" + (f" with {os.path.basename(attachment_path)}" if attachment_path else "")
+            if used_gdrive:
+                success_reason = f"Email successfully sent to {recipient} with Google Drive link to {os.path.basename(attachment_path)} (file size: {compressed_size} bytes)"
+            else:
+                success_reason = f"Email successfully sent to {recipient}" + (f" with {os.path.basename(attachment_path)}" if attachment_path else "")
+                
             email_logger.log_email_transaction(
                 email_id=email_id,
                 email=recipient,

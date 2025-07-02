@@ -71,3 +71,7 @@ wheels/
 # Project specific
 logs/
 Email_Archive/
+
+# Google Drive credentials
+credentials/oauth_credentials.json
+credentials/token.pickle

@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     EMAIL_ARCHIVE_PATH: Optional[str] = "Email_Archive"
     DEFAULT_EMAIL_TEMPLATE_PATH: Optional[str] = "./templates/default_template.txt"
     
+    # Google Drive configuration
+    GDRIVE_CREDENTIALS_PATH: Optional[str] = "./credentials/oauth_credentials.json"
+    GDRIVE_FOLDER_ID: Optional[str] = None  # Optional folder ID for uploads
+    
     @validator('EMAIL_ARCHIVE_PATH')
     def validate_archive_path(cls, v):
         """

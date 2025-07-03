@@ -14,6 +14,7 @@ from ..core.config import get_settings
 from ..utils.db_utils import get_db_connection
 from ..models.email import EmailStatus
 from ..utils.email_logger import email_logger
+from ..utils.file_utils import format_file_size
 
 # Import the Google Drive service
 try:
@@ -30,6 +31,17 @@ logger = logging.getLogger(__name__)
 GMAIL_MAX_SIZE = 25 * 1024 * 1024  # 25MB
 SAFE_MAX_SIZE = 20 * 1024 * 1024   # 20MB (conservative limit to account for email headers)
 GDRIVE_UPLOAD_THRESHOLD = 20 * 1024 * 1024  # 20MB - when to use Google Drive instead of email attachment
+
+def format_size(size_bytes):
+    """Format size in bytes to a human-readable string (KB, MB, GB)"""
+    if size_bytes < 1024:
+        return f"{size_bytes} bytes"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    elif size_bytes < 1024 * 1024 * 1024:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+    else:
+        return f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
 
 def get_archive_path() -> str:
     """
@@ -150,6 +162,13 @@ class EmailSender:
                             # Initialize Google Drive service
                             gdrive = GoogleDriveService()
                             logger.info("Using Google Drive account for file upload")
+                            
+                            # Log that we're starting the Google Drive upload process
+                            file_size_bytes = os.path.getsize(attachment_path)
+                            file_size_formatted = format_file_size(file_size_bytes)
+                            file_name = os.path.basename(attachment_path)
+                            
+                            email_logger.log_info(f"Preparing to upload large file ({file_size_formatted}) to Google Drive...")
                         else:
                             raise ImportError("Google Drive service not available")
                         
@@ -160,6 +179,10 @@ class EmailSender:
                             # If successful, add the link to the email body
                             gdrive_link = drive_link
                             used_gdrive = True
+                            
+                            # Log success with size information
+                            success_message = f"Large file ({file_size_formatted}) uploaded to Google Drive - Link added to email"
+                            email_logger.log_info(f"SUCCESS: {success_message}")
                             
                             # Append download link information to the email body
                             file_name = os.path.basename(attachment_path)
@@ -176,12 +199,14 @@ class EmailSender:
                             # Add link to email body
                             email_body += link_html
                             
-                            email_logger.log_info(f"File {file_name} uploaded to Google Drive instead of email attachment (size: {compressed_size} bytes)")
+                            formatted_size = format_size(compressed_size)
+                            success_reason = f"SUCCESS: Large file ({formatted_size}) uploaded to Google Drive - Link added to email"
+                            email_logger.log_info(success_reason)
                         else:
                             # If Google Drive upload failed, fall back to regular attachment if possible
                             email_logger.log_warning(f"Google Drive upload failed: {error_msg}. Attempting regular attachment.")
                             if compressed_size > SAFE_MAX_SIZE:
-                                reason = f"Attachment too large: {compressed_size} bytes exceeds safe limit of {SAFE_MAX_SIZE} bytes and Google Drive upload failed: {error_msg}"
+                                reason = f"ERROR: File too large ({format_size(compressed_size)}) - GDrive upload failed: {error_msg}"
                                 email_logger.log_email_transaction(
                                     email_id=email_id,
                                     email=recipient,
@@ -217,7 +242,9 @@ class EmailSender:
                 if attachment_path and not used_gdrive:
                     # Double check size for regular attachment
                     if compressed_size > SAFE_MAX_SIZE:
-                        reason = f"Attachment too large: {compressed_size} bytes exceeds safe limit of {SAFE_MAX_SIZE} bytes"
+                        formatted_size = format_size(compressed_size)
+                        safe_limit = format_size(SAFE_MAX_SIZE)
+                        reason = f"ERROR: Attachment too large ({formatted_size}) - exceeds limit of {safe_limit}"
                         email_logger.log_email_transaction(
                             email_id=email_id,
                             email=recipient,
@@ -253,9 +280,15 @@ class EmailSender:
                 
             # Log successful email with meaningful success reason
             if used_gdrive:
-                success_reason = f"Email successfully sent to {recipient} with Google Drive link to {os.path.basename(attachment_path)} (file size: {compressed_size} bytes)"
+                file_name = os.path.basename(attachment_path)
+                formatted_size = format_file_size(compressed_size)
+                success_reason = f"SUCCESS: Email sent with Google Drive link - {file_name} ({formatted_size})"
+            elif attachment_path:
+                file_name = os.path.basename(attachment_path)
+                formatted_size = format_file_size(compressed_size) if compressed_size else "N/A"
+                success_reason = f"SUCCESS: Email sent with direct attachment - {file_name} ({formatted_size})"
             else:
-                success_reason = f"Email successfully sent to {recipient}" + (f" with {os.path.basename(attachment_path)}" if attachment_path else "")
+                success_reason = f"SUCCESS: Email sent without attachments"
                 
             email_logger.log_email_transaction(
                 email_id=email_id,
@@ -269,11 +302,16 @@ class EmailSender:
             )
             
             logger.info(f"Email sent successfully to {recipient}")
-            return True, None
+            return True, success_reason
             
         except Exception as e:
             error_message = f"Failed to send email to {recipient}: {str(e)}"
             logger.error(error_message)
+            
+            # Create a more descriptive and formatted reason
+            error_type = e.__class__.__name__
+            error_details = str(e)
+            formatted_reason = f"ERROR: {error_type} - {error_details}"
             
             # Log the error
             email_logger.log_email_transaction(
@@ -282,12 +320,12 @@ class EmailSender:
                 subject=subject,
                 file_path=folder_path,
                 status="Failed",
-                reason=str(e),
+                reason=formatted_reason,
                 original_size=original_size,
                 compressed_size=compressed_size
             )
             
-            return False, str(e)
+            return False, formatted_reason
             
     def _get_folder_size(self, folder_path: str) -> int:
         """
@@ -355,8 +393,9 @@ class EmailSender:
                 
                 # Get the size of the compressed file
                 compressed_size = os.path.getsize(archive_file_path)
+                formatted_size = format_file_size(compressed_size)
                 
-            email_logger.log_info(f"Folder compressed successfully: {archive_file_path}, size: {compressed_size} bytes")
+            email_logger.log_info(f"Folder compressed successfully: {archive_file_path}, size: {formatted_size} ({compressed_size} bytes)")
             return archive_file_path, compressed_size
             
         except Exception as e:

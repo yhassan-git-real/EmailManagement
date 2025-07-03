@@ -1,17 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+import sys
+import os
 from .api.endpoints import database, emails, automation, manual_email
 from .core.config import settings
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-# Set higher log levels for specific loggers to reduce noise
-logging.getLogger('app.services.automation_service').setLevel(logging.WARNING)
-logging.getLogger('app.api.endpoints.automation').setLevel(logging.WARNING)
+# Ensure all loggers are set to the appropriate level
+# Don't remove handlers as that's handled in run.py
 logger = logging.getLogger(__name__)
 
 # Create the FastAPI application

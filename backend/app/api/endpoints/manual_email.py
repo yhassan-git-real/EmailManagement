@@ -88,13 +88,14 @@ async def send_manual_email(email_data: ManualEmailRequest):
         
         email_id = create_email_record(record_data)
         
-        # Send the email
-        success, reason = email_sender.send_email(
+        # Send the email with validation
+        success, reason = email_sender.send_email_with_validation(
             recipient=", ".join(recipients + cc_list),  # TO + CC in recipient field
             subject=email_data.subject,
             body=email_data.body,
             sender=settings.SENDER_EMAIL or settings.EMAIL_USERNAME,
-            email_id=email_id
+            email_id=email_id,
+            validate_mapping=False  # Manual emails don't need mapping validation
         )
         
         # Update the record with the result

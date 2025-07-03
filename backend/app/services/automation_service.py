@@ -5,6 +5,7 @@ import time
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timedelta
 import queue
+import uuid
 
 from ..core.config import get_settings
 from ..utils.db_utils import get_db_connection
@@ -119,6 +120,9 @@ def _process_email_queue():
     _automation_state["status"] = "running"
     _automation_state["start_time"] = datetime.now()
     
+    # Get the process_id from the automation state
+    process_id = _automation_state.get("process_id")
+    
     # Reset summary
     _automation_state["summary"] = {
         "processed": 0,
@@ -141,7 +145,13 @@ def _process_email_queue():
     
     # Check if we have valid SMTP settings
     if not smtp_settings["smtp_server"] or not smtp_settings["username"] or not smtp_settings["password"]:
-        logger.error("SMTP settings are incomplete. Email automation cannot start.")
+        error_msg = "SMTP settings are incomplete. Email automation cannot start."
+        logger.error(error_msg)
+        
+        # End the process with error if a process_id exists
+        if process_id:
+            email_logger.end_process(process_id, "error", error_msg)
+            
         _automation_state["status"] = "error"
         _automation_state["last_run"] = datetime.now()
         return
@@ -166,7 +176,29 @@ def _process_email_queue():
                 # Get next email from queue with a timeout
                 email_record = _automation_state["email_queue"].get(timeout=1)
                 
-                logger.info(f"Processing email ID {email_record['Email_ID']} to {email_record['Email']}")
+                # Check if email is still pending (race condition check)
+                is_pending, current_status = _check_email_status(email_record["Email_ID"])
+                if not is_pending:
+                    # Log with process_id
+                    email_logger.log_info(
+                        f"Skipping email ID {email_record['Email_ID']} - " +
+                        f"Status changed from Pending to {current_status} (race condition prevention)",
+                        email_id=email_record["Email_ID"],
+                        process_id=process_id
+                    )
+                    
+                    # Mark task as done and continue to next email
+                    _automation_state["email_queue"].task_done()
+                    continue
+                
+                # Log with process_id
+                email_logger.log_info(
+                    f"Processing email ID {email_record['Email_ID']} to {email_record['Email']}",
+                    email_id=email_record["Email_ID"],
+                    recipient=email_record["Email"],
+                    subject=email_record["Subject"],
+                    process_id=process_id
+                )
                 
                 # Update processed count
                 _automation_state["summary"]["processed"] += 1
@@ -202,14 +234,47 @@ def _process_email_queue():
                 else:
                     email_logger.log_info(f"Using default file template for email ID {email_record['Email_ID']}")
                 
-                # Send email
-                success, reason = email_sender.send_email(
+                # Validate recipient mapping before sending
+                is_valid, error_reason = _validate_recipient_mapping(
+                    email_record["Email_ID"],
+                    email_record["Email"],
+                    email_record["File_Path"]
+                )
+                
+                if not is_valid:
+                    error_message = f"ERROR: {error_reason}"
+                    
+                    # Update status to failed
+                    from .email_sender import update_email_status as update_status
+                    update_status(
+                        email_id=email_record["Email_ID"],
+                        status=EmailStatus.FAILED.value,
+                        reason=error_message,
+                        date=datetime.now()
+                    )
+                    
+                    # Log the error
+                    email_logger.log_info(
+                        f"Email processing failed - ID: {email_record['Email_ID']}, "
+                        f"To: {email_record['Email']}, Subject: {email_record['Subject']}, "
+                        f"Status: Failed, Reason: {error_message}"
+                    )
+                    
+                    # Mark task as done and continue to next email
+                    _automation_state["email_queue"].task_done()
+                    _automation_state["summary"]["failed"] += 1
+                    continue
+                
+                # Send email with validation - we already validated recipient mapping here
+                # so we set validate_mapping=False to avoid duplicate validation
+                success, reason = email_sender.send_email_with_validation(
                     recipient=email_record["Email"],
                     subject=email_record["Subject"],
                     body=email_body,
                     folder_path=email_record["File_Path"],
                     sender=sender_email,
-                    email_id=email_record["Email_ID"]
+                    email_id=email_record["Email_ID"],
+                    validate_mapping=False  # Already validated above
                 )
                 
                 # Update status based on result
@@ -239,11 +304,14 @@ def _process_email_queue():
                     )
                     _automation_state["summary"]["failed"] += 1
                 
-                # Log the transaction
-                email_logger.log_info(
-                    f"Email processing result - ID: {email_record['Email_ID']}, "
-                    f"To: {email_record['Email']}, Subject: {email_record['Subject']}, "
-                    f"Status: {new_status.value}, Reason: {reason}"
+                # Log the transaction with process_id
+                email_logger.log_email_transaction(
+                    email_id=email_record["Email_ID"],
+                    email=email_record["Email"],
+                    subject=email_record["Subject"],
+                    status=new_status.value,
+                    reason=reason,
+                    process_id=process_id
                 )
                 
                 # Mark task as done in queue
@@ -253,18 +321,36 @@ def _process_email_queue():
                 # Queue is empty, continue to next loop iteration
                 continue
             except Exception as e:
-                logger.error(f"Error processing email: {str(e)}")
+                # Log the error with process_id
+                email_logger.log_error(
+                    f"Error processing email: {str(e)}",
+                    email_id=email_record.get("Email_ID"),
+                    process_id=process_id
+                )
                 # Continue with next email
                 continue
                 
-        # Update status when done
+        # All emails processed - update status and end the process
         _automation_state["status"] = "idle"
         _automation_state["last_run"] = datetime.now()
         _automation_state["is_running"] = False
         _automation_state["stop_requested"] = False
         
+        # End the process successfully if a process_id exists
+        if process_id:
+            summary = _automation_state["summary"]
+            description = (f"Processed {summary['processed']} emails: " +
+                          f"{summary['successful']} successful, {summary['failed']} failed")
+            email_logger.end_process(process_id, "success", description)
+        
     except Exception as e:
-        logger.error(f"Error in email automation process: {str(e)}")
+        error_msg = f"Error in email automation process: {str(e)}"
+        logger.error(error_msg)
+        
+        # End the process with error if a process_id exists
+        if process_id:
+            email_logger.end_process(process_id, "error", error_msg)
+            
         _automation_state["status"] = "error"
         _automation_state["last_run"] = datetime.now()
         _automation_state["is_running"] = False
@@ -351,6 +437,12 @@ def start_automation() -> Dict[str, Any]:
     _automation_state["stop_requested"] = False
     
     try:
+        # Generate a unique process ID for this automation run
+        process_id = f"auto_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        # Start process tracking in the logger
+        email_logger.start_process(process_id, "Email Automation Process")
+        
         # Get only pending emails
         emails_to_process = _load_emails_by_status(EmailStatus.PENDING.value)
         
@@ -359,6 +451,7 @@ def start_automation() -> Dict[str, Any]:
         
         # If no pending emails, no need to start
         if not emails_to_process:
+            email_logger.end_process(process_id, "completed", "No pending emails to process")
             logger.info("No pending emails to process")
             return get_automation_status()
         
@@ -367,6 +460,9 @@ def start_automation() -> Dict[str, Any]:
         
         for email in emails_to_process:
             _automation_state["email_queue"].put(email)
+        
+        # Store process ID in automation state
+        _automation_state["process_id"] = process_id
         
         # Start processing thread
         _automation_state["is_running"] = True
@@ -377,10 +473,14 @@ def start_automation() -> Dict[str, Any]:
         )
         _automation_state["automation_thread"].start()
         
-        logger.info(f"Started email automation with {len(emails_to_process)} pending emails to process")
+        email_logger.log_info(f"Started email automation with {len(emails_to_process)} pending emails to process", process_id=process_id)
         return get_automation_status()
         
     except Exception as e:
+        # If process_id was created, end the process with error
+        if 'process_id' in locals():
+            email_logger.end_process(process_id, "error", f"Error starting automation: {str(e)}")
+            
         logger.error(f"Error starting email automation: {str(e)}")
         _automation_state["status"] = "error"
         _automation_state["is_running"] = False
@@ -407,6 +507,12 @@ def stop_automation() -> Dict[str, Any]:
     _automation_state["stop_requested"] = True
     _automation_state["status"] = "stopping"
     
+    # End the process in the logger if a process_id exists
+    if "process_id" in _automation_state and _automation_state["process_id"]:
+        process_id = _automation_state["process_id"]
+        email_logger.log_info(f"Stopping email automation process", process_id=process_id)
+        email_logger.end_process(process_id, "stopped", "User requested stop")
+    
     logger.info("Stopping email automation...")
     return get_automation_status()
 
@@ -424,10 +530,16 @@ def restart_failed_emails() -> Dict[str, Any]:
     
     # Don't restart if already running
     if _automation_state["is_running"]:
-        logger.info("Cannot restart failed emails while automation is running")
+        email_logger.log_info("Cannot restart failed emails while automation is running")
         return get_automation_status()
     
     try:
+        # Generate a unique process ID for this automation run
+        process_id = f"retry_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        # Start process tracking in the logger
+        email_logger.start_process(process_id, "Failed Email Retry Process")
+        
         # Get failed emails only
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -443,10 +555,11 @@ def restart_failed_emails() -> Dict[str, Any]:
         failed_count = cursor.fetchone()[0]
         
         if failed_count == 0:
-            logger.info("No failed emails to restart")
+            email_logger.log_info("No failed emails to restart", process_id=process_id)
+            email_logger.end_process(process_id, "completed", "No failed emails to restart")
             return get_automation_status()
             
-        logger.info(f"Found {failed_count} failed emails to restart")
+        email_logger.log_info(f"Found {failed_count} failed emails to restart", process_id=process_id)
         
         # Get all failed emails
         failed_emails = _load_emails_by_status(EmailStatus.FAILED.value)
@@ -469,6 +582,13 @@ def restart_failed_emails() -> Dict[str, Any]:
             # Update the status in our local copy to match what we just did in the database
             email["Email_Status"] = EmailStatus.PENDING.value
             _automation_state["email_queue"].put(email)
+            
+            # Track this email in the process
+            if 'Email_ID' in email and email['Email_ID']:
+                email_logger.add_email_to_process(process_id, email['Email_ID'])
+        
+        # Store process ID in automation state
+        _automation_state["process_id"] = process_id
         
         # Update summary counts
         _update_summary()
@@ -482,11 +602,17 @@ def restart_failed_emails() -> Dict[str, Any]:
         )
         _automation_state["automation_thread"].start()
         
-        logger.info(f"Started reprocessing of {len(failed_emails)} previously failed emails")
+        email_logger.log_info(f"Started reprocessing of {len(failed_emails)} previously failed emails", process_id=process_id)
         return get_automation_status()
             
     except Exception as e:
-        logger.error(f"Error restarting failed emails: {str(e)}")
+        error_msg = f"Error restarting failed emails: {str(e)}"
+        email_logger.log_error(error_msg, process_id=process_id if 'process_id' in locals() else None)
+        
+        # End the process with error if a process_id exists
+        if 'process_id' in locals():
+            email_logger.end_process(process_id, "error", error_msg)
+            
         _automation_state["status"] = "error"
         return get_automation_status()
     finally:
@@ -928,3 +1054,91 @@ def _run_scheduler() -> None:
         time.sleep(60)
     
     logger.info("Scheduler thread stopped")
+
+def _validate_recipient_mapping(email_id: int, recipient: str, file_path: str) -> Tuple[bool, Optional[str]]:
+    """
+    Validate that the recipient email matches the Email_id in the database
+    
+    Args:
+        email_id: The ID of the email record
+        recipient: The recipient email address
+        file_path: The file path for the attachment
+        
+    Returns:
+        Tuple[bool, str]: (is_valid, error_reason_if_invalid)
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        settings = get_settings()
+        
+        # Get the email address associated with this email_id
+        query = f"""
+            SELECT Email, File_Path FROM {settings.EMAIL_TABLE}
+            WHERE Email_ID = ?
+        """
+        
+        cursor.execute(query, [email_id])
+        result = cursor.fetchone()
+        
+        if not result:
+            return False, f"No email record found with ID {email_id}"
+            
+        db_email, db_file_path = result
+        
+        # Check if the recipient matches the database email
+        if db_email.lower() != recipient.lower():
+            return False, f"Recipient mismatch: {recipient} doesn't match record: {db_email}"
+            
+        # For file path, we just need to make sure it's the same as in DB
+        # Sometimes paths might have different slashes or capitalization
+        if db_file_path and file_path:
+            norm_db_path = os.path.normpath(db_file_path).lower()
+            norm_input_path = os.path.normpath(file_path).lower()
+            
+            if norm_db_path != norm_input_path:
+                return False, f"File path mismatch: {file_path} doesn't match record: {db_file_path}"
+        
+        return True, None
+    except Exception as e:
+        logger.error(f"Error validating recipient mapping: {str(e)}")
+        return False, f"Error validating recipient: {str(e)}"
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+def _check_email_status(email_id: int) -> Tuple[bool, str]:
+    """
+    Check if email status is still Pending to prevent duplicate processing
+    
+    Args:
+        email_id: The ID of the email record
+        
+    Returns:
+        Tuple[bool, str]: (is_pending, current_status)
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        settings = get_settings()
+        
+        query = f"""
+            SELECT Email_Status FROM {settings.EMAIL_TABLE}
+            WHERE Email_ID = ?
+        """
+        
+        cursor.execute(query, [email_id])
+        result = cursor.fetchone()
+        
+        if not result:
+            return False, "Not found"
+            
+        status = result[0]
+        
+        return status.lower() == EmailStatus.PENDING.value.lower(), status
+    except Exception as e:
+        logger.error(f"Error checking email status: {str(e)}")
+        return False, f"Error: {str(e)}"
+    finally:
+        if 'conn' in locals():
+            conn.close()

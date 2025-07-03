@@ -131,6 +131,34 @@ class EmailSender:
             Tuple[bool, Optional[str]]: (success, reason_if_failed)
         """
         try:
+            # Validate recipient email address
+            is_valid, error_reason = self._validate_email(recipient)
+            if not is_valid:
+                error_message = f"ERROR: {error_reason}"
+                email_logger.log_email_transaction(
+                    email_id=email_id,
+                    email=recipient,
+                    subject=subject,
+                    file_path=folder_path,
+                    status="Failed",
+                    reason=error_message
+                )
+                return False, error_message
+                
+            # Check SMTP connectivity before proceeding
+            is_connected, error_reason = self._check_smtp_connection()
+            if not is_connected:
+                error_message = f"ERROR: {error_reason}"
+                email_logger.log_email_transaction(
+                    email_id=email_id,
+                    email=recipient,
+                    subject=subject,
+                    file_path=folder_path,
+                    status="Failed",
+                    reason=error_message
+                )
+                return False, error_message
+                
             # Create email message
             msg = MIMEMultipart()
             msg['From'] = sender or self.username
@@ -147,18 +175,50 @@ class EmailSender:
             used_gdrive = False
             gdrive_link = None
             
-            if folder_path and os.path.exists(folder_path):
+            if folder_path:
+                # First validate the attachment path
+                is_valid, error_reason = self._validate_attachment_path(folder_path)
+                if not is_valid:
+                    error_message = f"ERROR: {error_reason}"
+                    email_logger.log_email_transaction(
+                        email_id=email_id,
+                        email=recipient,
+                        subject=subject,
+                        file_path=folder_path,
+                        status="Failed",
+                        reason=error_message
+                    )
+                    return False, error_message
+                
                 # Get original folder size
                 original_size = self._get_folder_size(folder_path)
                 
                 # Compress the folder
                 attachment_path, compressed_size = self._compress_folder(folder_path)
                 
+                # Verify compression was successful
+                if not attachment_path or not compressed_size:
+                    error_message = "ERROR: Failed to compress attachment folder"
+                    email_logger.log_email_transaction(
+                        email_id=email_id,
+                        email=recipient,
+                        subject=subject,
+                        file_path=folder_path,
+                        status="Failed",
+                        reason=error_message
+                    )
+                    return False, error_message
+                
                 # If file exists and is larger than threshold, try to use Google Drive
                 if attachment_path and compressed_size > GDRIVE_UPLOAD_THRESHOLD:
-                    try:
-                        # Use personal Google Drive account
-                        if GDRIVE_AVAILABLE:
+                    # Check GDrive availability before attempting to use it
+                    is_available, gdrive_error = self._check_gdrive_availability()
+                    
+                    if not is_available:
+                        email_logger.log_warning(f"Google Drive not available: {gdrive_error}. Will try regular attachment.")
+                        # We don't fail here, we'll try regular attachment instead
+                    else:
+                        try:
                             # Initialize Google Drive service
                             gdrive = GoogleDriveService()
                             logger.info("Using Google Drive account for file upload")
@@ -169,44 +229,61 @@ class EmailSender:
                             file_name = os.path.basename(attachment_path)
                             
                             email_logger.log_info(f"Preparing to upload large file ({file_size_formatted}) to Google Drive...")
-                        else:
-                            raise ImportError("Google Drive service not available")
-                        
-                        # Upload file to Google Drive and get shareable link
-                        upload_success, drive_link, error_msg = gdrive.upload_and_get_link(attachment_path)
-                        
-                        if upload_success and drive_link:
-                            # If successful, add the link to the email body
-                            gdrive_link = drive_link
-                            used_gdrive = True
                             
-                            # Log success with size information
-                            success_message = f"Large file ({file_size_formatted}) uploaded to Google Drive - Link added to email"
-                            email_logger.log_info(f"SUCCESS: {success_message}")
+                            # Upload file to Google Drive and get shareable link
+                            upload_success, drive_link, error_msg = gdrive.upload_and_get_link(attachment_path)
                             
-                            # Append download link information to the email body
-                            file_name = os.path.basename(attachment_path)
-                            link_html = f"""
-                            <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">
-                                <p><strong>Large File Attachment Notice:</strong></p>
-                                <p>The file <strong>{file_name}</strong> was too large to send as an email attachment.</p>
-                                <p>It has been uploaded to Google Drive for your convenience.</p>
-                                <p><a href="{gdrive_link}" style="display: inline-block; padding: 10px 20px; background-color: #4285F4; color: white; text-decoration: none; border-radius: 4px;">Download File</a></p>
-                                <p style="font-size: 12px; color: #666;">This link will be available for 30 days.</p>
-                            </div>
-                            """
+                            if upload_success and drive_link:
+                                # If successful, add the link to the email body
+                                gdrive_link = drive_link
+                                used_gdrive = True
+                                
+                                # Log success with size information
+                                success_message = f"Large file ({file_size_formatted}) uploaded to Google Drive - Link added to email"
+                                email_logger.log_info(f"SUCCESS: {success_message}")
+                                
+                                # Append download link information to the email body
+                                file_name = os.path.basename(attachment_path)
+                                link_html = f"""
+                                <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">
+                                    <p><strong>Large File Attachment Notice:</strong></p>
+                                    <p>The file <strong>{file_name}</strong> was too large to send as an email attachment.</p>
+                                    <p>It has been uploaded to Google Drive for your convenience.</p>
+                                    <p><a href="{gdrive_link}" style="display: inline-block; padding: 10px 20px; background-color: #4285F4; color: white; text-decoration: none; border-radius: 4px;">Download File</a></p>
+                                    <p style="font-size: 12px; color: #666;">This link will be available for 30 days.</p>
+                                </div>
+                                """
+                                
+                                # Add link to email body
+                                email_body += link_html
+                                
+                                formatted_size = format_size(compressed_size)
+                                success_reason = f"SUCCESS: Large file ({formatted_size}) uploaded to Google Drive - Link added to email"
+                                email_logger.log_info(success_reason)
+                            else:
+                                # If Google Drive upload failed, fall back to regular attachment if possible
+                                email_logger.log_warning(f"Google Drive upload failed: {error_msg}. Attempting regular attachment.")
+                                if compressed_size > SAFE_MAX_SIZE:
+                                    reason = f"ERROR: File too large ({format_size(compressed_size)}) - GDrive upload failed: {error_msg}"
+                                    email_logger.log_email_transaction(
+                                        email_id=email_id,
+                                        email=recipient,
+                                        subject=subject,
+                                        file_path=folder_path,
+                                        status="Failed",
+                                        reason=reason,
+                                        original_size=original_size,
+                                        compressed_size=compressed_size
+                                    )
+                                    return False, reason
+                        except Exception as e:
+                            # Log error but continue with regular attachment if possible
+                            error_message = f"Error using Google Drive for large file: {str(e)}"
+                            email_logger.log_error(error_message)
                             
-                            # Add link to email body
-                            email_body += link_html
-                            
-                            formatted_size = format_size(compressed_size)
-                            success_reason = f"SUCCESS: Large file ({formatted_size}) uploaded to Google Drive - Link added to email"
-                            email_logger.log_info(success_reason)
-                        else:
-                            # If Google Drive upload failed, fall back to regular attachment if possible
-                            email_logger.log_warning(f"Google Drive upload failed: {error_msg}. Attempting regular attachment.")
+                            # Check if file is too large for regular email
                             if compressed_size > SAFE_MAX_SIZE:
-                                reason = f"ERROR: File too large ({format_size(compressed_size)}) - GDrive upload failed: {error_msg}"
+                                reason = f"Attachment too large: {compressed_size} bytes exceeds safe limit of {SAFE_MAX_SIZE} bytes and Google Drive integration failed"
                                 email_logger.log_email_transaction(
                                     email_id=email_id,
                                     email=recipient,
@@ -218,25 +295,6 @@ class EmailSender:
                                     compressed_size=compressed_size
                                 )
                                 return False, reason
-                    except Exception as e:
-                        # Log error but continue with regular attachment if possible
-                        error_message = f"Error using Google Drive for large file: {str(e)}"
-                        email_logger.log_error(error_message)
-                        
-                        # Check if file is too large for regular email
-                        if compressed_size > SAFE_MAX_SIZE:
-                            reason = f"Attachment too large: {compressed_size} bytes exceeds safe limit of {SAFE_MAX_SIZE} bytes and Google Drive integration failed"
-                            email_logger.log_email_transaction(
-                                email_id=email_id,
-                                email=recipient,
-                                subject=subject,
-                                file_path=folder_path,
-                                status="Failed",
-                                reason=reason,
-                                original_size=original_size,
-                                compressed_size=compressed_size
-                            )
-                            return False, reason
                 
                 # If we didn't use Google Drive and the file exists, attach it to the email
                 if attachment_path and not used_gdrive:
@@ -326,7 +384,128 @@ class EmailSender:
             )
             
             return False, formatted_reason
+    
+    def send_email_with_validation(self, 
+                               recipient: str, 
+                               subject: str, 
+                               body: str, 
+                               folder_path: Optional[str] = None,
+                               sender: Optional[str] = None,
+                               email_id: Optional[int] = None,
+                               validate_mapping: bool = True) -> Tuple[bool, Optional[str]]:
+        """
+        Send an email with full validation before compression and sending
+        
+        This method performs all validations first before any resource-intensive operations.
+        It validates recipient email, folder path, SMTP connection, and optionally recipient mapping.
+        
+        Args:
+            recipient: Recipient email address
+            subject: Email subject
+            body: Email body content (HTML)
+            folder_path: Path to folder that should be compressed and attached
+            sender: Sender email address (defaults to SMTP username)
+            email_id: Database ID of the email record for logging
+            validate_mapping: Whether to validate recipient mapping against database
             
+        Returns:
+            Tuple[bool, Optional[str]]: (success, reason_if_failed)
+        """
+        try:
+            # STEP 1: Validate recipient email address
+            is_valid, error_reason = self._validate_email(recipient)
+            if not is_valid:
+                error_message = f"ERROR: {error_reason}"
+                email_logger.log_email_transaction(
+                    email_id=email_id,
+                    email=recipient,
+                    subject=subject,
+                    file_path=folder_path,
+                    status="Failed",
+                    reason=error_message
+                )
+                return False, error_message
+                
+            # STEP 2: Check SMTP connectivity before proceeding
+            is_connected, error_reason = self._check_smtp_connection()
+            if not is_connected:
+                error_message = f"ERROR: {error_reason}"
+                email_logger.log_email_transaction(
+                    email_id=email_id,
+                    email=recipient,
+                    subject=subject,
+                    file_path=folder_path,
+                    status="Failed",
+                    reason=error_message
+                )
+                return False, error_message
+                
+            # STEP 3: Validate the attachment path if provided
+            if folder_path:
+                is_valid, error_reason = self._validate_attachment_path(folder_path)
+                if not is_valid:
+                    error_message = f"ERROR: {error_reason}"
+                    email_logger.log_email_transaction(
+                        email_id=email_id,
+                        email=recipient,
+                        subject=subject,
+                        file_path=folder_path,
+                        status="Failed",
+                        reason=error_message
+                    )
+                    return False, error_message
+                    
+            # STEP 4: Validate recipient mapping against database if requested
+            if validate_mapping and email_id is not None:
+                # Import here to avoid circular imports
+                from ..services.automation_service import _validate_recipient_mapping
+                is_valid, error_reason = _validate_recipient_mapping(email_id, recipient, folder_path)
+                if not is_valid:
+                    error_message = f"ERROR: {error_reason}"
+                    email_logger.log_email_transaction(
+                        email_id=email_id,
+                        email=recipient,
+                        subject=subject,
+                        file_path=folder_path,
+                        status="Failed",
+                        reason=error_message
+                    )
+                    return False, error_message
+                
+            # STEP 5: If we need Google Drive, validate its availability
+            if folder_path:
+                # Get original folder size to determine if we might need GDrive
+                original_size = self._get_folder_size(folder_path)
+                if original_size > GDRIVE_UPLOAD_THRESHOLD:
+                    is_available, gdrive_error = self._check_gdrive_availability()
+                    # Just log this as a warning, we'll try normal attachment if GDrive fails
+                    if not is_available:
+                        email_logger.log_warning(f"Google Drive not available: {gdrive_error}. Will try regular attachment.")
+            
+            # Now that all validations have passed, proceed with the actual sending
+            return self.send_email(recipient, subject, body, folder_path, sender, email_id)
+                
+        except Exception as e:
+            error_message = f"Failed to validate email: {str(e)}"
+            logger.error(error_message)
+            
+            # Create a more descriptive and formatted reason
+            error_type = e.__class__.__name__
+            error_details = str(e)
+            formatted_reason = f"ERROR: {error_type} - {error_details}"
+            
+            # Log the error
+            email_logger.log_email_transaction(
+                email_id=email_id,
+                email=recipient,
+                subject=subject,
+                file_path=folder_path,
+                status="Failed",
+                reason=formatted_reason
+            )
+            
+            return False, formatted_reason
+
     def _get_folder_size(self, folder_path: str) -> int:
         """
         Calculate the total size of a folder in bytes
@@ -362,7 +541,9 @@ class EmailSender:
         """
         try:
             if not os.path.exists(folder_path):
-                logger.error(f"Folder path does not exist: {folder_path}")
+                error_msg = f"Folder path does not exist for compression: {folder_path}"
+                logger.error(error_msg)
+                email_logger.log_error(error_msg)
                 return None, None
                 
             folder_name = os.path.basename(folder_path)
@@ -375,25 +556,63 @@ class EmailSender:
                 temp_zip_path = os.path.join(temp_dir, zip_filename)
                 
                 # Create the zip file
-                with zipfile.ZipFile(temp_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                    # If the source is a file
-                    if os.path.isfile(folder_path):
-                        zipf.write(folder_path, os.path.basename(folder_path))
-                    else:
-                        # If the source is a directory, iterate through all files
-                        for root, _, files in os.walk(folder_path):
-                            for file in files:
-                                file_path = os.path.join(root, file)
-                                # Preserve the directory structure inside the zip
-                                arcname = os.path.relpath(file_path, os.path.dirname(folder_path))
-                                zipf.write(file_path, arcname)
+                try:
+                    with zipfile.ZipFile(temp_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                        # If the source is a file
+                        if os.path.isfile(folder_path):
+                            zipf.write(folder_path, os.path.basename(folder_path))
+                        else:
+                            # If the source is a directory, iterate through all files
+                            files_found = False
+                            for root, _, files in os.walk(folder_path):
+                                for file in files:
+                                    files_found = True
+                                    file_path = os.path.join(root, file)
+                                    # Preserve the directory structure inside the zip
+                                    arcname = os.path.relpath(file_path, os.path.dirname(folder_path))
+                                    zipf.write(file_path, arcname)
+                            
+                            # Double-check we actually found files
+                            if not files_found:
+                                error_msg = f"No files found in folder for compression: {folder_path}"
+                                logger.error(error_msg)
+                                email_logger.log_error(error_msg)
+                                return None, None
+                except Exception as zip_error:
+                    error_msg = f"Error creating zip file for {folder_path}: {str(zip_error)}"
+                    logger.error(error_msg)
+                    email_logger.log_error(error_msg)
+                    return None, None
                 
                 # Move the zip file to the archive path
-                shutil.move(temp_zip_path, archive_file_path)
+                try:
+                    shutil.move(temp_zip_path, archive_file_path)
+                except Exception as move_error:
+                    error_msg = f"Error moving zip file to archive path: {str(move_error)}"
+                    logger.error(error_msg)
+                    email_logger.log_error(error_msg)
+                    return None, None
                 
                 # Get the size of the compressed file
-                compressed_size = os.path.getsize(archive_file_path)
-                formatted_size = format_file_size(compressed_size)
+                try:
+                    compressed_size = os.path.getsize(archive_file_path)
+                    
+                    # Check if compressed file is empty or too small (could indicate compression failure)
+                    if compressed_size == 0:
+                        error_msg = f"Compressed file is empty: {archive_file_path}"
+                        logger.error(error_msg)
+                        email_logger.log_error(error_msg)
+                        
+                        # Clean up the empty file
+                        os.remove(archive_file_path)
+                        return None, None
+                        
+                    formatted_size = format_file_size(compressed_size)
+                except Exception as size_error:
+                    error_msg = f"Error getting compressed file size: {str(size_error)}"
+                    logger.error(error_msg)
+                    email_logger.log_error(error_msg)
+                    return None, None
                 
             email_logger.log_info(f"Folder compressed successfully: {archive_file_path}, size: {formatted_size} ({compressed_size} bytes)")
             return archive_file_path, compressed_size
@@ -403,6 +622,100 @@ class EmailSender:
             logger.error(error_msg)
             email_logger.log_error(error_msg)
             return None, None
+        
+    def _validate_attachment_path(self, folder_path: str) -> Tuple[bool, Optional[str]]:
+        """
+        Validate that a folder path exists and contains files
+        
+        Args:
+            folder_path: Path to the folder to validate
+            
+        Returns:
+            Tuple[bool, str]: (is_valid, error_reason_if_invalid)
+        """
+        # Check if folder path is provided
+        if not folder_path:
+            return False, "No attachment path provided"
+            
+        # Check if folder exists
+        if not os.path.exists(folder_path):
+            return False, f"Folder path does not exist: {folder_path}"
+            
+        # If it's a file, check if it exists and is not empty
+        if os.path.isfile(folder_path):
+            if os.path.getsize(folder_path) == 0:
+                return False, f"Attachment file exists but is empty: {folder_path}"
+            return True, None
+            
+        # If it's a folder, check if it has files
+        has_files = False
+        for _, _, files in os.walk(folder_path):
+            if files:
+                has_files = True
+                break
+                
+        if not has_files:
+            return False, f"Folder exists but is empty: {folder_path}"
+            
+        return True, None
+    
+    def _validate_email(self, email: str) -> Tuple[bool, Optional[str]]:
+        """
+        Validate email format and content
+        
+        Args:
+            email: Email address to validate
+            
+        Returns:
+            Tuple[bool, str]: (is_valid, error_reason_if_invalid)
+        """
+        if not email:
+            return False, "Email address is empty"
+            
+        # Simple regex for email validation
+        import re
+        email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        if not email_pattern.match(email):
+            return False, f"Invalid email format: {email}"
+            
+        return True, None
+
+    def _check_smtp_connection(self) -> Tuple[bool, Optional[str]]:
+        """
+        Verify SMTP server connectivity before attempting to send
+        
+        Returns:
+            Tuple[bool, str]: (is_connected, error_reason_if_not)
+        """
+        try:
+            # Try to connect to the SMTP server
+            with smtplib.SMTP(self.smtp_server, self.port, timeout=10) as server:
+                if self.use_tls:
+                    server.starttls()
+                server.ehlo()  # Just say hello, don't login yet
+            return True, None
+        except Exception as e:
+            error_msg = f"Cannot connect to SMTP server: {str(e)}"
+            return False, error_msg
+
+    def _check_gdrive_availability(self) -> Tuple[bool, Optional[str]]:
+        """
+        Verify Google Drive API is available
+        
+        Returns:
+            Tuple[bool, str]: (is_available, error_reason_if_not)
+        """
+        if not GDRIVE_AVAILABLE:
+            return False, "Google Drive service not available"
+            
+        try:
+            # Try to initialize the Google Drive service
+            gdrive = GoogleDriveService()
+            # Just check if we can initialize it
+            return True, None
+        except Exception as e:
+            error_msg = f"Cannot connect to Google Drive: {str(e)}"
+            return False, error_msg
 
 # Functions to handle email records from the database
 def get_email_status_summary() -> Dict[str, int]:

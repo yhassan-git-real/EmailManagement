@@ -242,15 +242,40 @@ class EmailSender:
                                 success_message = f"Large file ({file_size_formatted}) uploaded to Google Drive - Link added to email"
                                 email_logger.log_info(f"SUCCESS: {success_message}")
                                 
-                                # Append download link information to the email body
+                                # Append download link information to the email body in Gmail Drive attachment style
                                 file_name = os.path.basename(attachment_path)
+                                formatted_size = format_size(os.path.getsize(attachment_path))
+                                
+                                # Determine proper icon based on file extension
+                                file_extension = os.path.splitext(file_name)[1].lower()
+                                if file_extension in ['.zip', '.rar', '.tar', '.gz']:
+                                    # Archive file icon
+                                    icon_url = "https://ssl.gstatic.com/docs/doclist/images/icon_10_generic_list.png"
+                                elif file_extension in ['.pdf']:
+                                    # PDF file icon
+                                    icon_url = "https://ssl.gstatic.com/docs/doclist/images/icon_11_pdf_list.png"
+                                elif file_extension in ['.doc', '.docx']:
+                                    # Word document icon
+                                    icon_url = "https://ssl.gstatic.com/docs/doclist/images/icon_11_word_list.png"
+                                elif file_extension in ['.xls', '.xlsx']:
+                                    # Excel spreadsheet icon
+                                    icon_url = "https://ssl.gstatic.com/docs/doclist/images/icon_11_excel_list.png"
+                                elif file_extension in ['.ppt', '.pptx']:
+                                    # PowerPoint presentation icon
+                                    icon_url = "https://ssl.gstatic.com/docs/doclist/images/icon_11_powerpoint_list.png"
+                                else:
+                                    # Default document icon
+                                    icon_url = "https://ssl.gstatic.com/docs/doclist/images/icon_11_document_list.png"
+                                
+                                # Create Gmail-style Drive attachment HTML with precise alignment to match Gmail's native chips
                                 link_html = f"""
-                                <div style="margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">
-                                    <p><strong>Large File Attachment Notice:</strong></p>
-                                    <p>The file <strong>{file_name}</strong> was too large to send as an email attachment.</p>
-                                    <p>It has been uploaded to Google Drive for your convenience.</p>
-                                    <p><a href="{gdrive_link}" style="display: inline-block; padding: 10px 20px; background-color: #4285F4; color: white; text-decoration: none; border-radius: 4px;">Download File</a></p>
-                                    <p style="font-size: 12px; color: #666;">This link will be available for 30 days.</p>
+                                <div style="margin: 6px 0px;">
+                                    <div class="gmail_chip gmail_drive_chip" style="width: 386px; height: 20px; max-height: 20px; background-color: rgb(245,245,245); padding: 10px; font-size: 14px; line-height: 20px; font-family: 'Google Sans', Roboto, Arial, sans-serif; border: 1px solid rgb(221,221,221);">
+                                        <a href="{gdrive_link}" style="color: rgb(32,33,36); display: inline-block; max-width: 356px; overflow: hidden; text-overflow: ellipsis; text-decoration: none; border: none;">
+                                            <img src="{icon_url}" style="vertical-align: text-bottom; border: none; padding-right: 10px; height: 20px; width: 20px;" alt="File icon">
+                                            <span dir="ltr" style="vertical-align: bottom; text-decoration: none; display: inline-block; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{file_name}</span>
+                                        </a>
+                                    </div>
                                 </div>
                                 """
                                 

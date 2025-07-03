@@ -249,14 +249,16 @@ class GoogleDriveService:
                 body=permission
             ).execute()
             
-            # Get the file to construct the direct download link
+            # Get the file to construct the shareable link
             file = self.drive_service.files().get(
                 fileId=file_id,
                 fields='webContentLink,webViewLink'
             ).execute()
             
-            # Prefer webContentLink (direct download) if available, otherwise use webViewLink
-            shareable_link = file.get('webContentLink', file.get('webViewLink'))
+            # Prefer webViewLink (shows file in Drive interface) over webContentLink (direct download)
+            # This provides a better user experience similar to Gmail attachments, showing the file in Drive UI
+            # rather than triggering the "Google Drive can't scan this file for viruses" warning
+            shareable_link = file.get('webViewLink', file.get('webContentLink'))
             
             if not shareable_link:
                 return False, None, "Failed to generate shareable link"

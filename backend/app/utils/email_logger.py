@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from typing import List, Dict, Any, Optional
+from .file_utils import format_file_size
 
 class EmailLogger:
     """Enhanced logger for email transactions with detailed information"""
@@ -44,32 +45,30 @@ class EmailLogger:
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         
-        # Console handler for debugging
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.DEBUG)
-        console_handler.setFormatter(formatter)
-        
-        # Add handlers to logger
+        # Add file handler to logger
         logger.addHandler(file_handler)
-        logger.addHandler(console_handler)
+        
+        # Make sure propagation is enabled to ensure the root logger's handlers see these logs
+        logger.propagate = True
         
         return logger
-
+        
     def log_info(self, message: str, email_id: Optional[int] = None, recipient: Optional[str] = None, 
                   subject: Optional[str] = None, status: Optional[str] = None, 
-                  file_name: Optional[str] = None):
+                  file_name: Optional[str] = None, file_path: Optional[str] = None):
         """Log an informational message with additional email-specific data"""
-        self._log_with_data(logging.INFO, message, email_id, recipient, subject, status, file_name)
+        self._log_with_data(logging.INFO, message, email_id, recipient, subject, status, file_name, file_path)
         
     def log_error(self, message: str, email_id: Optional[int] = None, recipient: Optional[str] = None,
                    subject: Optional[str] = None, status: Optional[str] = None, 
-                   file_name: Optional[str] = None):
+                   file_name: Optional[str] = None, file_path: Optional[str] = None):
         """Log an error message with additional email-specific data"""
-        self._log_with_data(logging.ERROR, message, email_id, recipient, subject, status, file_name)
+        self._log_with_data(logging.ERROR, message, email_id, recipient, subject, status, file_name, file_path)
     
     def _log_with_data(self, level: int, message: str, email_id: Optional[int] = None, 
                        recipient: Optional[str] = None, subject: Optional[str] = None,
-                       status: Optional[str] = None, file_name: Optional[str] = None):
+                       status: Optional[str] = None, file_name: Optional[str] = None,
+                       file_path: Optional[str] = None):
         """Internal method to log with additional structured data"""
         log_data = {
             "timestamp": datetime.now().isoformat(),
@@ -87,18 +86,77 @@ class EmailLogger:
             log_data["status"] = status
         if file_name is not None:
             log_data["file_name"] = file_name
-        
+        if file_path is not None:
+            log_data["file_path"] = file_path
+            
         # Convert to JSON for structured logging
         json_data = json.dumps(log_data)
         
-        # Log using the appropriate level
+        # Also log to root logger with a standard format
         if level == logging.INFO:
+            # Log to our file logger (as JSON)
             self.logger.info(json_data)
+            
+            # Also log to the root logger (via direct printing) as a formatted string
+            # This will be picked up by the console output with our custom formatter
+            prefix = ""
+            emoji = ""
+            
+            # Import colorama here to avoid circular imports
+            from colorama import Fore, Style, init
+            
+            # Force colorama initialization for direct print statements
+            # This ensures PowerShell sees the colors correctly
+            init(autoreset=True, strip=False, convert=True)
+            
+            # Add category prefix with color
+            if "Google Drive" in message or "GDrive" in message:
+                prefix = f"{Fore.MAGENTA}[GDRIVE]{Style.RESET_ALL} "
+            elif "Email transaction" in message or "Email sent" in message:
+                prefix = f"{Fore.BLUE}[EMAIL]{Style.RESET_ALL} "
+            elif "template" in message.lower():
+                prefix = f"{Fore.CYAN}[TEMPLATE]{Style.RESET_ALL} "
+            elif "compressed" in message.lower() or "attachment" in message.lower():
+                prefix = f"{Fore.BLUE}[ATTACHMENT]{Style.RESET_ALL} "
+            elif "updated" in message.lower() and "status" in message.lower():
+                prefix = f"{Fore.YELLOW}[DB]{Style.RESET_ALL} "
+            elif "authenticated" in message.lower() or "authentication" in message.lower():
+                prefix = f"{Fore.RED}[AUTH]{Style.RESET_ALL} "
+            else:
+                prefix = f"{Fore.BLUE}[EMAIL]{Style.RESET_ALL} "
+                
+            # Add emoji based on message content
+            if "SUCCESS:" in message or ("Success" in message and "status" in message.lower()):
+                emoji = "✅ "
+            elif "ERROR:" in message or "Failed" in message or "Error" in message:
+                emoji = "❌ "
+            elif "uploaded to Google Drive" in message:
+                emoji = "📤 "
+            elif "compressed successfully" in message:
+                emoji = "🗜️ "
+            elif "authenticated with Google Drive" in message:
+                emoji = "🔐 "
+            elif "Using template" in message:
+                emoji = "📝 "
+            elif "Email sent" in message:
+                emoji = "📧 "
+            elif "Updated email" in message and "Success" in message:
+                emoji = "🔄 "
+            elif "Email processing result" in message:
+                emoji = "📊 "
+            elif "Logs cleared" in message:
+                emoji = "🧹 "
+            
+            print(f"EMAIL AUTOMATION: {prefix}{emoji}{message}")
+            
         elif level == logging.ERROR:
+            # Import colorama here to avoid circular imports
+            from colorama import Fore, Style
             self.logger.error(json_data)
+            print(f"EMAIL AUTOMATION ERROR: {Fore.RED}❌ {message}{Style.RESET_ALL}")
         else:
             self.logger.debug(json_data)
-        
+            
         # Add to in-memory cache for quick retrieval
         self._log_entries.append(log_data)
         
@@ -178,6 +236,17 @@ class EmailLogger:
             original_size: Original size of attachment in bytes
             compressed_size: Compressed size of attachment in bytes
         """
+        # Determine appropriate emoji based on status and reason
+        emoji = ""
+        if status == "Success":
+            emoji = "✅ "
+            if "Google Drive" in reason or "GDrive" in reason:
+                emoji = "📤 "
+            elif "attachment" in reason:
+                emoji = "📧 "
+        else:
+            emoji = "❌ "
+            
         message = f"Email transaction: {status}"
         if reason:
             message += f" - {reason}"
@@ -194,10 +263,22 @@ class EmailLogger:
         # Add optional fields if provided
         if file_path:
             log_data["file_path"] = file_path
+        
+        # Format file sizes as human-readable if provided
         if original_size is not None:
+            original_size_formatted = format_file_size(original_size)
             log_data["original_size"] = original_size
-        if compressed_size is not None:
-            log_data["compressed_size"] = compressed_size
+            log_data["original_size_formatted"] = original_size_formatted
+            # Add file size to message if available
+            if compressed_size is not None:
+                compressed_size_formatted = format_file_size(compressed_size)
+                compression_ratio = (1 - (compressed_size / original_size)) * 100 if original_size > 0 else 0
+                message += f" (Original: {original_size_formatted}, Compressed: {compressed_size_formatted}, Saved: {compression_ratio:.1f}%)"
+                log_data["compressed_size"] = compressed_size
+                log_data["compressed_size_formatted"] = compressed_size_formatted
+                log_data["compression_ratio"] = f"{compression_ratio:.1f}%"
+            else:
+                message += f" (Size: {original_size_formatted})"
             
         # Convert to JSON for structured logging
         json_data = json.dumps(log_data)

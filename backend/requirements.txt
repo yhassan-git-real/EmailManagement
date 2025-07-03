@@ -7,6 +7,7 @@ pyodbc==4.0.39
 sqlalchemy==2.0.20
 python-multipart==0.0.6
 email-validator==2.0.0
+colorama==0.4.6
 
 # Google Drive API dependencies
 google-api-python-client==2.85.0

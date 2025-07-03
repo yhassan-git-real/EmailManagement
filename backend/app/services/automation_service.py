@@ -223,7 +223,7 @@ def _process_email_queue():
                     update_status(
                         email_id=email_record["Email_ID"],
                         status=new_status.value,
-                        reason="Email sent successfully",
+                        reason=reason or "Email sent successfully",
                         send_date=current_time,
                         date=current_time
                     )
@@ -243,7 +243,7 @@ def _process_email_queue():
                 email_logger.log_info(
                     f"Email processing result - ID: {email_record['Email_ID']}, "
                     f"To: {email_record['Email']}, Subject: {email_record['Subject']}, "
-                    f"Status: {new_status.value}, Reason: {reason or 'Success'}"
+                    f"Status: {new_status.value}, Reason: {reason}"
                 )
                 
                 # Mark task as done in queue

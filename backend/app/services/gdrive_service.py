@@ -8,6 +8,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from ..core.config import get_settings
 from ..utils.email_logger import email_logger
+from ..utils.file_utils import get_formatted_file_size
 
 logger = logging.getLogger(__name__)
 
@@ -172,8 +173,16 @@ class GoogleDriveService:
             settings = get_settings()
             env_folder_id = settings.GDRIVE_FOLDER_ID
             
+            # Get file size and format it
+            size_bytes, formatted_size = get_formatted_file_size(file_path)
+            
+            # Log that we're beginning the upload process
+            upload_message = f"Starting upload of {file_name} ({formatted_size}) to Google Drive..."
+            logger.info(upload_message)
+            email_logger.log_info(upload_message)
+            
             # Debug logging for folder ID
-            logger.info(f"GDrive Upload - File: {file_name}, Size: {os.path.getsize(file_path)} bytes")
+            logger.info(f"GDrive Upload - File: {file_name}, Size: {formatted_size} ({size_bytes} bytes)")
             logger.info(f"GDrive Upload - Param folder_id: {folder_id}")
             logger.info(f"GDrive Upload - Env folder_id: {env_folder_id}")
             
@@ -202,7 +211,9 @@ class GoogleDriveService:
             ).execute()
             
             file_id = file.get('id')
-            logger.info(f"Successfully uploaded file {file_name} to Google Drive with ID: {file_id}")
+            success_message = f"Successfully uploaded file {file_name} ({formatted_size}) to Google Drive with ID: {file_id}"
+            logger.info(success_message)
+            email_logger.log_info(f"Upload complete: {file_name} successfully uploaded to Google Drive")
             
             return True, file_id, None
             
@@ -270,16 +281,33 @@ class GoogleDriveService:
             Tuple[bool, Optional[str], Optional[str]]: 
                 (success, shareable_link if successful, error message if failed)
         """
+        # Get file size for logging
+        size_bytes, formatted_size = get_formatted_file_size(file_path)
+        file_name = os.path.basename(file_path)
+        
+        # Log the overall process beginning
+        process_start_message = f"Processing large file {file_name} ({formatted_size}) for Google Drive upload and sharing"
+        logger.info(process_start_message)
+        email_logger.log_info(process_start_message)
+        
         # Upload the file
         upload_success, file_id, upload_error = self.upload_file(file_path, folder_id)
         
         if not upload_success:
             return False, None, upload_error
         
+        # Log progress
+        email_logger.log_info(f"Generating shareable link for {file_name}...")
+        
         # Generate shareable link
         link_success, shareable_link, link_error = self.generate_shareable_link(file_id)
         
         if not link_success:
             return False, None, link_error
+        
+        # Log completion of the entire process
+        complete_message = f"File {file_name} ({formatted_size}) successfully uploaded and shared on Google Drive"
+        logger.info(complete_message)
+        email_logger.log_info(complete_message)
         
         return True, shareable_link, None

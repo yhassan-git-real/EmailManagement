@@ -1,5 +1,10 @@
 # Email Management System .gitignore
 
+# Portable Python environment
+scripts/portable_env/downloads/
+backend/portable_python/
+backend/portable_venv/
+
 # Node.js dependencies and build outputs
 /node_modules
 **/node_modules

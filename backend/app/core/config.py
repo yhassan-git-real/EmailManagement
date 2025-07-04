@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.0"
     APP_DESCRIPTION: str = "Backend API for EmailManagement application"
     
+    # API settings
+    API_PORT: int = 8000
+    API_PREFIX: str = "/api"
+    
     # Database connection settings
     DB_SERVER: str
     DB_NAME: str
@@ -48,9 +52,6 @@ class Settings(BaseSettings):
         if v and not v.strip():
             return "Email_Archive"
         return v
-    
-    # API settings
-    API_PREFIX: str = "/api"
     
     # Stored Procedures
     SP_EMAIL_RECORDS_BY_STATUS: str = "GetEmailRecordsByStatus" 

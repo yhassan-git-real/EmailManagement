@@ -1,5 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
+
 REM All-in-one script to run both the frontend and backend of EmailManagement
 REM This script starts both applications in separate windows
 
@@ -33,7 +34,19 @@ echo Frontend will be available at: http://localhost:%FRONTEND_PORT%
 echo.
 
 REM Start backend in a new window
-start cmd /c "%~dp0start_backend.bat"
+echo Starting backend...
+start "EmailManagement Backend" cmd /c "%~dp0start_backend.bat"
 
-REM Start frontend in this window
-call "%~dp0start_frontend.bat"
+REM Give the backend a moment to start
+timeout /t 2 >nul
+
+REM Start frontend in a new window
+echo Starting frontend...
+start "EmailManagement Frontend" cmd /c "%~dp0start_frontend.bat"
+
+echo.
+echo Both applications have been started in separate windows.
+echo To stop the applications, close their respective command windows.
+echo.
+echo Press any key to exit this launcher...
+pause

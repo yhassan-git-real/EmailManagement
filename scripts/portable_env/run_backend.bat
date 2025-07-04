@@ -1,11 +1,19 @@
 @echo off
 REM Run the backend application using the portable environment
 
+REM Load utility functions
+call "%~dp0..\..\scripts\utils.bat"
+
 REM Set working directory and path variables using relative paths
 set "ROOT_DIR=%~dp0..\.."
 set "BACKEND_DIR=%ROOT_DIR%\backend"
 set "ENV_PYTHON=%BACKEND_DIR%\portable_venv\Scripts\python.exe"
 set "ACTIVATE_SCRIPT=%BACKEND_DIR%\portable_venv\Scripts\activate.bat"
+set "ENV_FILE=%BACKEND_DIR%\.env"
+
+REM Get API port from .env or use default 8000
+call :GetEnvValue "%ENV_FILE%" "API_PORT" "8000"
+set "API_PORT=%RETURN_VALUE%"
 
 REM Check if portable environment exists
 if not exist "%ENV_PYTHON%" (
@@ -14,7 +22,7 @@ if not exist "%ENV_PYTHON%" (
 )
 
 echo Starting application with portable Python environment...
-echo Backend will be available at: http://localhost:8000
+echo Backend will be available at: http://localhost:%API_PORT%
 
 REM Activate the environment and run the application
 call "%ACTIVATE_SCRIPT%"

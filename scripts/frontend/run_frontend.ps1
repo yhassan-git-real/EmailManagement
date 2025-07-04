@@ -4,10 +4,17 @@
 # Stop on any error
 $ErrorActionPreference = "Stop"
 
+# Import utility functions
+. (Join-Path $PSScriptRoot "..\..\scripts\utils.ps1")
+
 # Set working directory and path variables using relative paths
 $RootDir = Join-Path $PSScriptRoot "..\..\"
 $FrontendDir = Join-Path $RootDir "frontend"
 $NodeModulesDir = Join-Path $FrontendDir "node_modules"
+$EnvFile = Join-Path $FrontendDir ".env"
+
+# Get frontend port from .env or use default 3000
+$FrontendPort = Get-EnvValue -filePath $EnvFile -key "VITE_PORT" -defaultValue "3000"
 
 # Check if Node.js is installed
 try {
@@ -49,7 +56,7 @@ if (-not (Test-Path $NodeModulesDir)) {
 }
 
 Write-Host "`nStarting frontend development server..." -ForegroundColor Cyan
-Write-Host "Frontend will be available at: http://localhost:3000" -ForegroundColor Cyan
+Write-Host "Frontend will be available at: http://localhost:$FrontendPort" -ForegroundColor Cyan
 
 # Change directory to the frontend folder
 $CurrentLocation = Get-Location

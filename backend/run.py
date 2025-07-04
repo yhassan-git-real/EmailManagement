@@ -447,9 +447,16 @@ if __name__ == "__main__":
     # Create Email_Archive directory if it doesn't exist
     email_archive_path = os.environ.get("EMAIL_ARCHIVE_PATH", os.path.join(os.getcwd(), "Email_Archive"))
     os.makedirs(email_archive_path, exist_ok=True)
-    logger.info(f"CONFIG: Email archive directory: {email_archive_path}")
+    logger.info(f"CONFIG: Email archive directory: {email_archive_path}")    
+    # Load environment variables (if not already loaded)
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    load_dotenv(dotenv_path=env_path)
+      # Get port from environment variable through Settings class
+    from app.core.config import get_settings
+    settings = get_settings()
+    api_port = settings.API_PORT
     
-    logger.info(f"SERVER: Starting EmailManagement API server")
+    logger.info(f"SERVER: Starting EmailManagement API server on port {api_port}")
     
     # Run the FastAPI application with modified logging config
     # Add Uvicorn's logs to our custom logging system
@@ -480,12 +487,11 @@ if __name__ == "__main__":
             # Access logs will be handled by our custom formatter
             "uvicorn.access": {"handlers": ["default"], "level": "INFO", "propagate": True},
         },
-    }
-    
+    }    
     uvicorn.run(
         "app.main:app", 
         host="0.0.0.0", 
-        port=8000, 
+        port=api_port, 
         reload=True,
         log_config=log_config
     )

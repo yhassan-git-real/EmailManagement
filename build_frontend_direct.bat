@@ -1,27 +1,13 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-REM All-in-one script to run the EmailManagement frontend
-REM This script automatically handles dependency installation and starts the development server
+REM Direct script to build the frontend for production
+REM This is a simplified version for reliability
 
-REM Read port configuration from .env file
-set "FRONTEND_ENV_FILE=%~dp0frontend\.env"
-set "FRONTEND_PORT=3000"
-
-if exist "%FRONTEND_ENV_FILE%" (
-    for /F "usebackq tokens=1,* delims==" %%A in ("%FRONTEND_ENV_FILE%") do (
-        if "%%A"=="VITE_PORT" (
-            set "FRONTEND_PORT=%%B"
-        )
-    )
-)
-
-echo [EmailManagement] Starting frontend application...
-echo Frontend will be available at: http://localhost:%FRONTEND_PORT%
-echo.
-
-REM Change to the frontend directory
 cd "%~dp0frontend"
+
+echo [EmailManagement] Building frontend for production...
+echo.
 
 REM Check if Node.js is installed
 where node >nul 2>&1
@@ -67,19 +53,28 @@ if not exist "node_modules" (
 )
 
 echo.
-echo Starting frontend development server...
-echo Frontend will be available at: http://localhost:%FRONTEND_PORT%
+echo Building frontend for production...
 echo.
 
-REM Run the frontend directly in this window
-set "VITE_PORT=%FRONTEND_PORT%"
-cmd /k npm run dev
+REM Run build command
+npm run build
 
+if %ERRORLEVEL% NEQ 0 (
+    echo Error building the frontend.
+    goto :error
+)
+
+echo.
+echo Frontend built successfully!
+echo The production build is in: %~dp0frontend\dist
 goto :end
 
 :error
 echo.
-echo An error occurred while setting up or running the frontend.
+echo An error occurred while building the frontend.
 exit /b 1
 
 :end
+echo.
+echo Build process completed successfully.
+pause

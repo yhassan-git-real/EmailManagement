@@ -1,4 +1,5 @@
 @echo off
+setlocal EnableDelayedExpansion
 REM Script to build the frontend for production
 
 REM Set working directory and path variables using relative paths
@@ -8,14 +9,15 @@ set "NODE_MODULES_DIR=%FRONTEND_DIR%\node_modules"
 set "BUILD_DIR=%FRONTEND_DIR%\dist"
 
 REM Check if Node.js is installed
-node -v > nul 2>&1
+where node >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo Node.js is not installed or not in the PATH. Please install Node.js to continue.
     echo Download Node.js from: https://nodejs.org/
     exit /b 1
+) else (
+    echo Node.js is installed
+    node --version
 )
-
-echo Node.js is installed
 
 REM Check if frontend dependencies are installed
 if not exist "%NODE_MODULES_DIR%" (

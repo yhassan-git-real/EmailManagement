@@ -13,14 +13,40 @@ EmailManagement/
 ├── scripts/                # Utility scripts for the project
 │   ├── portable_env/       # Portable Python environment scripts
 │   └── frontend/           # Frontend development scripts
-├── start_backend.ps1       # Script to run backend
-├── start_backend.bat       # Script to run backend
-├── start_frontend.ps1      # Script to run frontend
-├── start_frontend.bat      # Script to run frontend
-├── start_app.ps1           # Script to run both frontend and backend
-├── start_app.bat           # Script to run both frontend and backend
-└── package.json            # Root package.json for managing workspaces
+├── start_backend.ps1       # Script to run backend (PowerShell)
+├── start_backend.bat       # Script to run backend (Batch)
+├── start_frontend.ps1      # Script to run frontend (PowerShell)
+├── start_frontend.bat      # Script to run frontend (Batch)
+├── start_app.ps1           # Script to run both frontend and backend (PowerShell)
+├── start_app.bat           # Script to run both frontend and backend (Batch)
+├── build_frontend.ps1      # Script to build the frontend for production (PowerShell)
+└── build_frontend.bat      # Script to build the frontend for production (Batch)
 ```
+
+## Quick Start
+
+To run the application:
+
+1. **Start Both Frontend and Backend**:
+   - PowerShell: `.\start_app.ps1`
+   - Command Prompt: `start_app.bat`
+
+2. **Start Only the Backend**:
+   - PowerShell: `.\start_backend.ps1`
+   - Command Prompt: `start_backend.bat`
+
+3. **Start Only the Frontend**:
+   - PowerShell: `.\start_frontend.ps1`
+   - Command Prompt: `start_frontend.bat`
+
+4. **Build Frontend for Production**:
+   - PowerShell: `.\build_frontend.ps1`
+   - Command Prompt: `build_frontend.bat`
+
+### Port Configuration
+
+- Backend runs on port 8000 by default (configurable in `backend/.env`)
+- Frontend runs on port 3000 by default (configurable in `frontend/.env`)
 
 ## Features
 
@@ -164,6 +190,47 @@ frontend/
 ├── tailwind.config.js
 └── README.md
 ```
+
+## Port Configuration
+
+Both the backend and frontend applications use environment variables to configure their ports:
+
+### Backend Port Configuration
+
+The backend API server port can be configured in `backend/.env`:
+
+```
+# In backend/.env
+API_PORT=8000  # Change this to use a different port
+```
+
+### Frontend Port Configuration
+
+The frontend development server port can be configured in `frontend/.env`:
+
+```
+# In frontend/.env
+VITE_PORT=3000  # Change this to use a different port
+```
+
+When you change these port configurations, all the scripts will automatically use the new ports.
+
+## Choosing Port Numbers
+
+When selecting port numbers for your applications, consider these guidelines:
+
+1. **Port Range**: Generally, ports 1024-49151 are recommended for user applications.
+   - Ports 0-1023 are reserved for system services (HTTP: 80, HTTPS: 443, etc.)
+   - Ports 49152-65535 are dynamic/private ports
+
+2. **Common Development Ports**:
+   - 3000-3999: Often used for web development (React, Next.js, etc.)
+   - 8000-8999: Commonly used for API servers and backends
+   - 4000-4999: Used for various development servers
+
+3. **Avoid Conflicts**: Make sure the ports you choose aren't already in use by other applications.
+
+4. **Firewall Considerations**: Some ports might be blocked by firewalls, especially in corporate environments.
 
 ## Recent Updates
 

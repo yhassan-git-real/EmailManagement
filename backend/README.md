@@ -23,6 +23,8 @@ backend/
 
 ## Setup
 
+### Option 1: Using System Python (Traditional Setup)
+
 1. Install Python dependencies:
    ```
    pip install -r requirements.txt
@@ -41,6 +43,55 @@ backend/
 3. Run the application:
    ```
    python run.py
+   ```
+
+### Option 2: Using Portable Python Environment (Recommended)
+
+This method creates a self-contained, portable Python environment that works across different systems without relying on the system's global Python installation.
+
+The portable environment scripts are located in the root directory of the project.
+
+#### PowerShell (Recommended for Windows)
+
+1. Run the all-in-one script from the project root:
+   ```powershell
+   # From project root (PowerShell)
+   .\start_backend.ps1
+   
+   # From project root (CMD)
+   start_backend.bat
+   ```
+
+#### Command Prompt
+
+1. Run the all-in-one script from the project root:
+   ```
+   start_backend.bat
+   ```
+
+#### For Development (Manual Environment Activation)
+
+If you need to work directly with the Python environment (for installing packages, etc.):
+
+1. Activate the environment:
+   ```
+   # PowerShell
+   .\scripts\portable_env\activate.ps1
+   
+   # CMD
+   .\scripts\portable_env\activate.bat
+   ```
+
+2. You can now run Python commands directly.
+
+3. Deactivate when finished:
+   ```
+   deactivate
+   ```
+
+4. Or simply use the all-in-one run script:
+   ```
+   ..\run_backend_portable.bat
    ```
 
 ## API Endpoints

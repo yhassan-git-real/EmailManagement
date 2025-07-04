@@ -8,9 +8,18 @@ The project is organized into a monorepo with frontend and backend code separate
 
 ```
 EmailManagement/
-├── frontend/        # React.js frontend application
-├── backend/         # Node.js backend (will be implemented later)
-└── package.json     # Root package.json for managing workspaces
+├── frontend/               # React.js frontend application
+├── backend/                # FastAPI Python backend
+├── scripts/                # Utility scripts for the project
+│   ├── portable_env/       # Portable Python environment scripts
+│   └── frontend/           # Frontend development scripts
+├── start_backend.ps1       # Script to run backend
+├── start_backend.bat       # Script to run backend
+├── start_frontend.ps1      # Script to run frontend
+├── start_frontend.bat      # Script to run frontend
+├── start_app.ps1           # Script to run both frontend and backend
+├── start_app.bat           # Script to run both frontend and backend
+└── package.json            # Root package.json for managing workspaces
 ```
 
 ## Features
@@ -24,7 +33,7 @@ EmailManagement/
 ## Tech Stack
 
 - **Frontend**: React.js with Tailwind CSS
-- **Backend** (planned): Node.js
+- **Backend**: FastAPI (Python)
 
 ## Getting Started
 
@@ -32,37 +41,96 @@ EmailManagement/
 
 - Node.js 14.x or higher
 - npm 6.x or higher
+- For backend: Python 3.11 (automatically handled with portable environment scripts)
+
+### Running the Backend
+
+#### Using Portable Python Environment (Recommended)
+
+This method creates a self-contained, portable Python environment that works across different systems without relying on the system's global Python installation.
+
+1. Run the backend with a single command:
+   ```powershell
+   # PowerShell
+   .\start_backend.ps1
+   
+   # or CMD
+   start_backend.bat
+   ```
+
+The backend will be available at: http://localhost:8000
+
+The portable environment approach ensures consistent behavior across different systems and avoids dependency issues.
 
 ### Running the Frontend
 
-#### Option 1: From the root directory
-1. Install dependencies
-   ```bash
-   npm run install:frontend
+1. Run the frontend with a single command:
+   ```powershell
+   # PowerShell
+   .\start_frontend.ps1
+   
+   # or CMD
+   start_frontend.bat
    ```
 
-2. Start the frontend development server
-   ```bash
-   npm run start:frontend
-   ```
+The frontend will be available at: http://localhost:3000
 
-#### Option 2: From the frontend directory
-1. Navigate to the frontend directory
-   ```bash
-   cd frontend
-   ```
+This will automatically:
+- Check if Node.js is installed
+- Install frontend dependencies if needed
+- Start the development server
 
-2. Install dependencies
-   ```bash
-   npm install
-   ```
+### Running Both Frontend and Backend
 
-3. Start the development server
-   ```bash
-   npm start
-   ```
+For full-stack development, you can start both the frontend and backend with a single command:
 
-4. Open [http://localhost:3000](http://localhost:3000) to view the application
+```powershell
+# PowerShell
+.\start_app.ps1
+
+# or CMD
+start_app.bat
+```
+
+This will start both applications in separate windows for convenient development.
+
+- Backend will be available at: http://localhost:8000
+- Frontend will be available at: http://localhost:3000
+
+### Using npm (Alternative)
+
+You can also use npm commands from the root directory:
+
+```bash
+# Start the backend
+npm run start:backend
+
+# Start the frontend
+npm run start:frontend
+
+# Start both frontend and backend
+npm start
+
+# Build the frontend for production
+npm run build:frontend
+```
+
+## Building for Production
+
+To build the frontend for production deployment:
+
+```powershell
+# PowerShell
+.\build_frontend.ps1
+
+# or CMD
+build_frontend.bat
+
+# or npm
+npm run build:frontend
+```
+
+This will create an optimized production build in the `frontend/dist` directory that can be deployed to a web server.
 
 ## Frontend Structure
 

@@ -1,4 +1,13 @@
 {
+  "name": "email-management",
+  "version": "1.0.0",
+  "description": "Full-stack application for managing and sending emails",
+  "scripts": {
+    "start:backend": "powershell -File .\\start_backend.ps1",
+    "start:frontend": "powershell -File .\\start_frontend.ps1",
+    "start": "powershell -File .\\start_app.ps1",
+    "build:frontend": "powershell -File .\\build_frontend.ps1"
+  },
   "dependencies": {
     "react-router-dom": "^6.22.3"
   }

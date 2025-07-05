@@ -4,7 +4,6 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Dashboard from './pages/Dashboard';
 import StatusPage from './pages/StatusPage';
-import ComposePage from './pages/ComposePage';
 import AutomatePage from './pages/AutomatePage';
 
 function App() {
@@ -62,17 +61,6 @@ function App() {
           <Route
             path="/status"
             element={<Navigate to="/dashboard" replace />}
-          />
-          <Route
-            path="/compose"
-            element={
-              <ProtectedRoute>
-                <ComposePage
-                  connectionInfo={connectionInfo}
-                  onDisconnect={handleDisconnect}
-                />
-              </ProtectedRoute>
-            }
           />
           <Route
             path="/automate"

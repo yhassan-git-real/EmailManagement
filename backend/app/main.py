@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 import sys
 import os
-from .api.endpoints import database, emails, automation, manual_email
+from .api.endpoints import database, emails, automation
 from .api import email_records_router
 from .core.config import settings
 
@@ -48,7 +48,6 @@ except Exception as e:
 app.include_router(database.router, prefix="/api/database", tags=["database"])
 app.include_router(emails.router, prefix="/api/email", tags=["email"])
 app.include_router(automation.router, prefix="/api/automation", tags=["automation"])
-app.include_router(manual_email.router, prefix="/api/manual-email", tags=["manual-email"])
 # Include the new Email Records router
 app.include_router(email_records_router.router, prefix="/api", tags=["email-records"])
 

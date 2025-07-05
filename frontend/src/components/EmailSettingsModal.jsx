@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
-import { getSmtpConfig, updateSmtpConfig } from '../utils/apiClient';
+import { validateSMTPCredentials } from '../utils/automationApi';
 import { toast } from 'react-toastify';
 import DraggableWithRef from './DraggableWithRef';
 
@@ -15,7 +15,7 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
         console.error('Error parsing saved email settings', e);
       }
     }
-    
+
     // Use initialData from props or default values
     return {
       senderEmail: initialData.senderEmail || '',
@@ -27,20 +27,20 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
       useTLS: initialData.useTLS !== undefined ? initialData.useTLS : true
     };
   });
-  
+
   const [validationStatus, setValidationStatus] = useState({
     isValidating: false,
     isValid: null,
     message: ''
   });
-  
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : value
     });
-    
+
     // Reset validation status when fields change
     if (name === 'smtpServer' || name === 'port' || name === 'username' || name === 'password' || name === 'useTLS') {
       setValidationStatus({
@@ -50,53 +50,42 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
       });
     }
   };
-  
-  // Load current SMTP configuration when modal opens
+
+  // Load SMTP configuration from localStorage when modal opens
   useEffect(() => {
-    const loadSmtpConfig = async () => {
+    const savedSettings = localStorage.getItem('emailSettings');
+    if (savedSettings) {
       try {
-        const response = await getSmtpConfig();
-        
-        if (response.success) {
-          setFormData({
-            senderEmail: response.data.sender_email || '',
-            smtpServer: response.data.smtp_server || '',
-            port: response.data.smtp_port || '587',
-            authType: 'login', // Default auth type
-            username: response.data.smtp_username || '',
-            password: '', // Password is not returned for security reasons
-            useTLS: response.data.use_tls !== false
-          });
-        }
-      } catch (error) {
-        console.error('Error loading SMTP config:', error);
+        const parsedSettings = JSON.parse(savedSettings);
+        setFormData(prevState => ({
+          ...prevState,
+          ...parsedSettings
+        }));
+      } catch (e) {
+        console.error('Error parsing saved email settings', e);
       }
-    };
-    
-    loadSmtpConfig();
+    }
   }, []);
-  
+
   const handleValidateSmtp = async () => {
     setValidationStatus({
       isValidating: true,
       isValid: null,
       message: 'Validating SMTP settings...'
     });
-    
+
     try {
-      // We'll use our update function to validate
-      // In a real implementation, you might want a separate validation endpoint
-      const configData = {
-        smtp_server: formData.smtpServer,
-        smtp_port: parseInt(formData.port, 10),
-        smtp_username: formData.username,
-        smtp_password: formData.password,
-        sender_email: formData.senderEmail,
-        use_tls: formData.useTLS
+      // Use the automation API to validate SMTP credentials
+      const credentials = {
+        smtpServer: formData.smtpServer,
+        port: parseInt(formData.port, 10),
+        username: formData.username,
+        password: formData.password,
+        useTLS: formData.useTLS
       };
-      
-      const response = await updateSmtpConfig(configData);
-      
+
+      const response = await validateSMTPCredentials(credentials);
+
       if (response.success) {
         setValidationStatus({
           isValidating: false,
@@ -105,7 +94,7 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
         });
       } else {
         setValidationStatus({
-          isValidating: false, 
+          isValidating: false,
           isValid: false,
           message: response.message || 'SMTP validation failed'
         });
@@ -118,40 +107,26 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
       });
     }
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
-      const configData = {
-        smtp_server: formData.smtpServer,
-        smtp_port: parseInt(formData.port, 10),
-        smtp_username: formData.username,
-        smtp_password: formData.password,
-        sender_email: formData.senderEmail,
-        use_tls: formData.useTLS
-      };
-      
-      const response = await updateSmtpConfig(configData);
-      
-      if (response.success) {
-        // Save to localStorage for convenience
-        localStorage.setItem('emailSettings', JSON.stringify(formData));
-        toast.success('SMTP configuration saved successfully');
-        
-        // Call the onSave prop
-        if (onSave) {
-          onSave(formData);
-        }
-      } else {
-        toast.error(`Failed to save SMTP configuration: ${response.message}`);
+      // We'll just save to localStorage and pass to onSave
+      // The automation settings will be updated through the AutomatePage
+      localStorage.setItem('emailSettings', JSON.stringify(formData));
+      toast.success('SMTP configuration saved successfully');
+
+      // Call the onSave prop
+      if (onSave) {
+        onSave(formData);
       }
     } catch (error) {
       console.error('Error saving SMTP config:', error);
       toast.error(`Error saving configuration: ${error.message}`);
     }
   };
-  
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
       <DraggableWithRef handle=".modal-handle">
@@ -165,7 +140,7 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
               <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="p-4">
             <div className="space-y-4">
               <div>
@@ -183,7 +158,7 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
                   required
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="smtpServer" className="block text-sm font-medium text-gray-700 mb-1">
                   SMTP Server
@@ -199,7 +174,7 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
                   required
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="port" className="block text-sm font-medium text-gray-700 mb-1">
@@ -233,7 +208,7 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
                   </select>
                 </div>
               </div>
-              
+
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                   Username
@@ -248,7 +223,7 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
                   required
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                   Password
@@ -263,7 +238,7 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
                   required
                 />
               </div>
-              
+
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -277,16 +252,15 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
                   Use TLS
                 </label>
               </div>
-              
+
               {/* Validation status display */}
               {validationStatus.message && (
-                <div className={`rounded-md p-3 flex items-center ${
-                  validationStatus.isValid === true 
-                    ? 'bg-green-50 text-green-700' 
-                    : validationStatus.isValid === false 
-                      ? 'bg-red-50 text-red-700'
-                      : 'bg-blue-50 text-blue-700'
-                }`}>
+                <div className={`rounded-md p-3 flex items-center ${validationStatus.isValid === true
+                  ? 'bg-green-50 text-green-700'
+                  : validationStatus.isValid === false
+                    ? 'bg-red-50 text-red-700'
+                    : 'bg-blue-50 text-blue-700'
+                  }`}>
                   {validationStatus.isValid === true ? (
                     <CheckCircleIcon className="h-5 w-5 mr-2" />
                   ) : validationStatus.isValid === false ? (
@@ -295,10 +269,10 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
                   <span>{validationStatus.message}</span>
                 </div>
               )}
-              
+
               {/* Test SMTP button */}
               <div>
-                <button 
+                <button
                   type="button"
                   onClick={handleValidateSmtp}
                   disabled={validationStatus.isValidating}
@@ -308,7 +282,7 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
                 </button>
               </div>
             </div>
-            
+
             <div className="mt-5 flex justify-end space-x-3">
               <button
                 type="button"

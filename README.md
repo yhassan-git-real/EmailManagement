@@ -53,7 +53,6 @@ To run the application:
 - **Database Connection Interface**: Connect to SQL Server databases
 - **Email Status Report Viewer**: View sent, failed, and pending email statistics
 - **Modern UI/UX**: Clean, responsive dashboard with collapsible sidebar
-- **Manual Email Composition**: Create and send emails with rich formatting
 - **Email Automation**: Set up automated email workflows and rules
 
 ## Tech Stack
@@ -178,11 +177,9 @@ frontend/
 │   │   └── Welcome.jsx
 │   ├── pages/
 │   │   ├── AutomatePage.jsx
-│   │   ├── ComposePage.jsx
 │   │   ├── Dashboard.jsx
 │   │   └── StatusPage.jsx
 │   ├── utils/
-│   │   └── mockApi.js
 │   ├── App.jsx
 │   ├── index.css
 │   └── index.js

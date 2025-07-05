@@ -1,0 +1,5 @@
+{
+    "editor.formatOnSave": true,
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "editor.wordWrap": "on"
+}

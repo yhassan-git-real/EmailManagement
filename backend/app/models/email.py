@@ -20,10 +20,6 @@ class EmailRecordBase(BaseModel):
     reason: Optional[str] = None
 
 
-class EmailRecordCreate(EmailRecordBase):
-    pass
-
-
 class EmailRecord(EmailRecordBase):
     email_id: int
     date: datetime = Field(default_factory=datetime.now)

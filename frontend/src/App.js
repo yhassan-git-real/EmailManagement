@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import StatusPage from './pages/StatusPage';
 import AutomatePage from './pages/AutomatePage';
 import EmailRecordsPage from './features/email-records';
+import { saveConnectionToSession, loadConnectionFromSession, clearConnectionSession } from './utils/sessionUtils';
 
 // Silence React Router warnings for future version
 const originalConsoleWarn = console.warn;
@@ -25,19 +26,18 @@ console.warn = function (msg) {
 function App() {
   // Initialize state from sessionStorage if available
   const [isConnected, setIsConnected] = useState(() => {
-    const saved = sessionStorage.getItem('isConnected');
-    return saved ? JSON.parse(saved) : false;
+    const { isConnected } = loadConnectionFromSession();
+    return isConnected;
   });
 
   const [connectionInfo, setConnectionInfo] = useState(() => {
-    const saved = sessionStorage.getItem('connectionInfo');
-    return saved ? JSON.parse(saved) : null;
+    const { connectionInfo } = loadConnectionFromSession();
+    return connectionInfo;
   });
 
   // Update sessionStorage when connection state changes
   useEffect(() => {
-    sessionStorage.setItem('isConnected', JSON.stringify(isConnected));
-    sessionStorage.setItem('connectionInfo', JSON.stringify(connectionInfo));
+    saveConnectionToSession(isConnected, connectionInfo);
   }, [isConnected, connectionInfo]);
 
   const handleConnect = (connected, info) => {
@@ -49,8 +49,7 @@ function App() {
     setIsConnected(false);
     setConnectionInfo(null);
     // Clear session storage on disconnect
-    sessionStorage.removeItem('isConnected');
-    sessionStorage.removeItem('connectionInfo');
+    clearConnectionSession();
   };
 
   // Protected route component

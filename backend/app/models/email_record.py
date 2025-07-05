@@ -25,7 +25,7 @@ class EmailRecord(EmailRecordBase):
     created_at: datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class EmailRecordUpdate(BaseModel):
     """Model for updating an email record"""
@@ -38,11 +38,11 @@ class EmailRecordUpdate(BaseModel):
     email_send_date: Optional[datetime] = None
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class EmailRecordStatusUpdate(BaseModel):
     """Model for updating just the status of an email record"""
     status: str = Field(..., description="Email status: Pending, Success, or Failed")
     
     class Config:
-        orm_mode = True
+        from_attributes = True

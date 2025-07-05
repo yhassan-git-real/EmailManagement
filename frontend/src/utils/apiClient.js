@@ -75,7 +75,7 @@ export const testDatabaseConnection = async (credentials) => {
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || 'Failed to test database connection');
     }
@@ -113,7 +113,7 @@ export const connectToDatabase = async (credentials) => {
     // We're using the same test endpoint for now
     // In a real implementation, you might have a separate endpoint for establishing a session
     const response = await testDatabaseConnection(credentials);
-    
+
     return {
       success: true,
       message: 'Successfully connected to database',
@@ -136,13 +136,13 @@ export const connectToDatabase = async (credentials) => {
 export const fetchEmailStatus = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/email/status-summary`);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch email status');
     }
-    
+
     const data = await response.json();
-    
+
     return {
       total: data.total || 0,
       pending: data.pending || 0,
@@ -165,7 +165,7 @@ export const fetchEmailStatus = async () => {
 export const fetchEmailRecords = async (options = {}) => {
   try {
     let url = `${API_BASE_URL}/api/email/records`;
-    
+
     // Add query parameters if options provided
     if (Object.keys(options).length > 0) {
       url += '?';
@@ -175,13 +175,13 @@ export const fetchEmailRecords = async (options = {}) => {
       if (options.offset) params.push(`offset=${options.offset}`);
       url += params.join('&');
     }
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch email records');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching email records:', error);
@@ -213,7 +213,7 @@ export const sendManualEmail = async (emailData) => {
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || 'Failed to send email');
     }
@@ -239,13 +239,13 @@ export const sendManualEmail = async (emailData) => {
 export const getSmtpConfig = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/manual-email/smtp-config`);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch SMTP configuration');
     }
-    
+
     const data = await response.json();
-    
+
     return {
       success: true,
       data
@@ -275,7 +275,7 @@ export const updateSmtpConfig = async (config) => {
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || 'Failed to update SMTP configuration');
     }
@@ -305,9 +305,9 @@ export const fetchEmailTemplates = async (isActive = true, category = null) => {
     if (category) {
       url += `?category=${encodeURIComponent(category)}`;
     }
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       console.warn('Failed to fetch templates from API. Using default templates.');
       return {
@@ -315,9 +315,9 @@ export const fetchEmailTemplates = async (isActive = true, category = null) => {
         data: DEFAULT_TEMPLATES
       };
     }
-    
+
     const data = await response.json();
-    
+
     // File-based templates already come in the correct format
     if (data.success && Array.isArray(data.templates)) {
       return {
@@ -364,7 +364,7 @@ export const updateEmailRecordStatus = async (emailId, status, reason = null) =>
 
     const response = await fetch(url, requestOptions);
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || 'Failed to update email status');
     }
@@ -394,33 +394,33 @@ export const fetchEmailTableData = async (page = 1, pageSize = 5, searchTerm = '
   try {
     // Ensure page is a valid number and force to integer
     const currentPage = parseInt(page, 10) || 1;
-    
+
     // Calculate offset for pagination - ensure it's an integer
     const offset = (currentPage - 1) * pageSize;
-    
+
     console.log(`API Call - Page: ${currentPage}, Offset: ${offset}, PageSize: ${pageSize}, Status: ${status}`);
-    
+
     let url = `${API_BASE_URL}/api/email/records?limit=${pageSize}&offset=${offset}`;
-    
+
     // If search term is provided, add it to the query
     if (searchTerm) {
       url += `&search=${encodeURIComponent(searchTerm)}`;
     }
-    
+
     // If status filter is provided, add it to the query
     if (status && status !== 'All') {
       url += `&status=${encodeURIComponent(status)}`;
     }
-    
+
     console.log(`Fetching URL: ${url}`);
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch email records');
     }
-    
+
     const responseData = await response.json();
-    
+
     // Check if response has the new format (success and data fields)
     if (responseData && responseData.success && responseData.data) {
       const result = {
@@ -433,13 +433,13 @@ export const fetchEmailTableData = async (page = 1, pageSize = 5, searchTerm = '
           totalPages: Math.ceil((responseData.data.total || 0) / pageSize)
         }
       };
-      
+
       console.log(`API Response - Page: ${currentPage}, Total: ${result.data.total}, Rows: ${result.data.rows.length}`);
       return result;
     } else {
       // Handle legacy format or unexpected response
       const formattedData = Array.isArray(responseData) ? responseData : [];
-      
+
       return {
         success: true,
         data: {
@@ -463,6 +463,42 @@ export const fetchEmailTableData = async (page = 1, pageSize = 5, searchTerm = '
         pageSize: 5,
         totalPages: 1
       }
+    };
+  }
+};
+
+/**
+ * Deletes an email record by ID
+ * @param {string|number} id - The ID of the email record to delete
+ * @returns {Promise<Object>} - Response indicating success or failure
+ */
+export const deleteEmailRecord = async (id) => {
+  try {
+    if (!id) {
+      throw new Error('Email record ID is required');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/email/records/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to delete email record (${response.status})`);
+    }
+
+    return {
+      success: true,
+      message: 'Email record deleted successfully'
+    };
+  } catch (error) {
+    console.error('Error deleting email record:', error);
+    return {
+      success: false,
+      message: error.message || 'An unknown error occurred while deleting the email record'
     };
   }
 };

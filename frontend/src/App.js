@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BrowserRouter as Router, 
-  Routes, 
-  Route, 
-  Navigate 
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate
 } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -11,10 +11,11 @@ import Dashboard from './pages/Dashboard';
 import StatusPage from './pages/StatusPage';
 import ComposePage from './pages/ComposePage';
 import AutomatePage from './pages/AutomatePage';
+import EmailRecordsPage from './features/email-records';
 
 // Silence React Router warnings for future version
 const originalConsoleWarn = console.warn;
-console.warn = function(msg) {
+console.warn = function (msg) {
   if (msg && msg.includes && msg.includes('react-router-dom')) {
     // Suppress React Router migration warnings
     return;
@@ -28,7 +29,7 @@ function App() {
     const saved = sessionStorage.getItem('isConnected');
     return saved ? JSON.parse(saved) : false;
   });
-  
+
   const [connectionInfo, setConnectionInfo] = useState(() => {
     const saved = sessionStorage.getItem('connectionInfo');
     return saved ? JSON.parse(saved) : null;
@@ -65,52 +66,75 @@ function App() {
     <Router>
       <div className="min-h-screen">
         <Routes>
-          <Route 
-            path="/" 
-            element={<Dashboard 
-              onConnected={handleConnect} 
-              onConnectionInfoUpdate={setConnectionInfo} 
-              connectionInfo={connectionInfo} 
-              isConnected={isConnected} 
-              onDisconnect={handleDisconnect} 
-            />} 
+          <Route
+            path="/"
+            element={<Dashboard
+              onConnected={handleConnect}
+              onConnectionInfoUpdate={setConnectionInfo}
+              connectionInfo={connectionInfo}
+              isConnected={isConnected}
+              onDisconnect={handleDisconnect}
+            />}
           />
-          <Route 
-            path="/dashboard" 
-            element={<Navigate to="/" replace />} 
+          <Route
+            path="/dashboard"
+            element={<Navigate to="/" replace />}
           />
-          <Route 
-            path="/status" 
+          <Route
+            path="/status"
             element={
               <ProtectedRoute>
-                <StatusPage 
-                  connectionInfo={connectionInfo} 
-                  onDisconnect={handleDisconnect} 
+                <StatusPage
+                  connectionInfo={connectionInfo}
+                  onDisconnect={handleDisconnect}
                 />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/compose" 
+          <Route
+            path="/compose"
             element={
               <ProtectedRoute>
-                <ComposePage 
-                  connectionInfo={connectionInfo} 
-                  onDisconnect={handleDisconnect} 
+                <ComposePage
+                  connectionInfo={connectionInfo}
+                  onDisconnect={handleDisconnect}
                 />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/automate" 
+          <Route
+            path="/automate"
             element={
               <ProtectedRoute>
-                <AutomatePage 
-                  connectionInfo={connectionInfo} 
-                  onDisconnect={handleDisconnect} 
+                <AutomatePage
+                  connectionInfo={connectionInfo}
+                  onDisconnect={handleDisconnect}
                 />
               </ProtectedRoute>
-            } 
+            }
+          />
+          <Route
+            path="/email-records"
+            element={
+              <ProtectedRoute>
+                <EmailRecordsPage
+                  connectionInfo={connectionInfo}
+                  onDisconnect={handleDisconnect}
+                />
+              </ProtectedRoute>
+            }
+          />
+          {/* Keep the old route for backward compatibility */}
+          <Route
+            path="/records"
+            element={
+              <ProtectedRoute>
+                <EmailRecordsPage
+                  connectionInfo={connectionInfo}
+                  onDisconnect={handleDisconnect}
+                />
+              </ProtectedRoute>
+            }
           />
         </Routes>
         <ToastContainer position="top-right" autoClose={5000} />

@@ -2,11 +2,10 @@ from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from datetime import datetime
 
-from ...models.email import EmailRecordCreate, EmailRecord, EmailStatus
+from ...models.email import EmailRecord, EmailStatus
 from ...services.email_service import (
     get_email_records,
     get_email_record_by_id, 
-    create_email_record, 
     update_email_status,
     get_email_status_summary
 )
@@ -49,23 +48,6 @@ async def read_email_record(email_id: int):
     if not record:
         raise HTTPException(status_code=404, detail=f"Email record {email_id} not found")
     return record
-
-
-@router.post("/records", response_model=EmailRecord)
-async def create_email_record_endpoint(record: EmailRecordCreate):
-    """
-    Create a new email record.
-    """
-    try:
-        record_dict = record.model_dump()
-        email_id = create_email_record(record_dict)
-        
-        # Get the created record to return
-        created_record = get_email_record_by_id(email_id)
-        return created_record
-    except Exception as e:
-        logger.error(f"Error creating email record: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to create email record")
 
 
 @router.put("/records/{email_id}/status")

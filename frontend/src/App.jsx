@@ -10,7 +10,7 @@ import AutomatePage from './pages/AutomatePage';
 function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionInfo, setConnectionInfo] = useState(null);
-  
+
   const handleConnect = (connected, info) => {
     setIsConnected(connected);
     if (info) {
@@ -34,61 +34,61 @@ function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="min-h-screen">
-        <Routes>          <Route 
-            path="/" 
-            element={
-              isConnected ? 
-              <Navigate to="/dashboard" replace /> : 
-              <Dashboard 
-                onConnected={handleConnect} 
-                onConnectionInfoUpdate={setConnectionInfo} 
-                connectionInfo={connectionInfo} 
-                isConnected={isConnected} 
-                onDisconnect={handleDisconnect} 
+        <Routes>          <Route
+          path="/"
+          element={
+            isConnected ?
+              <Navigate to="/dashboard" replace /> :
+              <Dashboard
+                onConnected={handleConnect}
+                onConnectionInfoUpdate={setConnectionInfo}
+                connectionInfo={connectionInfo}
+                isConnected={isConnected}
+                onDisconnect={handleDisconnect}
               />
-            } 
-          />
-          <Route 
-            path="/dashboard" 
+          }
+        />
+          <Route
+            path="/dashboard"
             element={
               <ProtectedRoute>
-                <StatusPage 
-                  connectionInfo={connectionInfo} 
-                  onDisconnect={handleDisconnect} 
+                <StatusPage
+                  connectionInfo={connectionInfo}
+                  onDisconnect={handleDisconnect}
                 />
               </ProtectedRoute>
-            } 
+            }
           />          {/* Redirect legacy /status route to /dashboard */}
-          <Route 
-            path="/status" 
-            element={<Navigate to="/dashboard" replace />} 
+          <Route
+            path="/status"
+            element={<Navigate to="/dashboard" replace />}
           />
-          <Route 
-            path="/compose" 
+          <Route
+            path="/compose"
             element={
               <ProtectedRoute>
-                <ComposePage 
-                  connectionInfo={connectionInfo} 
-                  onDisconnect={handleDisconnect} 
+                <ComposePage
+                  connectionInfo={connectionInfo}
+                  onDisconnect={handleDisconnect}
                 />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/automate" 
+          <Route
+            path="/automate"
             element={
               <ProtectedRoute>
-                <AutomatePage 
-                  connectionInfo={connectionInfo} 
-                  onDisconnect={handleDisconnect} 
+                <AutomatePage
+                  connectionInfo={connectionInfo}
+                  onDisconnect={handleDisconnect}
                 />
               </ProtectedRoute>
-            } 
+            }
           />
         </Routes>
-        <ToastContainer 
-          position="top-right" 
-          autoClose={3000} 
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
           hideProgressBar={false}
           newestOnTop={true}
           closeOnClick

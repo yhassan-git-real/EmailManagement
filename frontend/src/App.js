@@ -9,7 +9,6 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Dashboard from './pages/Dashboard';
 import StatusPage from './pages/StatusPage';
-import ComposePage from './pages/ComposePage';
 import AutomatePage from './pages/AutomatePage';
 import EmailRecordsPage from './features/email-records';
 
@@ -91,17 +90,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/compose"
-            element={
-              <ProtectedRoute>
-                <ComposePage
-                  connectionInfo={connectionInfo}
-                  onDisconnect={handleDisconnect}
-                />
-              </ProtectedRoute>
-            }
-          />
+
           <Route
             path="/automate"
             element={

@@ -56,7 +56,6 @@ frontend/
 │   ├── pages/
 │   │   └── Dashboard.jsx
 │   ├── utils/
-│   │   └── mockApi.js
 │   ├── App.js
 │   ├── index.css
 │   └── index.js

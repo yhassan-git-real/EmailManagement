@@ -11,7 +11,7 @@ import './styles/animations.css';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import AutomatePage from './pages/AutomatePage';
-import EmailRecordsPage from './features/email-records';
+import EmailRecordsPage from './pages/EmailRecordsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { saveConnectionToSession, loadConnectionFromSession, clearConnectionSession } from './utils/sessionUtils';
 

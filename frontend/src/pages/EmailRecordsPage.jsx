@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 import { EnvelopeIcon, ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -16,6 +17,7 @@ const EmailRecordsPage = ({ connectionInfo, onDisconnect }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRows, setSelectedRows] = useState([]);
     const [statusFilter, setStatusFilter] = useState('');
+    const loadingRef = React.useRef(false);
 
     // Function to load email records data
     const loadTableData = async (pageToLoad = currentPage) => {
@@ -298,18 +300,39 @@ const EmailRecordsPage = ({ connectionInfo, onDisconnect }) => {
             <Header connectionInfo={connectionInfo} onDisconnect={onDisconnect} />
 
             <div className="flex flex-row flex-grow relative">
-                <main className="flex-grow py-3 px-4 bg-gradient-to-b from-gray-50 to-gray-100 w-full overflow-x-hidden">
-                    <div className="max-w-7xl mx-auto w-full relative">
-                        <h1 className="text-sm font-medium mb-2 text-primary-600 pl-1 flex items-center">
-                            <EnvelopeIcon className="h-3.5 w-3.5 mr-1" />
+                <main className="flex-grow py-8 px-10 bg-gradient-to-b from-gray-50 to-gray-100 w-full overflow-x-hidden">
+                    <div className="max-w-full mx-4 w-full relative">
+                        {/* Breadcrumb Navigation */}
+                        <div className="mb-6 mt-1 w-full bg-white shadow-md rounded-xl p-3 border border-gray-200">
+                            <div className="flex items-center space-x-2 text-sm">
+                                <Link to="/home" className="flex items-center text-gray-600 hover:text-primary-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                    </svg>
+                                    Home
+                                </Link>
+                                <span className="text-gray-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </span>
+                                <span className="bg-primary-50 text-primary-700 font-medium px-3 py-1 rounded-lg border border-primary-100 shadow-sm flex items-center">
+                                    <EnvelopeIcon className="h-4 w-4 mr-1" />
+                                    Email Records
+                                </span>
+                            </div>
+                        </div>
+
+                        <h1 className="text-lg font-medium mt-2 mb-4 text-primary-600 pl-1 flex items-center">
+                            <EnvelopeIcon className="h-5 w-5 mr-2" />
                             Email Records
                         </h1>
 
                         {/* Data Table Section */}
-                        <div className="bg-white rounded-lg shadow mb-4 relative overflow-x-hidden">
-                            <div className="p-3 border-b border-gray-200">
-                                <h2 className="text-sm font-medium text-gray-700">Database Email Records</h2>
-                                <p className="text-xs text-gray-500">
+                        <div className="bg-white rounded-lg shadow-lg mb-6 relative overflow-x-hidden">
+                            <div className="p-4 border-b border-gray-200">
+                                <h2 className="text-base font-medium text-gray-700">Database Email Records</h2>
+                                <p className="text-sm text-gray-500 mt-1">
                                     View and filter email records from the database.
                                     <span className="ml-1 text-primary-600 font-medium">Click "Execute" after selecting filters to load data.</span>
                                 </p>

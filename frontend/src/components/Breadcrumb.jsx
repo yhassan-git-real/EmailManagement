@@ -3,17 +3,17 @@ import { Link } from 'react-router-dom';
 
 const Breadcrumb = ({ items = [] }) => {
   return (
-    <nav className="flex text-sm py-3 animate-fadeIn">
-      <div className="flex items-center bg-white/70 backdrop-blur-sm shadow-sm rounded-xl px-3 py-1.5 border border-gray-100">
+    <nav className="flex text-sm py-3 animate-fadeIn w-full z-20">
+      <div className="flex items-center bg-white shadow-md rounded-xl px-4 py-2 border border-gray-200 w-full">
         <ol className="flex flex-wrap items-center">
           {items.map((item, index) => {
             const isLast = index === items.length - 1;
-            
+
             return (
               <li key={index} className="flex items-center">
                 {index > 0 && (
                   <div className="mx-2 text-gray-300 flex items-center">
-                    <svg 
+                    <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-3.5 w-3.5 transform transition-transform duration-300 group-hover:translate-x-0.5"
                       fill="none"
@@ -29,11 +29,11 @@ const Breadcrumb = ({ items = [] }) => {
                     </svg>
                   </div>
                 )}
-                
+
                 {isLast || !item.path ? (
-                  <span 
-                    className={`flex items-center transition-all duration-300 ${isLast 
-                      ? 'bg-primary-50 text-primary-700 font-medium px-3 py-1 rounded-lg border border-primary-100 shadow-sm' 
+                  <span
+                    className={`flex items-center transition-all duration-300 ${isLast
+                      ? 'bg-primary-50 text-primary-700 font-medium px-3 py-1 rounded-lg border border-primary-100 shadow-sm'
                       : 'text-gray-500'}`}
                   >
                     {item.icon && (
@@ -84,7 +84,7 @@ const HomeIcon = () => (
 
 // Default breadcrumb with home icon
 const DefaultBreadcrumb = () => (
-  <Breadcrumb 
+  <Breadcrumb
     items={[
       { label: 'Home', path: '/', icon: <HomeIcon /> }
     ]}

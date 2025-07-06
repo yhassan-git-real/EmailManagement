@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
-import { TrashIcon, PencilIcon, MagnifyingGlassIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { TrashIcon, PencilIcon, MagnifyingGlassIcon, ArrowPathIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import DataTable from '../../components/DataTable';
 import FilePreviewer from '../../components/FilePreviewer';
 import EmailRecordEditModal from './EmailRecordEditModal';
@@ -13,6 +13,7 @@ import {
 const EmailRecordsView = () => {
     // State for data management
     const [tableData, setTableData] = useState([]);
+    const [filteredData, setFilteredData] = useState([]);
     const [selectedRows, setSelectedRows] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize] = useState(10);
@@ -20,6 +21,7 @@ const EmailRecordsView = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
+    const [isLocalFiltering, setIsLocalFiltering] = useState(false);
 
     // State for UI interactions
     const [selectedFile, setSelectedFile] = useState(null);
@@ -130,6 +132,7 @@ const EmailRecordsView = () => {
             }));
 
             setTableData(processedRecords);
+            setFilteredData(processedRecords);
             setTotalRows(response.data.total || processedRecords.length);
         } catch (error) {
             console.error('Error loading email records:', error);
@@ -191,11 +194,40 @@ const EmailRecordsView = () => {
         }
     };
 
-    // Handle search
+    // Apply client-side filtering based on search term
+    const applyClientSideFilter = (term) => {
+        console.log(`[EmailRecordsView] Applying client-side filter: "${term}"`);
+        if (!term.trim()) {
+            // If search term is empty, use the original data
+            setFilteredData([...tableData]);
+            setIsLocalFiltering(false);
+            return;
+        }
+
+        const searchLower = term.toLowerCase();
+        // Filter data by searching all string fields
+        const filtered = tableData.filter(record => {
+            // Search in all text fields
+            return Object.keys(record).some(key => {
+                const value = record[key];
+                // Only search string values and skip display_file_path which is internal
+                return typeof value === 'string' &&
+                    key !== 'display_file_path' &&
+                    key !== 'id' &&
+                    value.toLowerCase().includes(searchLower);
+            });
+        });
+
+        setFilteredData(filtered);
+        setIsLocalFiltering(true);
+    };
+
+    // Handle search - now applies client-side filtering immediately
     const handleSearch = (term) => {
         console.log(`[EmailRecordsView] Search term set to: ${term}`);
         setSearchTerm(term);
-        // Don't automatically load data, wait for Execute button
+        applyClientSideFilter(term);
+        // The Execute button will still be available for server-side search
     };
 
     // Handle status filter change
@@ -209,6 +241,7 @@ const EmailRecordsView = () => {
     const handleExecuteFilter = () => {
         console.log(`[EmailRecordsView] Execute button clicked with filters: status=${statusFilter}, search=${searchTerm}`);
         setCurrentPage(1); // Reset to first page
+        setIsLocalFiltering(false); // Disable local filtering when executing server search
         loadTableData(1); // Load first page with current filters
     };
 
@@ -319,128 +352,222 @@ const EmailRecordsView = () => {
 
     return (
         <div className="w-full">
-            <div className="bg-white shadow-sm rounded-lg p-4">
-                {/* Improved header styling with better typography and visual hierarchy */}
-                <div className="mb-6 border-b border-gray-200 pb-4">
-                    <h1 className="text-2xl font-bold text-primary-700 tracking-tight">Email Records</h1>
-                    <p className="text-sm text-gray-600 mt-1">View and monitor email records in the system</p>
+            <div className="bg-white shadow-md rounded-xl p-5">
+                {/* Enhanced header with date and info */}
+                <div className="mb-4 border-b border-gray-200 pb-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center">
+                            <div className="bg-primary-100 p-2 rounded-lg mr-3">
+                                <EnvelopeIcon className="h-5 w-5 text-primary-600" />
+                            </div>
+                            <h1 className="text-2xl font-bold text-primary-700 tracking-tight">Database Email Records</h1>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <div className="text-xs text-gray-500 font-medium bg-gray-50 px-2 py-1 rounded-md border border-gray-200 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {new Date().toLocaleDateString('en-US', {
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                })}
+                            </div>
+                            <div className="text-xs text-primary-600 font-medium bg-primary-50 px-2 py-1 rounded-md border border-primary-100 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+                                </svg>
+                                Last updated: Today
+                            </div>
+                        </div>
+                    </div>
+                    <div className="text-sm text-gray-600 font-medium">
+                        View and manage email records with search, filter, and bulk actions functionality.
+                    </div>
                 </div>
 
-                {/* Records section with improved heading */}
+                {/* Enhanced data information section */}
                 <div className="mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-base font-semibold text-gray-800">Database Email Records</h2>
+                    <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-200 shadow-sm mb-2">
+                        {/* Information section */}
+                        <div className="flex items-center">
+                            <div className={`h-8 w-1 ${isLocalFiltering ? 'bg-yellow-500' : 'bg-primary-500'} rounded-r-md mr-2`}></div>
+                            <div className="flex flex-col">
+                                <div className="flex items-center">
+                                    {!isLocalFiltering ? (
+                                        <p className="text-sm text-gray-700 font-medium">
+                                            Total Records: <span className="text-primary-600">{tableData.length}</span>
+                                        </p>
+                                    ) : (
+                                        <p className="text-sm text-yellow-700 font-medium">
+                                            Filtered: <span className="text-yellow-600">{filteredData.length}</span> of {tableData.length} records match "<span className="font-medium">{searchTerm}</span>"
+                                        </p>
+                                    )}
+
+                                    {isLocalFiltering && (
+                                        <button
+                                            className="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-0.5 rounded-md text-xs transition-colors flex items-center"
+                                            onClick={() => {
+                                                setSearchTerm('');
+                                                setIsLocalFiltering(false);
+                                                setFilteredData([...tableData]);
+                                            }}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            Clear filter
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="text-xs text-gray-500">
+                                    {!isLocalFiltering ? "Instant search available • Use Execute Button for table data" : "Client-side filtering active"}
+                                </p>
+                            </div>
+                        </div>
 
                         {/* Show selected count in a prominent way */}
                         {selectedRows.length > 0 && (
-                            <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-100 text-primary-800 text-sm font-medium">
+                            <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary-100 text-primary-800 text-sm font-medium shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
                                 <span>{selectedRows.length} record{selectedRows.length !== 1 ? 's' : ''} selected</span>
                             </div>
                         )}
                     </div>
+                </div>
 
-                    <p className="text-xs text-gray-500 mb-3">
-                        View and filter email records from the database.
-                        <span className="ml-1 text-primary-600 font-medium">Click "Execute" after selecting filters to load data.</span>
-                    </p>
-
-                    {/* Action Buttons Bar - Improved layout and alignment */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex flex-wrap items-center justify-between gap-3 mb-4 shadow-sm">
-                        {/* Left side: Search and Filter controls */}
-                        <div className="flex flex-wrap items-center gap-3">
-                            {/* Search Input with better styling */}
-                            <div className="relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
-                                </div>
-                                <input
-                                    type="text"
-                                    className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2"
-                                    placeholder="Search records..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
+                {/* Action Buttons Bar - More compact and wider layout */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex flex-wrap items-center justify-between gap-2 mb-4 shadow-sm">
+                    {/* Left side: Search and Filter controls */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* Search Input with enhanced styling and functionality */}
+                        <div className="relative rounded-md shadow-sm">
+                            <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                                <MagnifyingGlassIcon className={`h-3 w-3 ${isLocalFiltering ? 'text-primary-500' : 'text-gray-400'}`} aria-hidden="true" />
                             </div>
+                            <input
+                                type="text"
+                                className={`focus:ring-primary-500 focus:border-primary-500 block w-32 md:w-48 pl-7 text-xs font-medium rounded-md py-1.5 transition-all duration-200 ${isLocalFiltering
+                                    ? 'border-primary-300 bg-primary-50'
+                                    : 'border-gray-300'
+                                    }`}
+                                placeholder={isLocalFiltering ? `Filtering ${filteredData.length} records...` : "Search records..."}
+                                value={searchTerm}
+                                onChange={(e) => handleSearch(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleExecuteFilter();
+                                    }
+                                }}
+                            />
+                            {isLocalFiltering && searchTerm && (
+                                <div
+                                    className="absolute inset-y-0 right-0 pr-2 flex items-center cursor-pointer text-gray-400 hover:text-gray-600"
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                        setIsLocalFiltering(false);
+                                        setFilteredData([...tableData]);
+                                    }}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
 
-                            {/* Status Filter Buttons with improved styling */}
-                            <div className="flex space-x-1 bg-white border border-gray-200 p-1 rounded-md shadow-sm">
-                                {['All', 'Pending', 'Success', 'Failed'].map((status) => (
+                        {/* Status Filter Buttons with enhanced styling */}
+                        <div className="flex space-x-1 bg-white border border-gray-200 p-0.5 rounded-md shadow-sm">
+                            {['All', 'Pending', 'Success', 'Failed'].map((status) => {
+                                // Define status-specific colors
+                                const activeColor = status === 'All' ? 'bg-primary-600 text-white' :
+                                    status === 'Pending' ? 'bg-yellow-500 text-white' :
+                                        status === 'Success' ? 'bg-green-600 text-white' :
+                                            'bg-red-600 text-white';
+
+                                return (
                                     <button
                                         key={status}
                                         onClick={() => handleStatusFilterChange(status)}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${statusFilter === status
-                                            ? 'bg-primary-600 text-white shadow-sm'
-                                            : 'text-gray-700 hover:bg-gray-100'
+                                        className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${statusFilter === status
+                                            ? `${activeColor} shadow-sm`
+                                            : 'text-gray-600 hover:bg-gray-100'
                                             }`}
                                     >
                                         {status}
                                     </button>
-                                ))}
-                            </div>
+                                );
+                            })}
+                        </div>
 
-                            {/* Execute Button with better styling */}
-                            <button
-                                onClick={handleExecuteFilter}
-                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                            >
-                                <ArrowPathIcon className="h-4 w-4 mr-2" />
-                                Execute
-                            </button>
+                        {/* Execute Button with enhanced styling - Slightly larger and consistent with other buttons */}
+                        <button
+                            onClick={handleExecuteFilter}
+                            className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-primary-500 transition-all duration-200 relative overflow-hidden group"
+                            title={isLocalFiltering ? "Search server database with current filters" : "Execute search with current filters"}
+                        >
+                            <span className="absolute inset-0 w-0 bg-white bg-opacity-30 transition-all duration-300 ease-out group-hover:w-full"></span>
+                            <ArrowPathIcon className="h-4 w-4 mr-1.5 group-hover:rotate-180 transition-transform duration-300" />
+                            <span className="font-medium tracking-wide">{isLocalFiltering ? "Search Server" : "Execute"}</span>
+                        </button>
 
-                            {/* Edit Button - Only enabled when exactly one row is selected */}
-                            <button
-                                onClick={() => {
-                                    if (selectedRows.length === 1) {
-                                        const selectedRecord = tableData.find(record => record.id === selectedRows[0]);
-                                        if (selectedRecord) {
-                                            handleEditRecord(selectedRecord);
-                                        }
-                                    } else {
-                                        toast.warning('Please select exactly one record to edit');
+                        {/* Edit Button - Only enabled when exactly one row is selected - Slightly larger */}
+                        <button
+                            onClick={() => {
+                                if (selectedRows.length === 1) {
+                                    const selectedRecord = tableData.find(record => record.id === selectedRows[0]);
+                                    if (selectedRecord) {
+                                        handleEditRecord(selectedRecord);
                                     }
-                                }}
-                                disabled={selectedRows.length !== 1 || isLoading}
-                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <PencilIcon className="h-4 w-4 mr-2" />
-                                Edit Selected
-                            </button>
-                        </div>
+                                } else {
+                                    toast.warning('Please select exactly one record to edit');
+                                }
+                            }}
+                            disabled={selectedRows.length !== 1 || isLoading}
+                            className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                            <PencilIcon className="h-4 w-4 mr-1.5 group-hover:scale-110 transition-transform" />
+                            <span className="font-medium tracking-wide">Edit</span>
+                        </button>
+                    </div>
 
-                        {/* Right side: Delete Selected Button with improved styling */}
-                        <div>
-                            <button
-                                onClick={handleDeleteSelected}
-                                disabled={isLoading || selectedRows.length === 0}
-                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <TrashIcon className="h-4 w-4 mr-2" />
-                                Delete Selected {selectedRows.length > 0 && `(${selectedRows.length})`}
-                            </button>
-                        </div>
+                    {/* Right side: Delete Selected Button with improved styling - Slightly larger */}
+                    <div>
+                        <button
+                            onClick={handleDeleteSelected}
+                            disabled={isLoading || selectedRows.length === 0}
+                            className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                            <TrashIcon className="h-4 w-4 mr-1.5 group-hover:scale-110 transition-transform" />
+                            <span className="font-medium tracking-wide">Delete</span> {selectedRows.length > 0 && <span className="ml-0.5 bg-red-800 bg-opacity-30 rounded-full px-1.5 py-0.5 text-xs">{selectedRows.length}</span>}
+                        </button>
                     </div>
                 </div>
+            </div>
 
-                {/* Data Table Component */}
-                <div className="overflow-hidden border border-gray-200 rounded-lg shadow-sm">
-                    <DataTable
-                        data={tableData}
-                        columns={columns}
-                        isLoading={isLoading}
-                        totalRows={totalRows}
-                        pageSize={pageSize}
-                        currentPage={currentPage}
-                        onPageChange={handlePageChange}
-                        onRowSelect={handleRowSelect}
-                        onSearch={handleSearch}
-                        onSearchChange={handleSearch}
-                        selectedRows={selectedRows}
-                        compact={true}
-                        onStatusChange={handleStatusFilterChange}
-                        onExecute={handleExecuteFilter}
-                        onFilePreview={handleFilePreview}
-                    />
-                </div>
+            {/* Data Table Component */}
+            <div className="overflow-hidden border border-gray-200 rounded-lg shadow-md">
+                <DataTable
+                    data={isLocalFiltering ? filteredData : tableData}
+                    columns={columns}
+                    isLoading={isLoading}
+                    totalRows={isLocalFiltering ? filteredData.length : totalRows}
+                    pageSize={pageSize}
+                    currentPage={currentPage}
+                    onPageChange={handlePageChange}
+                    onRowSelect={handleRowSelect}
+                    onSearch={handleSearch}
+                    onSearchChange={handleSearch}
+                    selectedRows={selectedRows}
+                    compact={true}
+                    onStatusChange={handleStatusFilterChange}
+                    onExecute={handleExecuteFilter}
+                    onFilePreview={handleFilePreview}
+                    isFiltered={isLocalFiltering}
+                />
             </div>
 
             {/* File Previewer */}

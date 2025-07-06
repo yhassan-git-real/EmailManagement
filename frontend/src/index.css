@@ -18,8 +18,29 @@ body {
   background-size: 32px 32px;
 }
 
+@keyframes fadeInSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn-slide {
+  animation: fadeInSlide 0.4s ease-in-out forwards;
+}
+
 .card {
   @apply rounded-xl shadow-card bg-white backdrop-blur-sm bg-opacity-95 p-8 transition-all duration-300 hover:shadow-card-hover;
+}
+
+.text-2xs {
+  font-size: 0.65rem;
+  line-height: 1rem;
 }
 
 .card.glass {
@@ -99,6 +120,7 @@ aside nav ul li a:hover {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -114,12 +136,15 @@ aside nav ul li a:hover {
   0% {
     transform: translate(0px, 0px) scale(1);
   }
+
   33% {
     transform: translate(30px, -50px) scale(1.1);
   }
+
   66% {
     transform: translate(-20px, 20px) scale(0.9);
   }
+
   100% {
     transform: translate(0px, 0px) scale(1);
   }
@@ -139,10 +164,13 @@ aside nav ul li a:hover {
 
 /* Pulse animations at different speeds */
 @keyframes pulse-slow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.7;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.5;
     transform: scale(1.05);
@@ -150,10 +178,13 @@ aside nav ul li a:hover {
 }
 
 @keyframes pulse-slower {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.6;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.4;
     transform: scale(1.03);
@@ -187,6 +218,7 @@ aside nav ul li a:hover {
     transform: scale(0.8);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -221,7 +253,7 @@ aside nav ul li a:hover {
   .status-count {
     font-size: theme('fontSize.3xl');
   }
-  
+
   .card {
     padding: theme('spacing.4');
   }

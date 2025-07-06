@@ -11,8 +11,7 @@ export default function InitialContentPlugin() {
             const root = $getRoot();
             if (root.getChildrenSize() === 0) {
                 const paragraph = $createParagraphNode();
-                // Ensure consistency with the placeholder prop text
-                paragraph.append($createTextNode('Start editing your professional email template here...'));
+                paragraph.append($createTextNode('Start editing your template here...'));
                 root.append(paragraph);
             }
         });

@@ -1,168 +1,257 @@
-/* Base container for the entire editor component */
 .editor-container {
-    position: relative; /* For positioning elements like placeholder or modals */
-    background: white; /* Background of the entire editor area */
-    border-radius: 8px; /* Rounded corners for the container */
-    display: flex;
-    flex-direction: column; /* Stack editor area and toolbar vertically */
-    height: 100%; /* Occupy full height of its parent in TemplateEditor.jsx */
-    min-height: 300px; /* Minimum height for usability */
-    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15); /* Standard shadow */
-    overflow: hidden; /* Clip content like modals if they overflow */
-}
-
-/* Wrapper for the rich text input area */
-.editor-inner {
-    position: relative; /* For absolute positioning of placeholder */
-    flex-grow: 1; /* Allow editor area to take up available space */
-    display: flex; /* Use flex for internal layout if needed */
-    flex-direction: column; /* Stack elements like ContentEditable */
-    background: white; /* Background of the text input area */
-    overflow: hidden; /* Hide scrollbars until needed */
-    border-top-left-radius: 8px; /* Match container rounding */
-    border-top-right-radius: 8px; /* Match container rounding */
-}
-
-/* The actual editable content area */
-.editor-input {
-    flex-grow: 1; /* Expand to fill .editor-inner */
-    resize: none; /* Disable manual resizing by user */
-    font-size: 14px; /* Standard text size */
-    caret-color: #202124; /* Gmail's caret color */
     position: relative;
-    tab-size: 1; /* Define tab character width */
-    outline: 0; /* Remove default browser outline */
-    padding: 16px; /* Ample padding around text */
-    overflow-y: auto; /* Enable vertical scrolling when content exceeds height */
-    height: 100%; /* Fill available height */
-    min-height: 200px; /* Ensure a minimum usable editing area */
-    border-left: 1px solid #dadce0;
-    border-right: 1px solid #dadce0;
-    border-top: 1px solid #dadce0;
-    border-bottom: none; /* Toolbar is directly below */
-    line-height: 1.6; /* Improved readability */
-    color: #202124; /* Standard text color */
-    font-family: Arial, sans-serif; /* Default font */
-    border-top-left-radius: 7px; /* Align with container's border */
-    border-top-right-radius: 7px; /* Align with container's border */
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 300px;
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+    overflow: hidden;
 }
 
-/* Placeholder text style */
+.editor-inner {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    overflow: hidden;
+}
+
+.editor-input {
+    flex-grow: 1;
+    resize: none;
+    font-size: 14px;
+    caret-color: #202124;
+    position: relative;
+    tab-size: 1;
+    outline: 0;
+    padding: 12px 16px;
+    overflow-y: auto;
+    height: 100%;
+    min-height: 240px;
+    border: 1px solid #dadce0;
+    border-top: none;
+    line-height: 1.5;
+    color: #202124;
+    font-family: Arial, sans-serif;
+}
+
 .editor-placeholder {
-    color: #757575; /* Gmail's placeholder color */
-    font-style: normal; /* Ensure placeholder is not italic */
+    color: #5f6368;
     overflow: hidden;
     position: absolute;
     text-overflow: ellipsis;
-    top: 16px; /* Match editor-input padding */
-    left: 16px; /* Match editor-input padding */
+    top: 12px;
+    left: 16px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     user-select: none;
     display: inline-block;
-    pointer-events: none; /* Allow clicks to pass through to the editor */
-    font-size: 14px; /* Match editor font size */
-    font-family: Arial, sans-serif; /* Match editor font */
+    pointer-events: none;
+    font-style: italic;
+    font-size: 14px;
 }
 
-/* Text formatting styles */
-.editor-text-bold { font-weight: bold; }
-.editor-text-italic { font-style: italic; }
-.editor-text-underline { text-decoration: underline; }
-.editor-text-strikethrough { text-decoration: line-through; }
-.editor-text-underlineStrikethrough { text-decoration: underline line-through; }
+.editor-text-bold {
+    font-weight: bold;
+}
 
-.editor-link {
-    color: #1a73e8; /* Standard link color */
+.editor-text-italic {
+    font-style: italic;
+}
+
+.editor-text-underline {
     text-decoration: underline;
 }
-.editor-link:hover {
+
+.editor-text-strikethrough {
+    text-decoration: line-through;
+}
+
+.editor-text-underlineStrikethrough {
+    text-decoration: underline line-through;
+}
+
+.editor-link {
+    color: rgb(33, 111, 219);
     text-decoration: none;
 }
 
 .editor-code {
-    background-color: #f1f3f4; /* Light gray background for code blocks */
-    font-family: 'Roboto Mono', Menlo, Consolas, Monaco, monospace;
-    padding: 8px 12px;
+    background-color: rgb(240, 242, 245);
+    font-family: Menlo, Consolas, Monaco, monospace;
+    display: block;
+    padding: 8px 8px 8px 52px;
+    line-height: 1.53;
     font-size: 13px;
-    line-height: 1.5;
-    margin: 8px 0;
-    border-radius: 4px;
-    white-space: pre-wrap; /* Wrap long lines of code */
+    margin: 0;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    tab-size: 2;
+    white-space: pre;
     overflow-x: auto;
+    position: relative;
 }
 
 .editor-paragraph {
     margin: 0;
-    margin-bottom: 0.75em; /* Spacing between paragraphs */
+    margin-bottom: 8px;
     position: relative;
 }
-.editor-paragraph:last-child {
-    margin-bottom: 0;
+
+.editor-heading-h1 {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 10px 0;
 }
 
-.editor-heading-h1 { font-size: 2em; font-weight: bold; margin: 0.67em 0; }
-.editor-heading-h2 { font-size: 1.5em; font-weight: bold; margin: 0.83em 0; }
-.editor-heading-h3 { font-size: 1.17em; font-weight: bold; margin: 1em 0; }
+.editor-heading-h2 {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 8px 0;
+}
+
+.editor-heading-h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 6px 0;
+}
 
 .editor-horizontalrule {
     border: none;
-    border-top: 1px solid #dadce0; /* Gmail-like divider */
-    margin: 1em 0;
+    border-top: 1px solid #e2e8f0;
+    margin: 1rem 0;
     height: 1px;
 }
 
 .editor-quote {
-    margin: 0 0 10px 0;
-    font-size: 1em;
-    color: #5f6368; /* Subtler quote text color */
-    border-left: 3px solid #dadce0; /* Gmail-style quote border */
-    padding-left: 12px;
+    margin: 0;
+    margin-left: 20px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    color: rgb(101, 103, 107);
+    border-left-color: rgb(206, 208, 212);
+    border-left-width: 4px;
+    border-left-style: solid;
+    padding-left: 16px;
 }
 
-/* List Styles */
-.editor-list-ol, .editor-list-ul {
-    padding-left: 2em; /* Indentation for lists */
-    margin: 0.5em 0;
+.editor-list-ol {
+    list-style-type: decimal;
+    padding: 0;
+    margin: 0 0 0 16px;
 }
+
+.editor-list-ul {
+    list-style-type: disc;
+    padding: 0;
+    margin: 0 0 0 16px;
+}
+
 .editor-listitem {
-    margin: 0.25em 0;
-    padding-left: 0.25em;
-    display: list-item; /* Ensure correct list item rendering */
-}
-.editor-nested-listitem { /* For nested lists within list items */
-    list-style-type: none; /* Reset parent styling if needed */
+    margin: 6px 0;
+    padding-left: 8px;
+    display: list-item;
 }
 
-/* Ensure correct display for lists inside editor-input */
-.editor-input ul, .editor-input ol {
-    padding-left: 2em;
-    margin: 0.5em 0;
+.editor-nested-listitem {
+    list-style-type: none;
+    margin-left: 16px;
 }
-.editor-input ul { list-style-type: disc; }
-.editor-input ol { list-style-type: decimal; }
-.editor-input li { margin-bottom: 0.25em; }
 
-/* Nested list styling for Gmail consistency */
-.editor-input ul ul, .editor-list-ul .editor-list-ul { list-style-type: circle; }
-.editor-input ul ul ul, .editor-list-ul .editor-list-ul .editor-list-ul { list-style-type: square; }
-.editor-input ol ol, .editor-list-ol .editor-list-ol { list-style-type: lower-alpha; }
-.editor-input ol ol ol, .editor-list-ol .editor-list-ol .editor-list-ol { list-style-type: lower-roman; }
+/* Ensure nested lists appear correctly */
+.editor-list-ol li {
+    display: list-item;
+}
 
+.editor-list-ul li {
+    display: list-item;
+}
 
-/* Toolbar - now at the bottom */
+/* Add proper spacing for lists */
+.editor-list-ol ol,
+.editor-list-ul ul {
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+/* Add specific styles for different nesting levels */
+.editor-list-ul .editor-list-ul {
+    list-style-type: circle;
+}
+
+.editor-list-ul .editor-list-ul .editor-list-ul {
+    list-style-type: square;
+}
+
+.editor-list-ol .editor-list-ol {
+    list-style-type: lower-alpha;
+}
+
+.editor-list-ol .editor-list-ol .editor-list-ol {
+    list-style-type: lower-roman;
+}
+
+/* List styling */
+.editor-input ul,
+.editor-input ol {
+    padding-left: 24px;
+    margin: 8px 0;
+}
+
+.editor-input ul {
+    list-style-type: disc;
+}
+
+.editor-input ol {
+    list-style-type: decimal;
+}
+
+.editor-input li {
+    margin-bottom: 4px;
+}
+
+/* Nested lists */
+.editor-input ul ul,
+.editor-input ol ol,
+.editor-input ul ol,
+.editor-input ol ul {
+    margin-top: 4px;
+}
+
+.editor-input ul ul {
+    list-style-type: circle;
+}
+
+.editor-input ul ul ul {
+    list-style-type: square;
+}
+
+.editor-input ol ol {
+    list-style-type: lower-alpha;
+}
+
+.editor-input ol ol ol {
+    list-style-type: lower-roman;
+}
+
 .toolbar {
-    background-color: #f5f5f5; /* Gmail's light gray toolbar background */
-    border-top: 1px solid #e0e0e0; /* Separator line above the toolbar */
-    padding: 5px 8px; /* Compact padding */
+    background-color: #f2f2f2;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 4px 8px;
     display: flex;
-    flex-direction: row; /* Main axis for toolbar items */
-    flex-wrap: nowrap; /* Prevent wrapping to multiple lines by default */
-    align-items: center; /* Vertically align items in the toolbar */
-    border-bottom-left-radius: 8px; /* Match container rounding */
-    border-bottom-right-radius: 8px; /* Match container rounding */
-    overflow-x: auto; /* Allow horizontal scrolling if items exceed width */
-    box-shadow: none; /* Remove previous top shadow */
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.1);
+    overflow-x: auto;
 }
 
 .toolbar-row {
@@ -171,458 +260,476 @@
     flex-wrap: nowrap;
 }
 
-.toolbar-group { /* Optional: for grouping sets of buttons */
+.toolbar-group {
     display: inline-flex;
     align-items: center;
 }
 
-/* General styling for all toolbar buttons */
 .toolbar button {
     width: 28px;
     height: 28px;
-    min-width: 28px; /* Prevent shrinking */
+    min-width: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 3px; /* Slightly rounded corners, Gmail style */
-    margin: 0 1px; /* Minimal margin between buttons */
-    padding: 0; /* Icons should fill the button */
-    border: 1px solid transparent; /* No border by default, border appears on hover/focus for some elements */
-    background: transparent; /* No background by default */
+    border-radius: 4px;
+    margin: 0 1px;
+    padding: 3px;
+    border: 1px solid transparent;
+    background: transparent;
     cursor: pointer;
-    color: #5f6368; /* Default icon color */
-    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+    position: relative;
+    color: #5f6368;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
 
-/* Hover state for toolbar buttons */
+.toolbar-container button {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    margin: 0 2px;
+    padding: 2px;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+}
+
+.toolbar-container button:hover {
+    background-color: rgba(60, 64, 67, 0.08);
+    border-color: transparent;
+}
+
+.toolbar-container button.active {
+    background-color: rgba(66, 133, 244, 0.1);
+    color: #4285f4;
+    border-color: rgba(66, 133, 244, 0.2);
+}
+
 .toolbar button:hover {
-    background-color: #efefef; /* Subtle gray on hover */
-    color: #3c4043; /* Slightly darker icon on hover */
+    background-color: #f0f0f0;
 }
 
-/* Active (pressed or toggled) state for toolbar buttons */
 .toolbar button.active {
-    background-color: #e4efff; /* Light blue for active state (e.g., Bold is on) */
-    color: #176dee; /* Blue icon color for active state */
-}
-.toolbar button:active { /* Momentary press style */
-    background-color: #dde6f2;
+    background-color: #e8f0fe;
+    color: #1a73e8;
 }
 
+.toolbar button:active {
+    background-color: #e0e0e0;
+}
 
-/* Styling for select dropdowns (Font Family, Font Size, Heading) in the toolbar */
 .toolbar select {
-    height: 28px; /* Consistent height with buttons */
-    padding: 0 6px; /* Reduced horizontal padding */
-    padding-right: 22px; /* Space for custom arrow, slightly reduced */
-    font-size: 13px;
-    border: 1px solid transparent; /* No border in default state */
-    border-radius: 3px;
-    background-color: transparent; /* Fully transparent to blend with toolbar */
-    color: #3c4043; /* Dark gray text for readability */
-    margin: 0 1px; /* Minimal margin */
+    padding: 2px 6px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+    height: 28px;
+    margin: 0 2px;
     cursor: pointer;
-    appearance: none;
+    color: #444746;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23444746' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.5 6L8 9.5L11.5 6' stroke='%235F6368' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); /* Slightly thinner arrow */
-    background-repeat: no-repeat;
-    background-position: right 5px center; /* Adjusted arrow position */
-    transition: border-color 0.1s ease-in-out, background-color 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
-    line-height: 26px; /* Ensure text is vertically centered */
+    appearance: none;
+    padding-right: 20px;
 }
 
 .toolbar select:hover {
-    background-color: #e0e0e0; /* Slightly darker hover than buttons for differentiation */
-    border-color: #c5c5c5; /* Subtle border on hover */
+    border-color: #bdc1c6;
+    background-color: #f8f9fa;
 }
 
-.toolbar select:focus,
-.toolbar select:active { /* Style for when dropdown is open or focused */
-    border-color: #1a73e8;
-    background-color: #ffffff; /* White background when active/focused */
+.toolbar select:focus {
+    border-color: #4285f4;
     outline: none;
-    box-shadow: 0 0 0 1px #1a73e8; /* Gmail-like focus ring */
 }
 
 .font-family-selector {
-    min-width: 90px;
-    max-width: 130px;
-    font-family: inherit; /* Use selected font for its own display if possible, or toolbar default */
+    min-width: 110px;
+    max-width: 120px;
+    width: auto;
 }
 
 .font-size-selector {
     min-width: 60px;
-    max-width: 75px;
+    max-width: 70px;
+    width: auto;
 }
 
-/* Specific styling for the heading/text-style dropdown trigger */
-.text-style-dropdown { /* Container for icon + select */
-    position: relative;
-    display: flex;
-    align-items: center;
-    border-radius: 3px;
-    transition: background-color 0.1s ease-in-out, border-color 0.1s ease-in-out;
-    margin: 0 1px;
+.heading-selector {
+    min-width: 120px;
+    max-width: 130px;
+    width: auto;
 }
 
-.text-style-dropdown:hover {
-    background-color: #e0e0e0;
-    border-color: #c5c5c5;
-}
-.text-style-dropdown .select-wrapper {
-    display: flex;
-    align-items: center;
-    position: relative;
-}
-
-.text-style-dropdown .dropdown-icon {
-    position: absolute;
-    left: 6px; /* Position icon nicely inside the dropdown */
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: #5f6368;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1; /* Ensure icon is above select's background */
-}
-.text-style-dropdown .dropdown-icon svg {
-    width: 18px;
-    height: 18px;
-}
-
-.text-style-dropdown .heading-selector {
-    padding-left: 28px; /* Space for the icon */
-    min-width: 110px;
-    max-width: 140px;
-    border: 1px solid transparent; /* Match other selects */
-    background-color: transparent; /* Match other selects */
-}
-
-.text-style-dropdown:hover .heading-selector {
-    border-color: transparent; /* Hover on container, not select directly */
-}
-.text-style-dropdown .heading-selector:focus,
-.text-style-dropdown .heading-selector:active {
-    border-color: #1a73e8;
-    background-color: #ffffff;
-    box-shadow: 0 0 0 1px #1a73e8;
-}
-
-
-/* Color Picker Styles */
 .color-picker-container {
     position: relative;
     margin: 0 1px;
-    display: inline-flex; /* Align button correctly */
+    display: inline-flex;
 }
 
-.color-button { /* Specific button for color picker trigger */
+.color-button {
     padding: 0;
-    width: 28px;
-    height: 28px;
+    min-width: 28px !important;
+    width: 28px !important;
+    height: 28px !important;
     position: relative;
 }
 
-.color-button-inner { /* Visual representation of the selected color */
-    width: 18px; /* Smaller than button for padding effect */
-    height: 18px;
-    border: 1px solid #bdbdbd; /* Border for the color swatch */
+.color-button-inner {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #ddd;
     border-radius: 2px;
-    display: flex; /* Center the 'A' or other content */
-    align-items: center;
-    justify-content: center;
-    font-size: 12px; /* For the 'A' in text color */
-    line-height: 1;
 }
 
-/* Dropdown for color palette */
+/* Gmail-style color grid dropdown */
 .color-grid-dropdown {
     position: absolute;
-    bottom: 100%; /* Position above the toolbar */
-    left: 50%;
-    transform: translateX(-50%);
+    top: 100%;
+    left: 0;
     background-color: white;
-    border: 1px solid #d1d1d1; /* Gmail-like border */
+    border: 1px solid #ddd;
     border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* Gmail-like shadow */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     z-index: 100;
-    margin-bottom: 6px; /* Space from toolbar */
-    width: auto; /* Auto width based on content */
-    min-width: 180px; /* Minimum width */
-    padding: 8px;
-}
-.color-grid-dropdown .color-grid-header {
-    font-size: 12px;
-    color: #5f6368;
-    margin-bottom: 6px;
-    padding: 0 2px;
+    margin-top: 4px;
+    width: 180px;
+    padding: 6px;
 }
 
+/* Proper color grid layout */
 .color-grid {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr); /* 10 colors per row, matching Gmail */
-    gap: 3px; /* Gap between color cells */
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.color-grid-row {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
 }
 
 .color-grid-cell {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%; /* Circular color swatches */
-    border: 1px solid transparent;
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
     cursor: pointer;
-    transition: transform 0.1s ease-out, border-color 0.1s ease-out;
+    padding: 0;
+    margin: 0;
 }
+
 .color-grid-cell:hover {
     transform: scale(1.2);
-    border-color: #a0a0a0; /* Border on hover to highlight */
-    z-index: 1; /* Bring to front */
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3);
 }
-.color-grid-cell.transparent-cell { /* Special styling for transparent option */
+
+.transparent-cell {
     background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc),
-                      linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
-    background-size: 8px 8px;
-    background-position: 0 0, 4px 4px;
-    border: 1px solid #ccc;
+        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
+    background-size: 6px 6px;
+    background-position: 0 0, 3px 3px;
+    background-color: white;
+    position: relative;
+    margin-bottom: 4px;
 }
-.transparent-indicator { /* For the slash icon on transparent */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
+.transparent-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    font-size: 14px;
-    color: #5f6368;
-}
-
-
-/* Link Modal */
-.link-modal {
-    position: fixed; /* Cover viewport */
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: rgba(0,0,0,0.32); /* Standard overlay color */
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000; /* Above other content */
+    font-size: 10px;
+    color: #444746;
 }
+
+.color-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 6px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    width: 150px;
+}
+
+.color-option {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+}
+
+.link-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(60, 64, 67, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
 .link-modal-content {
     background-color: white;
-    padding: 20px 24px;
+    padding: 16px 20px;
     border-radius: 8px;
     width: 90%;
-    max-width: 420px; /* Max width for the modal */
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    max-width: 400px;
+    box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
 }
+
 .link-modal-content h4 {
     margin-top: 0;
     margin-bottom: 16px;
     color: #202124;
     font-size: 16px;
-    font-weight: 500; /* Medium weight for title */
+    font-weight: 500;
 }
-.link-modal-content input[type="text"] {
+
+.link-modal-content input {
     width: 100%;
-    padding: 10px 12px;
+    padding: 8px 12px;
     margin-bottom: 16px;
     border: 1px solid #dadce0;
     border-radius: 4px;
     font-size: 14px;
-    box-sizing: border-box;
 }
-.link-modal-content input[type="text"]:focus {
+
+.link-modal-content input:focus {
     outline: none;
     border-color: #1a73e8;
-    box-shadow: 0 0 0 1px #1a73e8 inset; /* Inner shadow for focus */
+    box-shadow: 0 0 0 1px rgba(26, 115, 232, 0.2);
 }
+
 .link-modal-buttons {
     display: flex;
     justify-content: flex-end;
-    gap: 8px; /* Space between buttons */
+    gap: 8px;
 }
+
 .link-modal-buttons button {
     padding: 8px 16px;
-    border: 1px solid transparent;
+    border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
-.link-modal-buttons button:first-child { /* Cancel button */
-    color: #1a73e8;
+
+.link-modal-buttons button:first-child {
     background-color: transparent;
+    color: #1a73e8;
 }
+
 .link-modal-buttons button:first-child:hover {
-    background-color: #f0f6ff; /* Light blue hover for cancel */
+    background-color: #f6fafe;
 }
-.link-modal-buttons button:last-child { /* Save button */
+
+.link-modal-buttons button:last-child {
     background-color: #1a73e8;
     color: white;
-    border-color: #1a73e8;
-}
-.link-modal-buttons button:last-child:hover {
-    background-color: #1668c7; /* Darker blue on hover */
-    border-color: #1668c7;
 }
 
-
-/* Divider between button groups in toolbar */
 .toolbar .divider {
     width: 1px;
-    height: 18px; /* Shorter than toolbar height */
-    background-color: #dadce0; /* Standard divider color */
-    margin: 0 6px; /* Spacing around divider */
+    height: 20px;
+    background-color: #dadce0;
+    margin: 0 4px;
     flex-shrink: 0;
 }
 
-/* SVG Icons styling within buttons */
+.button-group {
+    display: inline-flex;
+    margin: 0 2px;
+}
+
 .toolbar .format-icons {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
+    line-height: 1;
     height: 100%;
-}
-.toolbar .format-icons svg {
-    width: 18px; /* Adjust icon size as needed */
-    height: 18px;
-    fill: currentColor; /* Use button's color for fill if needed, else stroke */
-    stroke: currentColor; /* Default for outline icons */
-}
-.toolbar button.active .format-icons { /* Icon color change when button is active */
-    color: #176dee;
-}
-.toolbar button:hover .format-icons {
-    color: #3c4043;
-}
-/* Specific icon adjustments if needed */
-.toolbar button[title="Bold"] .format-icons svg,
-.toolbar button[title="Italic"] .format-icons svg {
-     /* Example: stroke-width: 2.2; if needed */
+    width: 100%;
+    color: #444746;
 }
 
-/* General styling for dropdown containers if using a div wrapper */
-.dropdown-container {
-    position: relative;
-    display: inline-flex; /* Align with other toolbar items */
-    align-items: center;
-    height: 28px;
-    margin: 0 1px;
+.toolbar .format-icons svg {
+    stroke: currentColor;
 }
-/* Special handling for text style (heading) dropdown if it uses an icon + select */
+
+.toolbar button.active .format-icons svg {
+    stroke: #1a73e8;
+}
+
+.toolbar button:hover .format-icons svg {
+    stroke-width: 2.2;
+}
+
+/* Improve Gmail-like appearance for specific buttons */
+.toolbar button[title="Heading 1"] .format-icons,
+.toolbar button[title="Heading 2"] .format-icons,
+.toolbar button[title="Heading 3"] .format-icons {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.toolbar .font-family-selector,
+.toolbar .font-size-selector {
+    padding: 4px 8px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #444746;
+    height: 28px;
+    background-color: white;
+}
+
+.toolbar .font-family-selector:hover,
+.toolbar .font-size-selector:hover {
+    border-color: #c6c6c6;
+    background-color: #f8f8f8;
+}
+
+.toolbar .font-family-selector:focus,
+.toolbar .font-size-selector:focus {
+    outline: none;
+    border-color: #1a73e8;
+    box-shadow: 0 0 0 1px rgba(26, 115, 232, 0.2);
+}
+
+/* Active states for list buttons */
+.toolbar-container button[data-active="true"] {
+    background-color: rgba(66, 133, 244, 0.1);
+    color: #4285f4;
+    border-color: rgba(66, 133, 244, 0.2);
+}
+
+.toolbar-container button:active {
+    background-color: rgba(66, 133, 244, 0.2);
+}
+
+.editor-error-boundary {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    padding: 1rem;
+    border: 1px solid #f87171;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.editor-error-boundary details {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .toolbar-row {
+        flex-wrap: wrap;
+    }
+}
+
+/* Gmail-style dropdowns */
+.toolbar select,
+.dropdown-container select {
+    height: 28px;
+    padding: 0 24px 0 8px;
+    font-size: 14px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #202124;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%23555%22%20d%3D%22M6%209L1%204h10z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    cursor: pointer;
+    margin: 0 2px;
+    min-width: 80px;
+    max-width: 120px;
+}
+
+.toolbar select:hover,
+.dropdown-container select:hover {
+    border-color: #bdc1c6;
+    background-color: #f8f9fa;
+}
+
+.toolbar select:focus,
+.dropdown-container select:focus {
+    border-color: #4285f4;
+    outline: none;
+}
+
+/* Gmail-style text dropdown */
 .text-style-dropdown .select-wrapper {
     position: relative;
     display: flex;
     align-items: center;
 }
-.text-style-dropdown .dropdown-icon { /* Icon placed before the select */
+
+.text-style-dropdown .dropdown-icon {
     position: absolute;
-    left: 6px; /* Position icon inside the select-like appearance */
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none; /* Icon should not be interactive */
+    left: 8px;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
     color: #5f6368;
-    z-index: 1; /* Above the select background */
+    z-index: 1;
 }
+
 .text-style-dropdown .heading-selector {
-    padding-left: 28px; /* Make space for the icon */
-    min-width: 120px;
+    padding-left: 30px;
+    background-color: #fff;
+    font-family: Arial, sans-serif;
 }
 
-
-/* Error Boundary Styling */
-.editor-error-boundary {
-    background-color: #fef2f2; /* Lighter red for background */
-    color: #991b1b; /* Darker red for text */
-    padding: 12px 16px;
-    border: 1px solid #fecaca; /* Light red border */
-    border-radius: 4px;
-    margin: 10px 0; /* Spacing if it appears */
-}
-.editor-error-boundary details {
-    margin-top: 8px;
-    padding: 8px;
-    background-color: rgba(255,255,255,0.6);
-    border-radius: 4px;
-    font-size: 0.9em;
-}
-.editor-error-boundary summary {
-    cursor: pointer;
-    font-weight: 500;
+/* Better dropdown positioning */
+.dropdown-container {
+    position: relative;
+    display: inline-flex;
+    margin: 0 2px;
+    align-items: center;
+    height: 28px;
 }
 
-
-/* Responsive adjustments for smaller screens */
-@media (max-width: 768px) {
-    .toolbar-row {
-        flex-wrap: wrap; /* Allow toolbar items to wrap on small screens */
-        padding: 2px 0; /* Adjust padding if wrapping */
-    }
-    .toolbar .divider {
-        margin: 0 3px; /* Reduce margin for dividers on smaller screens */
-    }
-    .toolbar button, .toolbar select {
-        margin: 1px; /* Reduce margins for buttons/selects */
-    }
-    .color-grid-dropdown { /* Ensure dropdown doesn't go off-screen */
-        left: 10px;
-        transform: translateX(0);
-        max-width: calc(100vw - 20px);
-    }
+/* Match Gmail's native text style button */
+.text-style-dropdown {
+    margin-left: 3px;
 }
 
-/* Styling for the Preview Area */
-.preview-area {
-    background-color: #ffffff; /* White background like a typical email */
-    border: 1px solid #e0e0e0; /* Subtle border */
-    border-radius: 4px; /* Slightly rounded corners */
-    padding: 16px; /* Padding around the content */
-    height: 100%; /* Fill available space */
-    overflow-y: auto; /* Allow scrolling for long previews */
-    font-family: Arial, sans-serif; /* Default email font */
-    font-size: 14px; /* Default email font size */
-    line-height: 1.6; /* Email line height */
-    color: #202124; /* Default text color */
+/* Gmail-like toolbar spacing and layout */
+.toolbar-container {
+    flex-wrap: nowrap;
+    display: flex;
 }
-
-/* Ensure preview content uses the full width and doesn't have unexpected margins */
-.preview-area > div {
-    width: 100%;
-    margin: 0;
-}
-
-/* Basic styling for elements within the preview to mimic email client rendering */
-.preview-area h1, .preview-area h2, .preview-area h3, .preview-area h4, .preview-area h5, .preview-area h6 {
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-}
-.preview-area p {
-    margin-top: 0;
-    margin-bottom: 1em;
-}
-.preview-area ul, .preview-area ol {
-    padding-left: 2em;
-    margin-bottom: 1em;
-}
-.preview-area li {
-    margin-bottom: 0.25em;
-}
-.preview-area a {
-    color: #1a73e8; /* Standard link color */
-    text-decoration: underline;
-}
-.preview-area blockquote {
-    border-left: 3px solid #ccc;
-    padding-left: 10px;
-    margin-left: 0;
-    color: #555;
-}
-.preview-area hr {
-    border: none;
-    border-top: 1px solid #ccc;
-    margin: 1em 0;
-}
-/* Add more styles as needed to better reflect common email client rendering */

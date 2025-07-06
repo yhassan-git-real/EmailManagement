@@ -7,8 +7,6 @@ import {
     FORMAT_ELEMENT_COMMAND,
     UNDO_COMMAND,
     REDO_COMMAND,
-    INDENT_CONTENT_COMMAND,
-    OUTDENT_CONTENT_COMMAND,
 } from 'lexical';
 import {
     $createParagraphNode,
@@ -37,114 +35,124 @@ import {
 import { $createHorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
 import { INSERT_TABLE_COMMAND } from '@lexical/table';
 
-// Gmail-style SVG icons - All icons aim for viewBox="0 0 24 24" for consistency
-// Stroke width typically 1.8 or 2. Fill set to 'none' for outline icons.
+// Gmail-style SVG icons
 const Icons = {
     undo: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2.5 7H12.5C17.1944 7 21 10.8056 21 15.5C21 20.1944 17.1944 24 12.5 24H11" transform="translate(0 -3.5)" />
-            <path d="M7 11.5L2.5 7L7 2.5" transform="translate(0 -3.5)" />
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 14 4 9l5-5" />
+            <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11" />
         </svg>
     ),
     redo: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21.5 7H11.5C6.80558 7 3 10.8056 3 15.5C3 20.1944 6.80558 24 11.5 24H13" transform="translate(0 -3.5)" />
-            <path d="M17 11.5L21.5 7L17 2.5" transform="translate(0 -3.5)" />
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 14 5-5-5-5" />
+            <path d="M4 9h10.5A5.5 5.5 0 0 1 20 14.5v0a5.5 5.5 0 0 1-5.5 5.5H11" />
         </svg>
     ),
     bold: (
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M17.25 9.99999C17.25 11.2153 16.7754 12.3367 15.9789 13.1356C15.1824 13.9344 14.0642 14.4167 12.85 14.4167H8.33333V18.25H7V5.74999H12.85C14.0642 5.74999 15.1824 6.23228 15.9789 7.03117C16.7754 7.83005 17.25 8.95146 17.25 9.99999ZM10.0833 12.6667H12.85C13.5588 12.6667 14.1721 12.3226 14.6108 11.8826C15.0496 11.4426 15.4167 10.8279 15.4167 10C15.4167 9.1721 15.0496 8.55737 14.6108 8.11737C14.1721 7.67737 13.5588 7.5 12.85 7.5H10.0833V12.6667Z" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" />
+            <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" />
         </svg>
     ),
     italic: (
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M14.25 5.75L10.0833 5.75L10.0833 7.5L11.9021 7.5L9.20417 16.5L7.83333 16.5L7.83333 18.25L13.75 18.25L13.75 16.5L11.9292 16.5L14.6271 7.5L16 7.5L16 5.75L14.25 5.75Z" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="4" x2="10" y2="4" />
+            <line x1="14" y1="20" x2="5" y2="20" />
+            <line x1="15" y1="4" x2="9" y2="20" />
         </svg>
     ),
     underline: (
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M12 16.5C14.6019 16.5 16.5833 14.5159 16.5833 11.9062V5.75H14.8333V11.9062C14.8333 13.5771 13.5729 14.75 12 14.75C10.4271 14.75 9.16667 13.5771 9.16667 11.9062V5.75H7.41667V11.9062C7.41667 14.5159 9.39812 16.5 12 16.5ZM7 18.25H17V20H7V18.25Z" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3" />
+            <line x1="4" y1="21" x2="20" y2="21" />
         </svg>
     ),
     strikethrough: (
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M12.6641 13.5938C13.4271 13.349 13.9688 12.8333 14.2865 12.0469C14.6042 11.2604 14.7604 10.3802 14.75 9.40625C14.75 8.01042 14.3177 6.90625 13.4531 6.09375C12.5885 5.28125 11.4427 4.875 10.0156 4.875C8.93229 4.875 8.00521 5.08854 7.23438 5.51562C6.46354 5.94271 5.92708 6.55208 5.625 7.34375L7.20312 7.96875C7.39062 7.50521 7.70833 7.16146 8.15625 6.9375C8.60417 6.71354 9.21354 6.60417 9.98438 6.60417C10.8021 6.60417 11.4323 6.83333 11.875 7.29167C12.3177 7.75 12.5417 8.40625 12.5625 9.26042C12.5625 9.82292 12.4323 10.2917 12.1719 10.6667C11.9115 11.0417 11.5365 11.375 11.0469 11.6667L5.5 13.875V15.125H18.5V13.5938H12.6641Z M5.5 11.1875L9.3125 9.75C9.0026 9.0599 8.8474 8.34479 8.84375 7.60417C8.84375 7.27083 8.88021 6.97396 8.95312 6.71354L5.5 7.90625V11.1875Z" transform="translate(-0.5 0)" />
-             <path d="M4 12.5H20V11H4V12.5Z" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M16 4H9a3 3 0 0 0-2.83 4" />
+            <path d="M14 12a4 4 0 0 1 0 8H6" />
+            <line x1="4" y1="12" x2="20" y2="12" />
         </svg>
     ),
     alignLeft: (
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M3 6H21V7.5H3V6ZM3 11.25H15V12.75H3V11.25ZM3 16.5H21V18H3V16.5Z" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="15" y2="12" />
+            <line x1="3" y1="18" x2="18" y2="18" />
         </svg>
     ),
     alignCenter: (
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M3 6H21V7.5H3V6ZM5 11.25H19V12.75H5V11.25ZM3 16.5H21V18H3V16.5Z" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="6" y1="12" x2="18" y2="12" />
+            <line x1="4" y1="18" x2="20" y2="18" />
         </svg>
     ),
     alignRight: (
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M3 6H21V7.5H3V6ZM9 11.25H21V12.75H9V11.25ZM3 16.5H21V18H3V16.5Z" />
-        </svg>
-    ),
-     alignJustify: (
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M3 6H21V7.5H3V6ZM3 11.25H21V12.75H3V11.25ZM3 16.5H21V18H3V16.5Z" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="9" y1="12" x2="21" y2="12" />
+            <line x1="6" y1="18" x2="21" y2="18" />
         </svg>
     ),
     bulletList: (
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M7.83333 6H20V7.5H7.83333V6ZM7.83333 11.25H20V12.75H7.83333V11.25ZM7.83333 16.5H20V18H7.83333V16.5ZM4 6.75C4 7.30228 4.44772 7.75 5 7.75C5.55228 7.75 6 7.30228 6 6.75C6 6.19772 5.55228 5.75 5 5.75C4.44772 5.75 4 6.19772 4 6.75ZM4 12C4 12.5523 4.44772 13 5 13C5.55228 13 6 12.5523 6 12C6 11.4477 5.55228 11 5 11C4.44772 11 4 11.4477 4 12ZM4 17.25C4 17.8023 4.44772 18.25 5 18.25C5.55228 18.25 6 17.8023 6 17.25C6 16.6977 5.55228 16.25 5 16.25C4.44772 16.25 4 16.6977 4 17.25Z" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <rect x="3" y="5" width="3" height="3" rx="1.5" />
+            <rect x="3" y="11" width="3" height="3" rx="1.5" />
+            <rect x="3" y="17" width="3" height="3" rx="1.5" />
+            <line x1="9" y1="6.5" x2="20" y2="6.5" stroke="currentColor" strokeWidth="1.5" />
+            <line x1="9" y1="12.5" x2="20" y2="12.5" stroke="currentColor" strokeWidth="1.5" />
+            <line x1="9" y1="18.5" x2="20" y2="18.5" stroke="currentColor" strokeWidth="1.5" />
         </svg>
     ),
     numberedList: (
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M7.83333 6H20V7.5H7.83333V6ZM7.83333 11.25H20V12.75H7.83333V11.25ZM7.83333 16.5H20V18H7.83333V16.5ZM5.58333 5.75L4 5.75L4 10.0833L5.58333 10.0833V9L4.91667 9V8.08333L5.58333 8.08333V7.16667L4.91667 7.16667V6.66667L5.58333 6.66667V5.75ZM4.17391 11.1667L5.58333 12.5417L5.58333 13.8333L4.08333 13.8333L4.08333 13.125L3.125 13.125L3.125 12.125L4.08333 11.1667H4.17391ZM4.08333 12.2083L3.58333 12.625L3.58333 12.6667L4.08333 12.6667V12.2083ZM5.58333 15.5833C5.58333 16.1311 5.4251 16.5833 5.1087 16.9403C4.79229 17.2972 4.36389 17.5 3.82396 17.5C3.28403 17.5 2.84028 17.3125 2.5 16.9375C2.15972 16.5625 2.04167 16.0469 2.16667 15.3906L2.625 15.5833C2.5625 15.9583 2.66667 16.2708 2.9375 16.5226C3.20833 16.7743 3.5625 16.875 4 16.8333C4.27083 16.8333 4.49306 16.7396 4.66667 16.5521C4.84028 16.3646 4.91667 16.1042 4.89583 15.7604C4.89583 15.4583 4.79167 15.2083 4.58333 15.0104C4.375 14.8125 4.08333 14.6667 3.70833 14.5833L3.20833 14.4583L3.20833 14.9583L3.5 15.0417C3.79167 15.125 4 15.25 4.125 15.4167C4.25 15.5833 4.29167 15.75 4.25 15.9167H5.08333L5.08333 15.0833L5.58333 15.0833V15.5833Z" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <text x="3.5" y="7" fontSize="8" fontWeight="bold" fill="currentColor">1</text>
+            <text x="3.5" y="13" fontSize="8" fontWeight="bold" fill="currentColor">2</text>
+            <text x="3.5" y="19" fontSize="8" fontWeight="bold" fill="currentColor">3</text>
+            <line x1="9" y1="6.5" x2="20" y2="6.5" stroke="currentColor" strokeWidth="1.5" />
+            <line x1="9" y1="12.5" x2="20" y2="12.5" stroke="currentColor" strokeWidth="1.5" />
+            <line x1="9" y1="18.5" x2="20" y2="18.5" stroke="currentColor" strokeWidth="1.5" />
         </svg>
     ),
     link: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
         </svg>
     ),
-    horizontalRule: ( // This icon isn't standard in Gmail's formatting bar, but useful. Simple line.
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="4" y1="12" x2="20" y2="12" />
+    horizontalRule: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12" />
         </svg>
     ),
     quote: (
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M8.41667 15.3333C9.52778 15.3333 10.4444 15.0139 11.1667 14.375C11.8889 13.7361 12.25 12.8889 12.25 11.8333V8.08333H10.0833L8.58333 11.1667H10.0833V11.8333C10.0833 12.4306 9.91088 12.8935 9.56616 13.2222C9.22143 13.5509 8.78333 13.7167 8.25183 13.7167C8.06806 13.7167 7.89097 13.6898 7.72083 13.6361L7.20833 15.0556C7.55556 15.2083 7.95139 15.3056 8.39583 15.3333H8.41667ZM15.0833 15.3333C16.1944 15.3333 17.1111 15.0139 17.8333 14.375C18.5556 13.7361 18.9167 12.8889 18.9167 11.8333V8.08333H16.75L15.25 11.1667H16.75V11.8333C16.75 12.4306 16.5776 12.8935 16.2329 13.2222C15.8881 13.5509 15.45 13.7167 14.9185 13.7167C14.7347 13.7167 14.5576 13.6898 14.3875 13.6361L13.875 15.0556C14.2222 15.2083 14.6181 15.3056 15.0625 15.3333H15.0833Z" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z" />
+            <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z" />
         </svg>
     ),
-    clearFormatting: ( // Icon for "Remove formatting" (Tx)
-        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-            <path d="M11.2778 15.3333L7.91667 6.75H9.63889L11.9028 12.4583L14.1667 6.75H15.8889L12.5278 15.3333H11.2778ZM15.3056 18.25L12.8056 12.9444L14.125 12.2917L17.1389 18.25H15.3056Z" />
-             <path d="M15.5 13.5 L18.5 16.5 M18.5 13.5 L15.5 16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    clearFormatting: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 8V4H8" />
+            <rect x="4" y="4" width="16" height="16" rx="2" />
+            <path d="m16 16-3.37-3.37" />
+            <path d="m8 8 3.37 3.37" />
         </svg>
     ),
-    indentLess: (
-      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-        <path d="M3 6H21V7.5H3V6ZM3 11.25H21V12.75H3V11.25ZM3 16.5H21V18H3V16.5ZM9.5 9L6.5 12L9.5 15V9Z" />
-      </svg>
-    ),
-    indentMore: (
-      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-        <path d="M3 6H21V7.5H3V6ZM3 11.25H21V12.75H3V11.25ZM3 16.5H21V18H3V16.5ZM6.5 9L9.5 12L6.5 15V9Z" />
-      </svg>
-    )
 };
 
-// Gmail-style text format icon (used for style/heading dropdown trigger)
+// Gmail-style text format icon
 const TextFormatIcon = (
-    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" >
-        <path d="M9.41667 18.25L9.41667 7.58333L5.66667 7.58333L5.66667 5.75L18.1667 5.75L18.1667 7.58333L14.4167 7.58333L14.4167 18.25L12.5833 18.25L12.5833 12.5833L11.25 12.5833L11.25 18.25L9.41667 18.25Z"/>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 7V4h16v3" />
+        <path d="M9 20h6" />
+        <path d="M12 4v16" />
     </svg>
 );
 
-// Font family options for the toolbar - these are fine
+// Font family options for the toolbar
 const FONT_FAMILY_OPTIONS = [
     { label: "Arial", value: "Arial, sans-serif" },
     { label: "Times New Roman", value: "'Times New Roman', Times, serif" },
@@ -203,17 +211,6 @@ export default function ToolbarPlugin() {
     const [isListActive, setIsListActive] = useState(false);
     const [listType, setListType] = useState(null); // 'bullet' or 'number'
     const [activeHeadingTag, setActiveHeadingTag] = useState("normal"); // 'normal', '1', '2', '3'
-
-
-    // INDENT HANDLERS
-    const handleIndent = () => {
-        editor.dispatchCommand(INDENT_CONTENT_COMMAND, undefined);
-    };
-
-    const handleOutdent = () => {
-        editor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined);
-    };
-
 
     // Update format states based on selection
     useEffect(() => {
@@ -820,12 +817,6 @@ export default function ToolbarPlugin() {
                         title="Align Right">
                         <span className="format-icons">{Icons.alignRight}</span>
                     </button>
-                     <button
-                        onClick={handleAlignJustify}
-                        className={alignment === 'justify' ? "active" : ""}
-                        title="Align Justify">
-                        <span className="format-icons">{Icons.alignJustify}</span>
-                    </button>
 
                     <div className="divider"></div>
 
@@ -845,16 +836,6 @@ export default function ToolbarPlugin() {
                         data-active={isListActive && listType === 'bullet'}
                     >
                         <span className="format-icons">{Icons.bulletList}</span>
-                    </button>
-
-                    <div className="divider"></div>
-
-                    {/* Indent buttons */}
-                    <button onClick={handleOutdent} title="Indent Less">
-                        <span className="format-icons">{Icons.indentLess}</span>
-                    </button>
-                    <button onClick={handleIndent} title="Indent More">
-                        <span className="format-icons">{Icons.indentMore}</span>
                     </button>
 
                     <div className="divider"></div>

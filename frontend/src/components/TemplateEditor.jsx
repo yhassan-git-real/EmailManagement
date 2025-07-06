@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import CustomRichTextEditor from './CustomRichTextEditor';
 import { XMarkIcon, DocumentCheckIcon } from '@heroicons/react/24/outline';
 
 const TemplateEditor = ({ initialTemplate, onSave, onClose }) => {
@@ -17,10 +16,12 @@ const TemplateEditor = ({ initialTemplate, onSave, onClose }) => {
       id: initialTemplate?.id || 'custom'
     });
   };
+  
+  // No modules needed for custom editor
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full h-3/4 flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full h-4/5 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <h2 className="text-lg font-medium text-gray-800">Email Template Editor</h2>
@@ -33,7 +34,7 @@ const TemplateEditor = ({ initialTemplate, onSave, onClose }) => {
         </div>
         
         {/* Editor */}
-        <div className="p-4 flex-grow flex flex-col">
+        <div className="p-4 flex-grow flex flex-col overflow-hidden">
           <div className="mb-4">
             <label htmlFor="templateName" className="block text-sm font-medium text-gray-700 mb-1">
               Template Name
@@ -47,29 +48,16 @@ const TemplateEditor = ({ initialTemplate, onSave, onClose }) => {
             />
           </div>
           
-          <div className="flex-grow">
-            <ReactQuill
-              value={editorContent}
+          <div className="flex-grow overflow-hidden p-1">
+            <CustomRichTextEditor
+              initialValue={editorContent}
               onChange={setEditorContent}
-              theme="snow"
-              style={{ height: 'calc(100% - 40px)', marginBottom: '40px' }}
-              modules={{
-                toolbar: [
-                  [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                  ['bold', 'italic', 'underline', 'strike'],
-                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                  [{ 'color': [] }, { 'background': [] }],
-                  [{ 'align': [] }],
-                  ['link', 'image'],
-                  ['clean']
-                ],
-              }}
             />
           </div>
         </div>
         
         {/* Footer with save button */}
-        <div className="px-4 py-3 border-t border-gray-200 flex justify-end">
+        <div className="px-4 py-3 border-t border-gray-200 flex justify-end flex-shrink-0">
           <button
             onClick={onClose}
             className="mr-3 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"

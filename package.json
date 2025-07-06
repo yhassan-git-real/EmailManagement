@@ -9,6 +9,14 @@
     "build:frontend": "powershell -File .\\build_frontend.ps1"
   },
   "dependencies": {
+    "@lexical/code": "^0.33.0",
+    "@lexical/html": "^0.33.0",
+    "@lexical/link": "^0.33.0",
+    "@lexical/list": "^0.33.0",
+    "@lexical/react": "^0.33.0",
+    "@lexical/rich-text": "^0.33.0",
+    "@lexical/table": "^0.33.0",
+    "lexical": "^0.33.0",
     "react-router-dom": "^6.22.3"
   }
 }

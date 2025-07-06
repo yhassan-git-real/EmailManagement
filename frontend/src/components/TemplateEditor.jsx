@@ -1,121 +1,21 @@
 import React, { useState } from 'react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { XMarkIcon, DocumentCheckIcon } from '@heroicons/react/24/outline';
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
-import { HeadingNode, QuoteNode } from '@lexical/rich-text';
-import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
-import { ListItemNode, ListNode } from '@lexical/list';
-import { CodeHighlightNode, CodeNode } from '@lexical/code';
-import { AutoLinkNode, LinkNode } from '@lexical/link';
-import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
-import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
-import { ListPlugin } from '@lexical/react/LexicalListPlugin';
-import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import ToolbarPlugin from './editor/ToolbarPlugin';
-import { serializeToHtml } from './editor/HtmlSerializer';
-import CustomErrorBoundary from './editor/CustomErrorBoundary';
-import InitialContentPlugin from './editor/InitialContentPlugin';
-import { HorizontalRulePlugin } from './editor/HorizontalRulePlugin';
-import './editor/editor.css';
 
-// Font family options for the editor
-const fontFamilyOptions = [
-  'Arial',
-  'Times New Roman',
-  'Georgia',
-  'Roboto',
-  'Calibri',
-  'Verdana',
-  'Tahoma',
-];
-
-// Theme for Lexical editor
-const theme = {
-  paragraph: 'editor-paragraph',
-  heading: {
-    h1: 'editor-heading-h1',
-    h2: 'editor-heading-h2',
-    h3: 'editor-heading-h3',
-  },
-  text: {
-    bold: 'editor-text-bold',
-    italic: 'editor-text-italic',
-    underline: 'editor-text-underline',
-    strikethrough: 'editor-text-strikethrough',
-    underlineStrikethrough: 'editor-text-underlineStrikethrough',
-  },
-  list: {
-    ol: 'editor-list-ol',
-    ul: 'editor-list-ul',
-    listitem: 'editor-listitem',
-    nested: {
-      listitem: 'editor-nested-listitem',
-    },
-  },
-  link: 'editor-link',
-  quote: 'editor-quote',
-  code: 'editor-code',
-  horizontalRule: 'editor-horizontalrule',
-};
-
-// Initial config for the editor
-const editorConfig = {
-  namespace: 'EmailTemplateEditor',
-  theme,
-  onError(error) {
-    console.error("Lexical editor error:", error);
-  },
-  nodes: [
-    HeadingNode,
-    ListNode,
-    ListItemNode,
-    QuoteNode,
-    CodeNode,
-    CodeHighlightNode,
-    TableNode,
-    TableCellNode,
-    TableRowNode,
-    AutoLinkNode,
-    LinkNode,
-    HorizontalRuleNode,
-  ],
-};
-
-function TemplateEditor({ initialTemplate, onSave, onClose }) {
+const TemplateEditor = ({ initialTemplate, onSave, onClose }) => {
   const [isSaving, setIsSaving] = useState(false);
-  const [editorState, setEditorState] = useState();
-  const [htmlContent, setHtmlContent] = useState(initialTemplate?.body || '<p>Start editing your template here...</p>');
+  const [editorContent, setEditorContent] = useState(initialTemplate?.body || '<p>Start editing your template here...</p>');
   const [templateName, setTemplateName] = useState(initialTemplate?.name || 'Custom Template');
-  const [editorError, setEditorError] = useState(null);
 
-  // Handle saving the template
   const handleSave = () => {
     setIsSaving(true);
-
-    // Convert editor state to HTML before saving
+    
     onSave({
       name: templateName,
-      body: htmlContent,
+      body: editorContent,
       id: initialTemplate?.id || 'custom'
     });
-  };
-  // Handle editor content change
-  const handleEditorChange = (editorState) => {
-    setEditorState(editorState);
-
-    try {
-      // Convert editor state to HTML
-      const html = serializeToHtml(editorState);
-      setHtmlContent(html);
-    } catch (error) {
-      console.error('Error serializing editor content:', error);
-      // Fallback to a basic HTML structure if serialization fails
-      setHtmlContent('<p>Error processing editor content</p>');
-    }
   };
 
   return (
@@ -124,16 +24,16 @@ function TemplateEditor({ initialTemplate, onSave, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <h2 className="text-lg font-medium text-gray-800">Email Template Editor</h2>
-          <button
+          <button 
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
-
+        
         {/* Editor */}
-        <div className="p-4 flex-grow flex flex-col overflow-hidden">
+        <div className="p-4 flex-grow flex flex-col">
           <div className="mb-4">
             <label htmlFor="templateName" className="block text-sm font-medium text-gray-700 mb-1">
               Template Name
@@ -146,38 +46,28 @@ function TemplateEditor({ initialTemplate, onSave, onClose }) {
               className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
             />
           </div>
-
-          <div className="flex-grow flex flex-col overflow-hidden">
-            {editorError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md mb-2 text-sm">
-                <strong>Error:</strong> {editorError}
-              </div>
-            )}
-
-            {/* Lexical Editor */}
-            <LexicalComposer initialConfig={editorConfig}>
-              <div className="editor-container">
-                <ToolbarPlugin />
-                <div className="editor-inner">
-                  <RichTextPlugin
-                    contentEditable={<ContentEditable className="editor-input" />}
-                    placeholder={<div className="editor-placeholder">Start editing your professional email template here...</div>}
-                    ErrorBoundary={CustomErrorBoundary}
-                  />
-                  <OnChangePlugin onChange={handleEditorChange} />
-                  <HistoryPlugin />
-                  <AutoFocusPlugin />
-                  <ListPlugin />
-                  <LinkPlugin />
-                  <HorizontalRulePlugin />
-                  <MarkdownShortcutPlugin />
-                  <InitialContentPlugin />
-                </div>
-              </div>
-            </LexicalComposer>
+          
+          <div className="flex-grow">
+            <ReactQuill
+              value={editorContent}
+              onChange={setEditorContent}
+              theme="snow"
+              style={{ height: 'calc(100% - 40px)', marginBottom: '40px' }}
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                  ['bold', 'italic', 'underline', 'strike'],
+                  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                  [{ 'color': [] }, { 'background': [] }],
+                  [{ 'align': [] }],
+                  ['link', 'image'],
+                  ['clean']
+                ],
+              }}
+            />
           </div>
         </div>
-
+        
         {/* Footer with save button */}
         <div className="px-4 py-3 border-t border-gray-200 flex justify-end">
           <button
@@ -209,6 +99,6 @@ function TemplateEditor({ initialTemplate, onSave, onClose }) {
       </div>
     </div>
   );
-}
+};
 
 export default TemplateEditor;

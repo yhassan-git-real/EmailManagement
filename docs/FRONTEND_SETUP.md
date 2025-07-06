@@ -1,124 +1,24 @@
-# EmailManagement Frontend
+# Frontend Setup Guide
 
-A professional web application for managing and sending emails to clients by retrieving data from a SQL Server database.
+This guide provides detailed instructions for setting up the EmailManagement frontend, which is built with React, Vite, and Tailwind CSS.
 
 ## Overview
 
-The frontend provides a modern, responsive user interface for the EmailManagement application. It includes:
-
+The EmailManagement frontend provides a modern, responsive user interface for:
 - Database connection interface
 - Email status dashboard
 - Email records management
 - Email automation configuration
 - Template management
-- Various utilities for date handling, session management, and API communication
 
-## Features
-
-- **Database Connection Interface**: Connect to SQL Server databases
-- **Email Status Report Viewer**: View sent, failed, and pending email statistics
-- **Email Records Management**: View, filter, and edit email records
-- **Email Automation**: Configure email sending rules and schedules
-- **Responsive Design**: Works on desktop, tablet, and mobile devices
-- **Protected Routes**: Ensures database connection before accessing features
-
-## Tech Stack
-
-- **Framework**: React.js 18
-- **Styling**: Tailwind CSS
-- **Build Tool**: Vite
-- **Routing**: React Router v6
-- **Notifications**: React Toastify
-- **Icons**: Heroicons
-- **Rich Text Editing**: React Quill
-
-## Workflow and Process
-
-The frontend follows a component-based architecture with several key sections:
-
-1. **Login Flow**:
-   - User enters database connection credentials
-   - Application validates credentials with backend
-   - On successful connection, user is redirected to the home page
-
-2. **Home Dashboard**:
-   - Displays email status summary
-   - Provides quick links to main features
-   - Shows connection information
-
-3. **Email Records**:
-   - Lists all email records with pagination
-   - Allows filtering and searching
-   - Provides editing capabilities
-
-4. **Automation**:
-   - Configure email automation settings
-   - Set up schedules for sending emails
-   - Manage automation rules
-
-## Getting Started
-
-For detailed setup instructions, please refer to the comprehensive setup guide:
-
-- [Frontend Setup Guide](../docs/FRONTEND_SETUP.md)
-
-### Prerequisites
+## Prerequisites
 
 - Node.js 14.x or higher
 - npm 6.x or higher
 
-### Installation
-
-#### Option 1: Using the Provided Scripts (Recommended)
-
-1. From the project root, run:
-   ```powershell
-   # PowerShell
-   .\start_frontend.ps1
-   ```
-   
-   This script will:
-   - Check for Node.js installation
-   - Install dependencies if needed
-   - Start the development server
-
-#### Option 2: Manual Setup
-
-1. Clone the repository
-   ```bash
-   git clone https://github.com/yourusername/email-management.git
-   cd email-management/frontend
-   ```
-
-2. Install dependencies
-   ```bash
-   npm install
-   ```
-
-3. Start the development server
-   ```bash
-   npm run dev
-   ```
-
-4. Open [http://localhost:5173](http://localhost:5173) to view the application
-
-### Building for Production
-
-To create a production build:
-
-```bash
-npm run build
-```
-
-This creates optimized files in the `dist` directory that can be deployed to any static hosting service.
-
-To preview the production build locally:
-
-```bash
-npm run preview
-```
-
 ## Project Structure
+
+The frontend follows a structured organization:
 
 ```
 frontend/
@@ -167,6 +67,86 @@ frontend/
 └── README.md                  # Frontend documentation
 ```
 
+## Setup Methods
+
+### Option 1: Using the Provided Scripts (Recommended)
+
+1. From the project root directory, run the frontend with a single command:
+   ```powershell
+   .\start_frontend.ps1
+   ```
+
+   This script automatically:
+   - Checks for Node.js installation
+   - Installs dependencies if needed
+   - Starts the development server
+
+2. The frontend will be available at: http://localhost:5173
+
+3. Open a browser and navigate to http://localhost:5173 to view the application.
+
+### Option 2: Manual Setup
+
+If you prefer to set up the frontend manually:
+
+1. Navigate to the frontend directory:
+   ```powershell
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```powershell
+   npm install
+   ```
+
+3. Start the development server:
+   ```powershell
+   npm run dev
+   ```
+
+4. Open [http://localhost:5173](http://localhost:5173) to view the application.
+
+## Building for Production
+
+To build the frontend for production deployment:
+
+1. Using the provided script (from project root):
+   ```powershell
+   .\build_frontend.ps1
+   ```
+
+2. Or manually:
+   ```powershell
+   cd frontend
+   npm run build
+   ```
+
+This will create an optimized production build in the `frontend/dist` directory that can be deployed to a web server.
+
+## Application Workflow
+
+The frontend follows a logical flow:
+
+1. **Login Flow**:
+   - User enters database connection credentials on the Login page
+   - Application validates credentials with backend
+   - On successful connection, user is redirected to the Home page
+
+2. **Home Dashboard**:
+   - Displays email status summary
+   - Provides quick links to main features
+   - Shows connection information
+
+3. **Email Records**:
+   - Lists all email records with pagination
+   - Allows filtering and searching
+   - Provides editing capabilities
+
+4. **Automation**:
+   - Configure email automation settings
+   - Set up schedules for sending emails
+   - Manage automation rules
+
 ## Key Components and Their Purposes
 
 ### Pages
@@ -198,6 +178,52 @@ The frontend communicates with the backend through several API clients:
 - **emailRecordsApi.js**: Specific functions for email records management
 - **automationApi.js**: Functions for email automation configuration
 
-## License
+## Customization
 
-This project is licensed under the MIT License.
+### Styling
+
+The application uses Tailwind CSS for styling. To customize the appearance:
+
+1. Edit the `tailwind.config.js` file to modify colors, fonts, and other design tokens
+2. Add custom styles in `src/index.css`
+
+### API Endpoint Configuration
+
+By default, the frontend connects to a backend at `http://localhost:8000`. To change this:
+
+1. Open `src/utils/apiClient.js`
+2. Modify the `API_BASE_URL` constant to point to your backend server
+
+## Browser Compatibility
+
+The application is designed to work with:
+- Chrome (latest 2 versions)
+- Firefox (latest 2 versions)
+- Edge (latest 2 versions)
+- Safari (latest 2 versions)
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Node.js Version**
+   - Ensure you have Node.js 14.x or higher installed
+   - Check with: `node --version`
+
+2. **Port Conflict**
+   - If port 5173 is already in use, Vite will automatically try the next available port
+   - Look for the URL in the terminal output when starting the development server
+
+3. **Backend Connection Issues**
+   - Check if the backend server is running
+   - Verify the API_BASE_URL in apiClient.js matches your backend URL
+   - Check browser console for CORS errors (ensure backend has proper CORS settings)
+
+4. **Build Errors**
+   - Run `npm run build` to see detailed error messages
+   - Check for any dependencies that need updating: `npm update`
+
+5. **White Screen/Blank Page**
+   - Check browser console for JavaScript errors
+   - Verify all dependencies are installed correctly
+   - Try clearing your browser cache

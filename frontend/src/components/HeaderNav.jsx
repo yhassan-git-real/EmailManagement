@@ -26,7 +26,7 @@ const HeaderNav = () => {
     {
       id: 'home',
       label: 'Home',
-      path: '/dashboard',
+      path: '/home',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
@@ -67,8 +67,8 @@ const HeaderNav = () => {
 
   // Check if a nav item is active based on current path
   const isActive = (path) => {
-    // Home/Dashboard is active on root path, /dashboard, and /status (for backward compatibility)
-    if (path === '/dashboard' && (currentPath === '/' || currentPath === '/dashboard' || currentPath === '/status')) {
+    // Home is active for /home, /dashboard and /status (for backward compatibility)
+    if (path === '/home' && (currentPath === '/home' || currentPath === '/dashboard' || currentPath === '/status')) {
       return true;
     }
     // Email Records is active for both /email-records and /records (for backward compatibility)

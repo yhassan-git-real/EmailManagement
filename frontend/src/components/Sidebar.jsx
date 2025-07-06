@@ -29,7 +29,7 @@ const Sidebar = (props) => {
     {
       id: 'home',
       label: 'Home',
-      path: '/dashboard',
+      path: '/home',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
@@ -84,8 +84,8 @@ const Sidebar = (props) => {
     // }
   ];  // Check if a nav item is active based on current path
   const isActive = (path) => {
-    // Home/Dashboard is active on root path, /dashboard, and /status (for backward compatibility)
-    if (path === '/dashboard' && (currentPath === '/' || currentPath === '/dashboard' || currentPath === '/status')) {
+    // Home is active on root path, /home, /dashboard, and /status (for backward compatibility)
+    if (path === '/home' && (currentPath === '/' || currentPath === '/home' || currentPath === '/dashboard' || currentPath === '/status')) {
       return true;
     }
     return currentPath === path || currentPath.startsWith(`${path}/`);
@@ -163,10 +163,10 @@ const Sidebar = (props) => {
                 <Link
                   to={item.path}
                   className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} p-3 rounded-lg transition-all duration-200 ${isActive(item.path)
-                      ? isCollapsed
-                        ? 'bg-primary-50 text-primary-700 shadow-sm'
-                        : 'bg-primary-50 text-primary-700 border-l-4 border-primary-500 pl-2.5'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-primary-600'
+                    ? isCollapsed
+                      ? 'bg-primary-50 text-primary-700 shadow-sm'
+                      : 'bg-primary-50 text-primary-700 border-l-4 border-primary-500 pl-2.5'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-primary-600'
                     }`}
                   aria-label={item.label}
                   title={isCollapsed ? item.label : ''}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const BrandingHeader = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   // Format date in a clean, professional way
   const getFormattedDate = () => {
     return new Date().toLocaleDateString(undefined, {
@@ -12,12 +12,10 @@ const BrandingHeader = () => {
     });
   };
 
-  // Navigation items
-  const navItems = [
-    { name: 'About', href: '#about' },
-    { name: 'Features', href: '#features' },
-    { name: 'Resources', href: '#resources' },
-    { name: 'Help', href: '#help' }
+  // Information items for login page
+  const infoItems = [
+    { name: 'Documentation', href: '#' },
+    { name: 'Support', href: '#' }
   ];
 
   return (
@@ -27,8 +25,8 @@ const BrandingHeader = () => {
           {/* Logo and App Name */}
           <div className="flex items-center">
             <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-lg shadow-md mr-3 hover:shadow-lg transition-all duration-300">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
                 className="w-6 h-6 text-white"
@@ -46,9 +44,9 @@ const BrandingHeader = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <nav className="flex space-x-6 mr-6">
-              {navItems.map((item) => (
-                <a 
-                  key={item.name} 
+              {infoItems.map((item) => (
+                <a
+                  key={item.name}
                   href={item.href}
                   className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium relative group"
                 >
@@ -61,7 +59,7 @@ const BrandingHeader = () => {
               {getFormattedDate()}
             </span>
           </div>
-          
+
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <span className="text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-100 mr-3">
@@ -85,12 +83,12 @@ const BrandingHeader = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            {navItems.map((item) => (
+            {infoItems.map((item) => (
               <a
                 key={item.name}
                 href={item.href}

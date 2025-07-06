@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { XMarkIcon, DocumentCheckIcon, EyeIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, DocumentCheckIcon } from '@heroicons/react/24/outline';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -88,10 +88,9 @@ const editorConfig = {
 function TemplateEditor({ initialTemplate, onSave, onClose }) {
   const [isSaving, setIsSaving] = useState(false);
   const [editorState, setEditorState] = useState();
-  const [htmlContent, setHtmlContent] = useState(initialTemplate?.body || '<p>Start editing your professional email template here...</p>');
+  const [htmlContent, setHtmlContent] = useState(initialTemplate?.body || '<p>Start editing your template here...</p>');
   const [templateName, setTemplateName] = useState(initialTemplate?.name || 'Custom Template');
   const [editorError, setEditorError] = useState(null);
-  const [isPreviewing, setIsPreviewing] = useState(false);
 
   // Handle saving the template
   const handleSave = () => {
@@ -125,76 +124,57 @@ function TemplateEditor({ initialTemplate, onSave, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <h2 className="text-lg font-medium text-gray-800">Email Template Editor</h2>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setIsPreviewing(!isPreviewing)}
-              className="p-1.5 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              title={isPreviewing ? "Edit Template" : "Preview Template"}
-            >
-              {isPreviewing ? <PencilIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-              title="Close Editor"
-            >
-              <XMarkIcon className="h-5 w-5" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
         </div>
 
-        {/* Editor or Preview Area */}
+        {/* Editor */}
         <div className="p-4 flex-grow flex flex-col overflow-hidden">
-          {!isPreviewing && (
-            <div className="mb-4">
-              <label htmlFor="templateName" className="block text-sm font-medium text-gray-700 mb-1">
-                Template Name
-              </label>
-              <input
-                type="text"
-                id="templateName"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-              />
-            </div>
-          )}
+          <div className="mb-4">
+            <label htmlFor="templateName" className="block text-sm font-medium text-gray-700 mb-1">
+              Template Name
+            </label>
+            <input
+              type="text"
+              id="templateName"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            />
+          </div>
 
           <div className="flex-grow flex flex-col overflow-hidden">
-            {editorError && !isPreviewing && (
+            {editorError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md mb-2 text-sm">
                 <strong>Error:</strong> {editorError}
               </div>
             )}
 
-            {isPreviewing ? (
-              <div className="preview-area p-4 border border-gray-300 rounded-md bg-white h-full overflow-auto">
-                <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-              </div>
-            ) : (
-              <LexicalComposer initialConfig={editorConfig}>
-                <div className="editor-container">
-                  {/* Editor content area */}
-                  <div className="editor-inner">
-                    <RichTextPlugin
-                      contentEditable={<ContentEditable className="editor-input" />}
-                      placeholder={<div className="editor-placeholder">Start editing your professional email template here...</div>}
-                      ErrorBoundary={CustomErrorBoundary}
-                    />
-                    <OnChangePlugin onChange={handleEditorChange} />
-                    <HistoryPlugin />
-                    <AutoFocusPlugin />
-                    <ListPlugin />
-                    <LinkPlugin />
-                    <HorizontalRulePlugin />
-                    <MarkdownShortcutPlugin />
-                    <InitialContentPlugin />
-                  </div>
-                  {/* Toolbar at the bottom */}
-                  <ToolbarPlugin />
+            {/* Lexical Editor */}
+            <LexicalComposer initialConfig={editorConfig}>
+              <div className="editor-container">
+                <ToolbarPlugin />
+                <div className="editor-inner">
+                  <RichTextPlugin
+                    contentEditable={<ContentEditable className="editor-input" />}
+                    placeholder={<div className="editor-placeholder">Start editing your professional email template here...</div>}
+                    ErrorBoundary={CustomErrorBoundary}
+                  />
+                  <OnChangePlugin onChange={handleEditorChange} />
+                  <HistoryPlugin />
+                  <AutoFocusPlugin />
+                  <ListPlugin />
+                  <LinkPlugin />
+                  <HorizontalRulePlugin />
+                  <MarkdownShortcutPlugin />
+                  <InitialContentPlugin />
                 </div>
-              </LexicalComposer>
-            )}
+              </div>
+            </LexicalComposer>
           </div>
         </div>
 
@@ -208,9 +188,8 @@ function TemplateEditor({ initialTemplate, onSave, onClose }) {
           </button>
           <button
             onClick={handleSave}
-            disabled={isSaving || isPreviewing} // Disable save when previewing
-            className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white flex items-center
-                        ${isPreviewing ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'}`}
+            disabled={isSaving}
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 flex items-center"
           >
             {isSaving ? (
               <>

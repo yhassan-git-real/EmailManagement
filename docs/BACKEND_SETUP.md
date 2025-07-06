@@ -1,24 +1,25 @@
-# EmailManagement Backend
+# Backend Setup Guide
 
-This is the backend API for the EmailManagement application, built with FastAPI and Microsoft SQL Server.
+This guide provides detailed instructions for setting up the EmailManagement backend, which is built with FastAPI and connects to a Microsoft SQL Server database.
 
 ## Overview
 
-The backend provides a RESTful API that handles:
+The EmailManagement backend is built with FastAPI and provides a RESTful API that handles:
 - Database connection testing and management
 - Email record retrieval and management
 - Email template operations
 - Email automation configuration
 - Integration with Google Drive for large file handling
 
-The backend provides a RESTful API that handles:
-- Database connection testing and management
-- Email record retrieval and management
-- Email template operations
-- Email automation configuration
-- Integration with Google Drive for large file handling
+## Prerequisites
+
+- Windows 10/11 (for portable Python setup)
+- Microsoft SQL Server (2016 or higher)
+- Internet connection (for downloading dependencies if needed)
 
 ## Project Structure
+
+The backend follows a structured organization:
 
 ```
 backend/
@@ -67,60 +68,54 @@ backend/
           └── db_utils.py      # Database utilities
 ```
 
-## Workflow and Process
+## Setup Methods
 
-The backend follows a layered architecture pattern:
+### Option 1: Using Portable Python Environment (Recommended)
 
-1. **API Layer** (`app/api/`):
-   - Defines all HTTP endpoints
-   - Validates incoming requests
-   - Handles HTTP-specific logic (status codes, headers)
+This method creates a self-contained, portable Python environment that works across different systems without relying on the system's global Python installation.
 
-2. **Service Layer** (`app/services/`):
-   - Implements business logic
-   - Orchestrates data operations
-   - Handles integration with external services
-
-3. **Data Layer** (`app/models/` and database connection):
-   - Defines data structures
-   - Manages database connections
-   - Executes database operations
-
-4. **Utility Layer** (`app/utils/`):
-   - Provides helper functions
-   - Handles cross-cutting concerns
-
-## Setup
-
-For detailed setup instructions, please refer to the comprehensive setup guide:
-
-- [Backend Setup Guide](../docs/BACKEND_SETUP.md)
-
-### Option 1: Using System Python (Traditional Setup)
-
-1. Install Python 3.11 or higher if not already installed
-
-2. Install the required ODBC driver for SQL Server:
-   - For Windows: [Download ODBC Driver for SQL Server](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server)
-   - For Linux: Follow [these instructions](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server)
-
-3. Clone the repository and navigate to the backend directory:
-   ```
-   cd EmailManagement/backend
+1. From the project root directory, run the backend with a single command:
+   ```powershell
+   .\start_backend.ps1
    ```
 
-4. Install Python dependencies:
+   This script automatically:
+   - Uses the pre-packaged portable Python environment
+   - Activates the virtual environment
+   - Installs any missing dependencies
+   - Starts the FastAPI server
+
+2. The backend will be available at: http://localhost:8000
+
+3. Verify it's working by opening http://localhost:8000/health in your browser. You should see a JSON response with "status": "ok".
+
+### Option 2: Using System Python (Traditional Setup)
+
+If you prefer to use your system's Python installation:
+
+1. Ensure you have Python 3.11 or higher installed.
+
+2. Create a virtual environment:
+   ```powershell
+   cd backend
+   python -m venv venv
+   .\venv\Scripts\activate
    ```
+
+3. Install the dependencies:
+   ```powershell
    pip install -r requirements.txt
    ```
 
-5. Create a `.env` file in the backend directory with the following settings:
+4. Create a `.env` file in the backend directory with the following content:
    ```
-   DB_SERVER=your_server
+   # Database settings
+   DB_SERVER=your_sql_server
    DB_NAME=your_database
    DB_USER=your_username
    DB_PASSWORD=your_password
-   DB_DRIVER=ODBC Driver 17 for SQL Server
+   
+   # Email tables and columns
    EMAIL_TABLE=EmailRecords
    
    # Optional Google Drive integration
@@ -132,53 +127,27 @@ For detailed setup instructions, please refer to the comprehensive setup guide:
    CORS_ORIGINS=["http://localhost:5173", "http://127.0.0.1:5173"]
    ```
 
-6. Run the application:
-   ```
+5. Run the application:
+   ```powershell
    python run.py
    ```
 
-### Option 2: Using Portable Python Environment (Recommended)
+## Database Setup
 
-This method creates a self-contained, portable Python environment that works across different systems without relying on the system's global Python installation.
+The application requires the following database tables and stored procedures:
 
-#### PowerShell (Recommended for Windows)
+1. Create the necessary tables by running the SQL scripts in the `database` directory:
+   - `email_tables.sql` - Creates the EmailRecords table
+   - `email_records_procedures.sql` - Creates stored procedures for email records
+   - `setup_stored_procedures.sql` - Master script that runs all procedure scripts
 
-1. Run the all-in-one script from the project root:
-   ```powershell
-   # From project root (PowerShell)
-   .\start_backend.ps1
-   
-   # From project root (CMD)
-   start_backend.bat
-   ```
+2. You can run these scripts directly in SQL Server Management Studio or using the sqlcmd utility.
 
-This script will:
-- Check if the portable Python environment is set up
-- Set up the environment if needed
-- Install all required dependencies
-- Run the backend application
-
-#### For Development (Manual Environment Activation)
-
-If you need to work directly with the Python environment (for installing packages, etc.):
-
-1. Activate the environment:
-   ```
-   # PowerShell
-   .\scripts\portable_env\activate.ps1
-   
-   # CMD
-   .\scripts\portable_env\activate.bat
-   ```
-
-2. You can now run Python commands directly.
-
-3. Deactivate when finished:
-   ```
-   deactivate
-   ```
+3. The application will connect to your database using the credentials provided when using the frontend interface.
 
 ## API Endpoints
+
+The backend exposes the following API endpoints:
 
 ### Root and Health Endpoints
 
@@ -191,14 +160,6 @@ If you need to work directly with the Python environment (for installing package
 - `POST /api/database/test` - Test database connection with provided credentials
 
 ### Email Records Endpoints
-
-- `GET /api/email/records` - Get paginated email records with optional filtering
-- `GET /api/email/records/{email_id}` - Get a specific email record by ID
-- `PUT /api/email/records/{email_id}` - Update an email record
-- `PUT /api/email/records/{email_id}/status` - Update the status of an email record
-- `DELETE /api/email/records/{email_id}` - Delete an email record
-
-### Email Records Endpoints (Alternative Format)
 
 - `GET /api/email-records/` - Get paginated email records with optional filtering
 - `GET /api/email-records/{record_id}` - Get a specific email record by ID
@@ -253,16 +214,53 @@ curl -X GET http://localhost:8000/api/config
 curl -X POST http://localhost:8000/api/database/test -H "Content-Type: application/json" -d '{"server":"your_server","database":"your_database","username":"your_username","password":"your_password"}'
 ```
 
-## Database Setup
+## Troubleshooting
 
-The application requires the following database tables and stored procedures:
+### Common Issues
 
-1. Create the necessary tables by running the SQL scripts in the `database` directory:
-   - `email_tables.sql` - Creates the EmailRecords table
-   - `email_records_procedures.sql` - Creates stored procedures for email records
+1. **Port Conflict**
+   - If port 8000 is already in use, modify the `API_PORT` value in the `.env` file
+   - Remember to update the frontend API client to point to the new port
 
-2. You can run these scripts directly in SQL Server Management Studio or using the sqlcmd utility.
+2. **Database Connection Issues**
+   - Verify SQL Server is running
+   - Check that the connection details are correct
+   - Ensure the user has appropriate permissions on the database
+   - Make sure SQL Server authentication is enabled if using SQL authentication
 
-## License
+3. **Missing Dependencies**
+   - If you encounter module import errors, run:
+     ```
+     pip install -r requirements.txt
+     ```
+   - For the portable environment, try:
+     ```
+     .\scripts\portable_env\setup.ps1
+     ```
 
-This project is licensed under the MIT License.
+4. **File Permission Issues**
+   - Ensure the application has write permissions to the `Email_Archive` directory
+   - Check permissions on template files
+
+## Architectural Notes
+
+The backend follows a layered architecture pattern:
+
+1. **API Layer** (`app/api/`):
+   - Defines all HTTP endpoints
+   - Validates incoming requests
+   - Handles HTTP-specific logic (status codes, headers)
+
+2. **Service Layer** (`app/services/`):
+   - Implements business logic
+   - Orchestrates data operations
+   - Handles integration with external services
+
+3. **Data Layer** (`app/models/` and database connection):
+   - Defines data structures
+   - Manages database connections
+   - Executes database operations
+
+4. **Utility Layer** (`app/utils/`):
+   - Provides helper functions
+   - Handles cross-cutting concerns

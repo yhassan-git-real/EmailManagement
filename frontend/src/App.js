@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import './styles/animations.css';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import AutomatePage from './pages/AutomatePage';

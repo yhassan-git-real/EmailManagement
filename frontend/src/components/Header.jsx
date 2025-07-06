@@ -5,9 +5,9 @@ import { formatConnectionTime, getFormattedDate } from '../utils/dateUtils';
 const Header = ({ connectionInfo, onDisconnect }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   return (
-    <header className="bg-white bg-opacity-90 backdrop-blur-md shadow-sm sticky top-0 z-50 w-full">
+    <header className="bg-white bg-opacity-95 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50 w-full shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
+        <div className="flex justify-between items-center py-3">
           <div className="flex items-center">
             <div className="bg-gradient-to-r from-primary-500 to-secondary-500 p-2 rounded-lg shadow-lg mr-3">
               <svg

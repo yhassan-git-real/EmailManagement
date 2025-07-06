@@ -4,40 +4,43 @@ const EmailStatusCard = ({ title, count, color, icon, description }) => {
   // Determine styling based on color type
   const styles = {
     green: {
-      bgColor: 'bg-gradient-to-br from-green-50 to-green-100',
-      iconBg: 'bg-green-100',
+      bgColor: 'bg-white',
+      iconBg: 'bg-green-50',
       textColor: 'text-green-600',
       countColor: 'text-green-700',
-      ringColor: 'ring-green-400',
+      borderColor: 'border-green-500',
+      hoverBorderColor: 'hover:border-green-400',
       hoverBg: 'hover:bg-green-50',
-      accentColor: 'bg-green-500',
-      shadowColor: 'shadow-green',
+      badgeBg: 'bg-green-500',
+      badgeText: 'text-white',
       letterBg: 'bg-green-100',
-      letterColor: 'text-green-600'
+      letterColor: 'text-green-700'
     },
     red: {
-      bgColor: 'bg-gradient-to-br from-red-50 to-red-100',
-      iconBg: 'bg-red-100',
+      bgColor: 'bg-white',
+      iconBg: 'bg-red-50',
       textColor: 'text-red-600',
       countColor: 'text-red-700',
-      ringColor: 'ring-red-400',
+      borderColor: 'border-red-500',
+      hoverBorderColor: 'hover:border-red-400',
       hoverBg: 'hover:bg-red-50',
-      accentColor: 'bg-red-500',
-      shadowColor: 'shadow-red',
+      badgeBg: 'bg-red-500',
+      badgeText: 'text-white',
       letterBg: 'bg-red-100',
-      letterColor: 'text-red-600'
+      letterColor: 'text-red-700'
     },
     yellow: {
-      bgColor: 'bg-gradient-to-br from-amber-50 to-amber-100',
-      iconBg: 'bg-amber-100',
+      bgColor: 'bg-white',
+      iconBg: 'bg-amber-50',
       textColor: 'text-amber-600',
       countColor: 'text-amber-700',
-      ringColor: 'ring-amber-400',
+      borderColor: 'border-amber-500',
+      hoverBorderColor: 'hover:border-amber-400',
       hoverBg: 'hover:bg-amber-50',
-      accentColor: 'bg-amber-500',
-      shadowColor: 'shadow-amber',
+      badgeBg: 'bg-amber-500',
+      badgeText: 'text-white',
       letterBg: 'bg-amber-100',
-      letterColor: 'text-amber-600'
+      letterColor: 'text-amber-700'
     }
   };
   
@@ -47,40 +50,41 @@ const EmailStatusCard = ({ title, count, color, icon, description }) => {
     
   const style = styles[colorType];
   return (
-    <div className={`card-glass group relative rounded-xl ${style.shadowColor} hover:shadow-xl p-7 transition-all duration-300`}>
-      {/* Accent line */}
-      <div className={`absolute top-0 left-0 h-2 w-full ${style.accentColor} rounded-t-xl`}></div>
-        <div className="flex flex-col h-full">
-        <div className="flex items-center mb-6 space-x-3">
-          {/* Status letter indicator with soft inner shadow */}
-          <div className={`flex items-center justify-center h-12 w-12 rounded-xl ${style.letterBg} ${style.letterColor} shadow-inner`}>
-            <span className="text-lg font-bold">
+    <div className={`bg-white group rounded-lg border shadow-sm ${style.borderColor} hover:shadow-md p-4 transition-all duration-200`}>
+      {/* Card header with status indicator */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center">
+          {/* Status letter indicator */}
+          <div className={`flex items-center justify-center h-7 w-7 rounded-md ${style.letterBg} ${style.letterColor}`}>
+            <span className="text-xs font-semibold">
               {title.charAt(0).toUpperCase()}
             </span>
           </div>
           
           {/* Title */}
-          <h3 className={`font-semibold text-lg ${style.textColor}`}>{title}</h3>
+          <h3 className={`ml-2 font-medium text-sm ${style.textColor}`}>{title}</h3>
         </div>
-          {/* Icon and count side by side */}
-        <div className="flex justify-between items-center mb-8">
-          <div className={`text-5xl font-bold ${style.countColor} animate-number tracking-tight`}>
-            {count}
-          </div>
-          
-          {/* Icon with background */}
-          <div className={`p-3.5 rounded-xl ${style.iconBg} ${style.textColor} shadow-sm`}>
-            {icon}
-          </div>
+        
+        {/* Icon with background */}
+        <div className={`p-1.5 rounded-md ${style.iconBg} ${style.textColor}`}>
+          {icon}
         </div>
-          {/* Description */}
-        <div className="text-sm mt-auto text-gray-600 font-medium">
+      </div>
+      
+      {/* Count and description */}
+      <div className="mt-1">
+        <div className={`text-3xl font-bold ${style.countColor} animate-number tracking-tight mb-1`}>
+          {count}
+        </div>
+        
+        {/* Description */}
+        <div className="text-xs text-gray-500">
           {description}
         </div>
       </div>
       
-      {/* Interactive hover effect */}
-      <div className={`absolute bottom-0 left-0 w-full h-1.5 ${style.accentColor} rounded-b-xl transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left`}></div>
+      {/* Interactive hover effect - subtle bottom border transition */}
+      <div className="h-0.5 w-0 group-hover:w-full bg-gray-200 mt-3 transition-all duration-300"></div>
     </div>
   );
 };

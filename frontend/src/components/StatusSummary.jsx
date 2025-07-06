@@ -57,34 +57,27 @@ const StatusSummary = () => {
     loadStatusData(true); // Force refresh from server
     // Removed toast notification as per requirement
   };  return (
-    <div className="card-glass max-w-5xl mx-auto shadow-xl">
-      {/* Card header with accent line */}
-      <div className="relative">
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-t-lg"></div>
-      </div>
-      
-      <div className="p-8 sm:p-10">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10">
-          <div className="mb-6 lg:mb-0">
-            <div className="flex items-center">
-              <div className="w-12 h-12 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6">
+    <div className="w-full">
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center">
+              <div className="w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                   <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" />
                   <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
                 </svg>
               </div>
               <div>
-                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-700 to-secondary-700">Email Status Report</h2>
+                <h2 className="text-base font-semibold text-gray-800">Email Status Report</h2>
                 {lastUpdated && (
-                  <p className="text-sm text-gray-500">Last updated: {lastUpdated}</p>
+                  <p className="text-xs text-gray-500">Last updated: {lastUpdated}</p>
                 )}
               </div>
-            </div>
           </div>
           <button 
             onClick={handleRefresh}
             disabled={loading}
-            className="btn-primary group self-end"
+            className="px-3 py-1.5 bg-primary-50 hover:bg-primary-100 text-primary-600 text-xs font-medium rounded-lg border border-primary-200 transition-colors group flex items-center"
           >
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
@@ -92,24 +85,24 @@ const StatusSummary = () => {
               viewBox="0 0 24 24" 
               strokeWidth={2} 
               stroke="currentColor" 
-              className={`w-5 h-5 mr-2 transition-transform duration-500 ${loading ? 'animate-spin' : 'group-hover:rotate-180'}`}
+              className={`w-3.5 h-3.5 mr-1.5 transition-transform duration-500 ${loading ? 'animate-spin' : 'group-hover:rotate-180'}`}
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
             </svg>
-            {loading ? 'Refreshing...' : 'Refresh Report'}
+            {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </div>      {loading && !statusData ? (
-        <div className="pt-2 pb-6 flex justify-center">
-          <div className="animate-pulse flex flex-col items-center space-y-8 w-full">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full max-w-4xl mt-4">
-              <div className="h-52 bg-gray-200 rounded-2xl shadow-md"></div>
-              <div className="h-52 bg-gray-200 rounded-2xl shadow-md"></div>
-              <div className="h-52 bg-gray-200 rounded-2xl shadow-md"></div>
+        <div className="pt-2 pb-4 flex justify-center">
+          <div className="animate-pulse flex flex-col items-center w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-2">
+              <div className="h-32 bg-gray-100 rounded-lg shadow-sm"></div>
+              <div className="h-32 bg-gray-100 rounded-lg shadow-sm"></div>
+              <div className="h-32 bg-gray-100 rounded-lg shadow-sm"></div>
             </div>
           </div>
         </div>      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-6 py-6 sm:px-8 sm:py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-2 px-2">
           <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
             <EmailStatusCard 
               title="Sent" 

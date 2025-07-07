@@ -1,30 +1,129 @@
-import React, { useState } from 'react';
-import HeaderNav from './HeaderNav';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { formatConnectionTime, getFormattedDate } from '../utils/dateUtils';
 
 const Header = ({ connectionInfo, onDisconnect }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const location = useLocation();
+  const currentPath = location.pathname;
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Check if screen is mobile size on mount and when window resizes
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
+  
+  // Navigation items with their icons and routes
+  const navItems = [
+    {
+      id: 'home',
+      label: 'Home',
+      path: '/home',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+          className="w-5 h-5">
+          <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" />
+          <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z" />
+        </svg>
+      )
+    },
+    {
+      id: 'records',
+      label: 'Email Records',
+      path: '/email-records',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+          className="w-5 h-5">
+          <path fillRule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 013.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 013.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 01-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875zm6.905 9.97a.75.75 0 00-1.06 0l-3 3a.75.75 0 101.06 1.06l1.72-1.72V18a.75.75 0 001.5 0v-4.19l1.72 1.72a.75.75 0 101.06-1.06l-3-3z" clipRule="evenodd" />
+          <path d="M14.25 5.25a5.23 5.23 0 00-1.279-3.434 9.768 9.768 0 016.963 6.963A5.23 5.23 0 0016.5 7.5h-1.875a.375.375 0 01-.375-.375V5.25z" />
+        </svg>
+      )
+    },
+    {
+      id: 'automate',
+      label: 'Automate Email',
+      path: '/automate',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+          className="w-5 h-5">
+          <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clipRule="evenodd" />
+        </svg>
+      )
+    }
+  ];
+  
+  // Check if a nav item is active based on current path
+  const isActive = (path) => {
+    // Home is active for /home, /dashboard and /status (for backward compatibility)
+    if (path === '/home' && (currentPath === '/home' || currentPath === '/dashboard' || currentPath === '/status')) {
+      return true;
+    }
+    // Email Records is active for both /email-records and /records (for backward compatibility)
+    if (path === '/email-records' && (currentPath === '/email-records' || currentPath === '/records')) {
+      return true;
+    }
+    // Otherwise, check for exact path match
+    return currentPath === path;
+  };
   return (
-    <header className="bg-white bg-opacity-95 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50 w-full shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-3">
-          <div className="flex items-center">
-            <div className="bg-gradient-to-r from-primary-500 to-secondary-500 p-2 rounded-lg shadow-lg mr-3">
+    <header className="bg-white bg-opacity-98 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50 w-full shadow-sm">
+      <div className="max-w-full mx-auto px-2 sm:px-3 lg:px-4">
+        <div className="flex justify-between items-center py-2.5">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-r from-primary-500 to-secondary-500 p-2.5 rounded-lg shadow-md mr-3 transform transition-transform duration-300 hover:scale-105">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                className="w-8 h-8 text-white"
+                className="w-7 h-7 text-white"
               >
                 <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
                 <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-secondary-600">EmailManagement</h1>
-              <p className="text-xs text-gray-500">Email Delivery Management System</p>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-secondary-600 tracking-tight">EmailManagement</h1>
+              <p className="text-xs text-gray-500 font-medium">Email Delivery Management System</p>
             </div>
           </div>
+          
+          {/* Navigation items - now on same line as header */}
+          <div className="hidden md:flex items-center">
+            {navItems.map((item) => (
+              <Link
+                key={item.id}
+                to={item.path}
+                className={`group flex items-center px-3 py-1.5 mx-1 relative ${isActive(item.path)
+                  ? 'text-primary-600'
+                  : 'text-gray-500 hover:text-primary-600'
+                } transition-all duration-300 hover:scale-105`}
+              >
+                <div className={`p-1 rounded-full mr-1.5 ${isActive(item.path) 
+                  ? 'bg-primary-100 text-primary-600 shadow-sm' 
+                  : 'text-gray-400 group-hover:text-primary-500 group-hover:bg-primary-50'} 
+                  transition-all duration-300 transform`}>
+                  {item.icon}
+                </div>
+                <span className={`text-sm font-medium tracking-wide ${isActive(item.path) ? 'font-semibold' : ''}`}>
+                  {item.label}
+                </span>
+                {isActive(item.path) && (
+                  <span className="absolute -bottom-1.5 left-0 w-full h-0.5 bg-gradient-to-r from-primary-400 to-primary-600 rounded-full"></span>
+                )}
+              </Link>
+            ))}
+          </div>
+          
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-md hidden sm:block">
               {new Date().toLocaleDateString()}
@@ -102,8 +201,46 @@ const Header = ({ connectionInfo, onDisconnect }) => {
           </div>
         </div>
       </div>
-      {/* Add HeaderNav component below the header content */}
-      <HeaderNav />
+      {/* Navigation is now integrated directly in the header row above */}
+
+      {/* Mobile menu button - only shown on mobile */}
+      {isMobile && (
+        <div className="md:hidden px-4 py-2 border-t border-gray-100 flex justify-between items-center">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="flex items-center text-primary-600 hover:text-primary-700 focus:outline-none rounded-md px-2 py-1.5 hover:bg-primary-50 transition-colors duration-200 w-full justify-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-5 w-5 mr-1">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
+            </svg>
+            <span className="text-sm">{mobileMenuOpen ? 'Close Menu' : 'Menu'}</span>
+          </button>
+        </div>
+      )}
+
+      {/* Mobile navigation menu */}
+      {isMobile && mobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-100 shadow-md animate-fadeIn">
+          <div className="px-3 pt-2 pb-3 space-y-1">
+            {navItems.map((item) => (
+              <Link
+                key={item.id}
+                to={item.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block px-4 py-2 rounded-lg text-sm font-medium flex items-center ${isActive(item.path)
+                  ? 'bg-primary-50 text-primary-600 border-l-4 border-primary-500 pl-3'
+                  : 'text-gray-600 hover:bg-primary-50/30 hover:text-primary-700'
+                } transition-all duration-200`}
+              >
+                <span className={`mr-3 ${isActive(item.path) ? 'text-primary-500' : 'text-gray-400'}`}>
+                  {item.icon}
+                </span>
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </header>
   );
 };

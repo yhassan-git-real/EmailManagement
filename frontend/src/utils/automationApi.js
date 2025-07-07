@@ -145,9 +145,20 @@ export const clearAutomationLogs = async () => {
 };
 
 // Clean up email archive
-export const cleanupEmailArchive = async () => {
+export const cleanupEmailArchive = async (days = 30) => {
   try {
-    const response = await apiClient.post(`${API_BASE}/archive/cleanup`);
+    const response = await apiClient.post(`${API_BASE}/archive/cleanup`, { days });
+    return response;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Save cleanup settings
+export const saveCleanupSettings = async (settings) => {
+  try {
+    const response = await apiClient.post(`${API_BASE}/archive/settings`, settings);
     return response;
   } catch (error) {
     console.error('API Error:', error);

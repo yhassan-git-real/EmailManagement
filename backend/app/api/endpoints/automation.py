@@ -443,33 +443,54 @@ async def clear_logs():
 
 
 @router.post("/archive/cleanup")
-async def cleanup_archive():
+async def cleanup_archive(days: int = Body(30)):
     """
-    Clean up the email archive by removing old .zip files.
+    Clean up the email archive by removing .zip files older than the specified days.
     
+    Args:
+        days: Number of days to keep files for (files older than this will be deleted)
+        
     Returns:
         Number of files deleted
     """
     try:
         import os
+        import time
+        from datetime import datetime, timedelta
         from ...services.email_sender import get_archive_path
         from pathlib import Path
         
         archive_path = get_archive_path()
         count = 0
         
+        # Calculate the cutoff timestamp (current time - days)
+        cutoff_date = datetime.now() - timedelta(days=days)
+        cutoff_timestamp = cutoff_date.timestamp()
+        
+        logger.info(f"Cleaning up archive files older than {days} days (before {cutoff_date.strftime('%Y-%m-%d %H:%M:%S')})")
+        
         # Ensure the archive path exists
         if os.path.exists(archive_path):
             for file_path in Path(archive_path).glob('*.zip'):
                 try:
-                    os.remove(file_path)
-                    count += 1
+                    # Get the file's modification time
+                    file_mtime = os.path.getmtime(file_path)
+                    
+                    # Check if the file is older than the cutoff date
+                    if file_mtime < cutoff_timestamp:
+                        file_date = datetime.fromtimestamp(file_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                        logger.info(f"Deleting old file: {file_path} (modified: {file_date})")
+                        os.remove(file_path)
+                        count += 1
+                    else:
+                        file_date = datetime.fromtimestamp(file_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                        logger.debug(f"Keeping recent file: {file_path} (modified: {file_date})")
                 except Exception as e:
-                    logger.error(f"Error deleting file {file_path}: {str(e)}")
+                    logger.error(f"Error processing file {file_path}: {str(e)}")
         
         return {
             "success": True,
-            "message": f"Archive cleaned up successfully. {count} files removed.",
+            "message": f"Archive cleaned up successfully. {count} files older than {days} days removed.",
             "filesDeleted": count
         }
     except Exception as e:

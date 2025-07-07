@@ -3,16 +3,15 @@ import { Link } from 'react-router-dom';
 
 const Breadcrumb = ({ items = [] }) => {
   return (
-    <nav className="flex text-sm py-3 animate-fadeIn w-full z-20">
-      <div className="flex items-center bg-white shadow-md rounded-xl px-4 py-2 border border-gray-200 w-full">
-        <ol className="flex flex-wrap items-center">
+    <nav className="flex text-sm py-2 animate-fadeIn w-full z-20">
+        <ol className="flex flex-wrap items-center w-full">
           {items.map((item, index) => {
             const isLast = index === items.length - 1;
 
             return (
               <li key={index} className="flex items-center">
                 {index > 0 && (
-                  <div className="mx-2 text-gray-300 flex items-center">
+                  <div className="mx-1.5 text-gray-300 flex items-center">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-3.5 w-3.5 transform transition-transform duration-300 group-hover:translate-x-0.5"
@@ -33,7 +32,7 @@ const Breadcrumb = ({ items = [] }) => {
                 {isLast || !item.path ? (
                   <span
                     className={`flex items-center transition-all duration-300 ${isLast
-                      ? 'bg-primary-50 text-primary-700 font-medium px-3 py-1 rounded-lg border border-primary-100 shadow-sm'
+                      ? 'bg-primary-50 text-primary-700 font-medium px-2 py-0.5 rounded-md border border-primary-100 shadow-sm'
                       : 'text-gray-500'}`}
                   >
                     {item.icon && (
@@ -51,7 +50,7 @@ const Breadcrumb = ({ items = [] }) => {
                 ) : (
                   <Link
                     to={item.path}
-                    className="group flex items-center text-gray-600 hover:text-primary-700 px-2.5 py-1 rounded-lg hover:bg-primary-50/70 transition-all duration-200"
+                    className="group flex items-center text-gray-600 hover:text-primary-700 px-2 py-0.5 rounded-md hover:bg-primary-50/70 transition-all duration-200"
                   >
                     {item.icon && (
                       <span className="mr-1.5 inline-flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
@@ -68,7 +67,6 @@ const Breadcrumb = ({ items = [] }) => {
             );
           })}
         </ol>
-      </div>
     </nav>
   );
 };

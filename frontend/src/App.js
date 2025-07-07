@@ -10,7 +10,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import './styles/animations.css';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
-import AutomatePage from './pages/AutomatePage';
+import AutomatePage from './pages/AutomateEmail';
 import EmailRecordsPage from './pages/EmailRecordsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { saveConnectionToSession, loadConnectionFromSession, clearConnectionSession } from './utils/sessionUtils';

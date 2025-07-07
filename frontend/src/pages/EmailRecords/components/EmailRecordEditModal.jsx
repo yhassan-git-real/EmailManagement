@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
+/**
+ * Modal component for editing email records
+ * 
+ * @param {Object} record - The record to edit
+ * @param {Function} onSave - Function to call when saving changes
+ * @param {Function} onCancel - Function to call when canceling
+ * @param {boolean} isLoading - Whether the form is in a loading state
+ */
 const EmailRecordEditModal = ({ record, onSave, onCancel, isLoading = false }) => {
     const [formData, setFormData] = useState({
         id: record.id,

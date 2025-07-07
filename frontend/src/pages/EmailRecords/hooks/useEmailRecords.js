@@ -26,10 +26,10 @@ const useEmailRecords = (initialPageSize = 10) => {
     // Clean up effect when the component unmounts
     useEffect(() => {
         console.log("[useEmailRecords] Hook initialized");
-        
+
         // Set mounted flag
         mountedRef.current = true;
-        
+
         return () => {
             console.log("[useEmailRecords] Hook cleanup");
             mountedRef.current = false;
@@ -103,10 +103,7 @@ const useEmailRecords = (initialPageSize = 10) => {
         }
     }, [currentPage, pageSize, searchTerm, statusFilter]);
 
-    // Load initial data when the hook is first used
-    useEffect(() => {
-        loadTableData(1);
-    }, [loadTableData]);
+
 
     /**
      * Apply client-side filtering based on search term
@@ -200,7 +197,7 @@ const useEmailRecords = (initialPageSize = 10) => {
         searchTerm,
         statusFilter,
         isLocalFiltering,
-        
+
         // Actions
         loadTableData,
         handleSearch,

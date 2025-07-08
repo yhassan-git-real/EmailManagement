@@ -248,6 +248,22 @@ aside nav ul li a:hover {
   border: 1px solid theme('colors.red.200');
 }
 
+/* Smaller toast size */
+.toast-smaller {
+  min-height: 48px !important;
+  padding: 8px 12px !important;
+  font-size: 0.875rem !important;
+}
+
+.toast-smaller .Toastify__toast-body {
+  margin: 0.25rem 0.5rem !important;
+}
+
+.toast-smaller .Toastify__close-button {
+  padding: 0 !important;
+  margin-top: -2px !important;
+}
+
 /* Responsive adjustments */
 @media screen and (max-width: 640px) {
   .status-count {

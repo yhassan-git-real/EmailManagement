@@ -6,7 +6,7 @@ const Toast = () => {
   return (
     <ToastContainer
       position="top-right"
-      autoClose={5000}
+      autoClose={2000}
       hideProgressBar={false}
       newestOnTop
       closeOnClick
@@ -15,7 +15,7 @@ const Toast = () => {
       draggable
       pauseOnHover
       theme="light"
-      toastClassName="custom-toast"
+      toastClassName="custom-toast toast-smaller"
       progressClassName="custom-progress-bar"
     />
   );

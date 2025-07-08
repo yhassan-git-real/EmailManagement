@@ -1,5 +1,6 @@
 {
     "editor.formatOnSave": true,
     "github.copilot.nextEditSuggestions.enabled": true,
-    "editor.wordWrap": "on"
+    "editor.wordWrap": "on",
+    "git.ignoreLimitWarning": true
 }

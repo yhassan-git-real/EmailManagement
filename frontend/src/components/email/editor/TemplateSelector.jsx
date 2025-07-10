@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, DocumentTextIcon, PencilIcon } from '@heroicons/react/24/outline';
-import { fetchEmailTemplates } from '../utils/apiClient';
+import { fetchEmailTemplates } from '../../../utils/apiClient';
 import TemplateEditor from './TemplateEditor';
 
 const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'default', directSelect = false }) => {
@@ -56,7 +56,7 @@ const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'defa
   const handleSaveTemplate = async (updatedTemplate) => {
     try {
       // Save the template to the server
-      const { updateTemplate, getEmailTemplates } = await import('../utils/automationApi');
+      const { updateTemplate, getEmailTemplates } = await import('../../../utils/automationApi');
 
       // Save template
       await updateTemplate(updatedTemplate.id, {

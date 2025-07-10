@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate
-} from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/animations.css';
-import LoginPage from './pages/LoginPage';
-import HomePage from './pages/HomePage';
-import AutomatePage from './pages/AutomateEmail';
-import EmailRecordsPage from './pages/EmailRecords/EmailRecordsPage';
-import ProtectedRoute from './components/ProtectedRoute';
+import AppRoutes from './routes';
 import { saveConnectionToSession, loadConnectionFromSession, clearConnectionSession } from './utils/sessionUtils';
 
 // Silence React Router warnings for future version
@@ -57,86 +48,15 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen">
-        <Routes>
-          {/* Login Page - Entry point where users connect to the database */}
-          <Route
-            path="/login"
-            element={<LoginPage
-              onConnected={handleConnect}
-              onConnectionInfoUpdate={setConnectionInfo}
-              connectionInfo={connectionInfo}
-              isConnected={isConnected}
-              onDisconnect={handleDisconnect}
-            />}
-          />
-
-          {/* Redirect root to login if not connected, otherwise to home */}
-          <Route
-            path="/"
-            element={isConnected ? <Navigate to="/home" replace /> : <Navigate to="/login" replace />}
-          />
-
-          {/* Home page showing email status reports */}
-          <Route
-            path="/home"
-            element={
-              <ProtectedRoute isConnected={isConnected}>
-                <HomePage
-                  connectionInfo={connectionInfo}
-                  onDisconnect={handleDisconnect}
-                />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* For backwards compatibility, redirect old routes to home */}
-          <Route
-            path="/status"
-            element={<Navigate to="/home" replace />}
-          />
-
-          <Route
-            path="/dashboard"
-            element={<Navigate to="/home" replace />}
-          />
-
-          <Route
-            path="/automate"
-            element={
-              <ProtectedRoute isConnected={isConnected}>
-                <AutomatePage
-                  connectionInfo={connectionInfo}
-                  onDisconnect={handleDisconnect}
-                />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/email-records"
-            element={
-              <ProtectedRoute isConnected={isConnected}>
-                <EmailRecordsPage
-                  connectionInfo={connectionInfo}
-                  onDisconnect={handleDisconnect}
-                />
-              </ProtectedRoute>
-            }
-          />
-          {/* Keep the old route for backward compatibility */}
-          <Route
-            path="/records"
-            element={
-              <ProtectedRoute isConnected={isConnected}>
-                <EmailRecordsPage
-                  connectionInfo={connectionInfo}
-                  onDisconnect={handleDisconnect}
-                />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+        <AppRoutes 
+          isConnected={isConnected}
+          connectionInfo={connectionInfo}
+          onConnect={handleConnect}
+          onDisconnect={handleDisconnect}
+        />
         <ToastContainer position="top-right" autoClose={5000} />
-      </div>    </Router>
+      </div>
+    </Router>
   );
 }
 

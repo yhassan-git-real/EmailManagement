@@ -1,10 +1,13 @@
 import React from 'react';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import Breadcrumb, { HomeIcon } from '../../components/Breadcrumb';
-import EmailSettingsModal from '../../components/EmailSettingsModal';
-import TemplateSelector from '../../components/TemplateSelector';
-import SchedulerSettings from '../../components/SchedulerSettings';
+import {
+  Header,
+  Footer,
+  Breadcrumb,
+  EmailSettingsModal,
+  TemplateSelector,
+  SchedulerSettings
+} from '../../components';
+import { HomeIcon } from '@heroicons/react/24/outline';
 
 // Custom hooks
 import useAutomationStatus from './hooks/useAutomationStatus';

@@ -13,21 +13,26 @@ The project is organized into a monorepo with frontend and backend code separate
 ```
 EmailManagement/
 ├── frontend/               # React.js frontend application
-├── backend/                # FastAPI Python backend
-├── docs/                   # Detailed setup and documentation
-├── scripts/                # Utility scripts for the project
-│   ├── portable_env/       # Portable Python environment scripts
-│   └── frontend/           # Frontend development scripts
-├── credentials/            # Authentication credentials for integrations
-├── Email_Archive/          # Archive of sent email attachments
-├── start_backend.ps1       # Script to run backend (PowerShell)
-├── start_backend.bat       # Script to run backend (Batch)
-├── start_frontend.ps1      # Script to run frontend (PowerShell)
-├── start_frontend.bat      # Script to run frontend (Batch)
-├── start_app.ps1           # Script to run both frontend and backend (PowerShell)
-├── start_app.bat           # Script to run both frontend and backend (Batch)
-├── build_frontend.ps1      # Script to build the frontend for production (PowerShell)
-└── build_frontend.bat      # Script to build the frontend for production (Batch)
+│   ├── src/                # Source code for the frontend
+│   │    ├── assets/        # Image and media assets
+│   │    ├── components/    # Reusable React components
+│   │    ├── pages/         # Page components
+│   │    ├── styles/        # Styling for the application
+│   │    └── utils/         # Utility functions and hooks
+│   ├── public/             # Static files
+│   ├── dist/               # Production build output
+│   ├── node_modules/       # Node.js dependencies
+│   └── .vscode/            # VSCode configuration
+├── backend/               # FastAPI Python backend
+│   ├── app/               # Backend application logic
+│   ├── database/          # Database connection and models
+│   ├── templates/         # HTML templates for the backend
+│   ├── Email_Archive/     # Archive of sent email attachments
+│   ├── portable_python/   # Portable Python environment scripts
+│   └── portable_venv/     # Virtual environment configurations
+├── docs/                  # Detailed setup and documentation
+├── scripts/               # Utility scripts for the project
+└── credentials/           # Authentication credentials for integrations
 ```
 
 ## Workflow and Process
@@ -35,37 +40,30 @@ EmailManagement/
 ### Application Workflow
 
 1. **Database Connection**:
-   - Users connect to a SQL Server database containing email recipient information
-   - The application verifies database credentials and establishes a connection
+   - Connect to a SQL Server database for recipient information.
+   - Verify and establish the connection.
 
 2. **Home Dashboard**:
-   - After successful connection, users are directed to the home dashboard
-   - The dashboard displays email status summaries and quick action links
+   - Dashboard displays email status summaries and provides quick actions.
 
 3. **Email Records Management**:
-   - Users can view, filter, and manage email records
-   - Records can be edited, and their statuses can be updated
+   - View, filter, and manage email records.
 
 4. **Email Automation**:
-   - Configure automation rules for sending emails
-   - Set up schedules and recurring email tasks
-   - Choose templates and customize email content
+   - Configure automation rules and templates.
+   - Set schedules and recurring tasks.
 
 5. **Large File Handling**:
-   - For attachments over 20MB, Google Drive integration automatically uploads the file and creates a shareable link
-   - The link is included in the email instead of the attachment
+   - Google Drive integration for attachments over 20MB.
 
 ### Development Workflow
 
 1. **Local Development**:
-   - Run both frontend and backend using the provided scripts
-   - Make changes to the codebase
-   - Test changes locally
-
+   - Use scripts to run frontend and backend locally.
+   - Make and test changes to the codebase.
+ 
 2. **Building for Production**:
-   - Build the frontend for production deployment
-   - Package the backend application
-   - Deploy to the target environment
+   - Build frontend and package backend for deployment.
 
 ## Features
 

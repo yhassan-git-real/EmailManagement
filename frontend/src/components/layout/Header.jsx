@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { formatConnectionTime, getFormattedDate } from '../utils/dateUtils';
+import { formatConnectionTime, getFormattedDate } from '../../utils/dateUtils';
 
 const Header = ({ connectionInfo, onDisconnect }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);

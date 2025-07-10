@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
-import { validateSMTPCredentials } from '../utils/automationApi';
+import { validateSMTPCredentials } from '../../../utils/automationApi';
 import { toast } from 'react-toastify';
-import DraggableWithRef from './DraggableWithRef';
+import DraggableWithRef from '../../dragdrop/DraggableWithRef';
 
 const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
   const [formData, setFormData] = useState(() => {

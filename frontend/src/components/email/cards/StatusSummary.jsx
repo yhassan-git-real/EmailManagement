@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // Import real API client and session utilities
-import { fetchEmailStatus } from '../utils/apiClient';
-import { saveEmailStatusToSession, loadEmailStatusFromSession, isEmailStatusStale } from '../utils/sessionUtils';
+import { fetchEmailStatus } from '../../../utils/apiClient';
+import { saveEmailStatusToSession, loadEmailStatusFromSession, isEmailStatusStale } from '../../../utils/sessionUtils';
 import EmailStatusCard from './EmailStatusCard';
 
 const StatusSummary = () => {

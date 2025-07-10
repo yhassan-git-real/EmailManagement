@@ -127,39 +127,11 @@ frontend/
 │   ├── index.html             # HTML template
 │   └── manifest.json          # PWA manifest
 ├── src/                       # Source code
+│   ├── assets/                # Image, icons, and fonts
 │   ├── components/            # Reusable UI components
-│   │   ├── Alert.jsx          # Alert message component
-│   │   ├── BrandingHeader.jsx # Header for login page
-│   │   ├── DatabaseConnector.jsx # Database connection form
-│   │   ├── EmailStatusCard.jsx # Email status display card
-│   │   ├── Footer.jsx         # Application footer
-│   │   ├── Header.jsx         # Main application header
-│   │   ├── HeaderNav.jsx      # Navigation in header
-│   │   ├── ProtectedRoute.jsx # Route protection wrapper
-│   │   ├── Sidebar.jsx        # Application sidebar
-│   │   ├── StatusBadge.jsx    # Status indicator
-│   │   ├── StatusSummary.jsx  # Email status summary
-│   │   ├── TemplateEditor.jsx # Email template editor
-│   │   └── Welcome.jsx        # Welcome message component
-│   ├── features/              # Feature-specific components
-│   │   └── email-records/     # Email records feature
-│   │       ├── EmailRecordEditModal.jsx # Edit modal
-│   │       ├── emailRecordsApi.js # API for email records
-│   │       ├── EmailRecordsView.jsx # Main view component
-│   │       └── index.js       # Feature entry point
 │   ├── pages/                 # Page components
-│   │   ├── AutomatePage.jsx   # Email automation page
-│   │   ├── HomePage.jsx       # Main dashboard page
-│   │   └── LoginPage.jsx      # Login/connection page
-│   ├── utils/                 # Utility functions
-│   │   ├── apiClient.js       # API communication
-│   │   ├── automationApi.js   # Automation API client
-│   │   ├── constants.js       # Application constants
-│   │   ├── dateUtils.js       # Date formatting utilities
-│   │   └── sessionUtils.js    # Session management
-│   ├── App.js                 # Main application component
-│   ├── index.css              # Global styles
-│   └── index.jsx              # Application entry point
+│   ├── styles/                # Styling for components
+│   └── utils/                 # Utility functions
 ├── package.json               # Dependencies and scripts
 ├── postcss.config.js          # PostCSS configuration
 ├── tailwind.config.js         # Tailwind CSS configuration

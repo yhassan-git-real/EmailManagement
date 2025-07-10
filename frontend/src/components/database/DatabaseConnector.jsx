@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { connectToDatabase, testDatabaseConnection } from '../utils/apiClient';
+import { connectToDatabase, testDatabaseConnection } from '../../utils/apiClient';
 
 const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
   const navigate = useNavigate();

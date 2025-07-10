@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import StatusSummary from '../components/StatusSummary';
-import EmailChart from '../components/EmailChart';
-import MetricsPanel from '../components/MetricsPanel';
-import Breadcrumb, { HomeIcon } from '../components/Breadcrumb';
+import { 
+  Header, 
+  Footer, 
+  StatusSummary, 
+  EmailChart,
+  MetricsPanel,
+  Breadcrumb 
+} from '../components';
+import { HomeIcon } from '@heroicons/react/24/outline';
 
 const HomePage = ({ connectionInfo, onDisconnect }) => {
     const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +51,13 @@ const HomePage = ({ connectionInfo, onDisconnect }) => {
             <div className="flex flex-row flex-grow relative">
                 <main className="flex-grow py-4 px-4 w-full">
                     <div className="w-full max-w-7xl mx-auto">
+                        {/* Breadcrumb Navigation */}
+                        <Breadcrumb
+                            items={[
+                                { label: 'Home', path: '/home', icon: <HomeIcon /> }
+                            ]}
+                        />
+                        
                         <div className="bg-gradient-to-br from-primary-50/80 via-white to-blue-50/50 rounded-2xl p-6 shadow-md border border-primary-100/30 mb-6 relative overflow-hidden">
                             {/* Enhanced decorative background elements */}
                             <div className="absolute top-0 right-0 w-40 h-40 bg-primary-100/40 rounded-full -mr-10 -mt-10 z-0 blur-md animate-pulse-slower"></div>
@@ -67,17 +77,6 @@ const HomePage = ({ connectionInfo, onDisconnect }) => {
                                     </div>
                                     
                                     <div>
-                                        {/* Simplified breadcrumb with improved typography */}
-                                        <div className="flex items-center mb-2">
-                                            <Link to="/" className="flex items-center text-xs font-medium text-gray-600 hover:text-primary-600 bg-white/80 py-1 px-2.5 rounded-md shadow-sm border border-gray-100 transition-all duration-200 hover:shadow group">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 transition-transform duration-200 group-hover:scale-110" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                                                </svg>
-                                                <span className="tracking-wide">Home</span>
-                                            </Link>
-                                            <span className="mx-2 text-gray-400 font-light">/</span>
-                                            <span className="text-xs font-medium text-primary-700 bg-primary-50 py-1 px-2.5 rounded-md border border-primary-100 tracking-wide">Dashboard</span>
-                                        </div>
                                         
                                         {/* Enhanced page title with subtitle and improved typography */}
                                         <div>

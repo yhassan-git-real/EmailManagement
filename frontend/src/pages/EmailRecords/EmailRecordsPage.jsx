@@ -6,11 +6,8 @@ import EmailRecordsHeader from './components/EmailRecordsHeader';
 import EmailRecordsToolbar from './components/EmailRecordsToolbar';
 import EmailRecordsList from './components/EmailRecordsList';
 import EmailRecordEditModal from './components/EmailRecordEditModal';
-import FilePreviewer from '../../components/FilePreviewer';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import Breadcrumb, { HomeIcon } from '../../components/Breadcrumb';
-import { EnvelopeIcon } from '@heroicons/react/24/outline';
+import { FilePreviewer, Header, Footer, Breadcrumb } from '../../components';
+import { EnvelopeIcon, HomeIcon } from '@heroicons/react/24/outline';
 
 /**
  * Main EmailRecordsPage component that combines header, toolbar, list, and edit modal

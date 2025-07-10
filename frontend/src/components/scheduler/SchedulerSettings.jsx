@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getScheduleSettings, updateScheduleSettings } from '../utils/automationApi';
+import { getScheduleSettings, updateScheduleSettings } from '../../utils/automationApi';
 import { ClockIcon } from '@heroicons/react/24/outline';
 
 const SchedulerSettings = ({ onSettingsChange }) => {

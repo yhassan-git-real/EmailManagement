@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAutomationLogs, clearAutomationLogs } from '../utils/automationApi';
+import { getAutomationLogs, clearAutomationLogs } from '../../../utils/automationApi';
 import { toast } from 'react-toastify';
 import { XCircleIcon, CheckCircleIcon, ClockIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 

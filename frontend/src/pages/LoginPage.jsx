@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import BrandingHeader from '../components/BrandingHeader';
-import Footer from '../components/Footer';
-import DatabaseConnector from '../components/DatabaseConnector';
-import Alert from '../components/Alert';
-import Welcome from '../components/Welcome';
-import BackgroundIllustration from '../components/BackgroundIllustration';
+import {
+  Footer,
+  DatabaseConnector,
+  Alert,
+  Welcome,
+  BackgroundIllustration,
+  BrandingHeader
+} from '../components';
 
 const LoginPage = ({ isConnected, connectionInfo, onConnected, onConnectionInfoUpdate, onDisconnect }) => {
     const [showSuccessAlert, setShowSuccessAlert] = useState(false);
@@ -23,6 +25,9 @@ const LoginPage = ({ isConnected, connectionInfo, onConnected, onConnectionInfoU
             {/* Enhanced gradient background with more contrast */}
             <div className="fixed inset-0 bg-gradient-to-br from-blue-100 via-white to-blue-200 z-0"></div>
             <div className="fixed inset-0 bg-gradient-to-tr from-transparent via-transparent to-indigo-100 opacity-70 z-0"></div>
+            
+            {/* Branding Header */}
+            <BrandingHeader />
 
             {/* SVG Pattern overlay for visual interest */}
             <div className="fixed inset-0 opacity-10 z-0 pointer-events-none">
@@ -48,8 +53,7 @@ const LoginPage = ({ isConnected, connectionInfo, onConnected, onConnectionInfoU
             <div className="fixed bottom-0 left-1/4 w-96 h-96 bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000 z-0 pointer-events-none"></div>
             <div className="fixed top-2/3 left-1/3 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000 z-0 pointer-events-none"></div>
 
-            {/* Branding Header with navigation */}
-            <BrandingHeader />
+            {/* Header section */}
 
             {/* Main container with improved visuals */}
             <div className="flex-grow relative z-10">

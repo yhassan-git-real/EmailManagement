@@ -1,0 +1,3 @@
+"""
+Core automation components package
+"""

@@ -16,9 +16,10 @@ The frontend provides a modern, responsive user interface for the EmailManagemen
 ## Features
 
 - **Database Connection Interface**: Connect to SQL Server databases
-- **Email Status Report Viewer**: View sent, failed, and pending email statistics
-- **Email Records Management**: View, filter, and edit email records
-- **Email Automation**: Configure email sending rules and schedules
+- **Email Status Report Viewer**: View sent, failed, and pending email statistics with interactive charts
+- **Email Records Management**: View, filter, and edit email records with a modular component structure
+- **Email Automation**: Configure email sending rules and schedules with a modular component architecture
+- **Modern UI/UX**: Enhanced with animations, hover effects, and improved visual feedback
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 - **Protected Routes**: Ensures database connection before accessing features
 
@@ -34,7 +35,7 @@ The frontend provides a modern, responsive user interface for the EmailManagemen
 
 ## Workflow and Process
 
-The frontend follows a component-based architecture with several key sections:
+The frontend follows a modular component-based architecture with several key sections:
 
 1. **Login Flow**:
    - User enters database connection credentials
@@ -42,19 +43,22 @@ The frontend follows a component-based architecture with several key sections:
    - On successful connection, user is redirected to the home page
 
 2. **Home Dashboard**:
-   - Displays email status summary
-   - Provides quick links to main features
+   - Displays email status summary with modern metric cards
+   - Provides quick links to main features with interactive animations
    - Shows connection information
+   - Features enhanced chart sections with better headers and fade-in animations
 
 3. **Email Records**:
-   - Lists all email records with pagination
-   - Allows filtering and searching
-   - Provides editing capabilities
+   - Lists all email records with pagination using a modular component structure
+   - Allows filtering and searching with dedicated hooks for state management
+   - Provides editing capabilities through modal dialogs
+   - Features bulk actions for efficient record management
 
 4. **Automation**:
-   - Configure email automation settings
+   - Configure email automation settings through modular components
    - Set up schedules for sending emails
    - Manage automation rules
+   - Monitor automation status with real-time updates
 
 ## Getting Started
 
@@ -130,6 +134,13 @@ frontend/
 │   ├── assets/                # Image, icons, and fonts
 │   ├── components/            # Reusable UI components
 │   ├── pages/                 # Page components
+│   │   ├── AutomateEmail/      # Email automation module
+│   │   │   ├── components/      # UI components for automation
+│   │   │   └── hooks/           # Custom hooks for automation state
+│   │   ├── EmailRecords/       # Email records module
+│   │   │   ├── components/      # UI components for records
+│   │   │   └── hooks/           # Custom hooks for records state
+│   │   └── Home/               # Home dashboard module
 │   ├── styles/                # Styling for components
 │   └── utils/                 # Utility functions
 ├── package.json               # Dependencies and scripts
@@ -144,17 +155,21 @@ frontend/
 ### Pages
 
 - **LoginPage**: Entry point where users connect to the database
-- **HomePage**: Main dashboard showing email status and quick actions
-- **AutomatePage**: Configuration for email automation rules
-- **EmailRecordsPage**: Management of email records (viewing, editing, filtering)
+- **HomePage**: Main dashboard showing email status and quick actions with modern UI elements
+- **AutomateEmail**: Modular structure for email automation configuration
+  - **Components**: AutomationControlPanel, StatusSummary, TemplateSettings, ArchiveManagement, EmailLogs
+  - **Hooks**: useAutomationStatus, useAutomationSettings, useAutomationActions
+- **EmailRecords**: Modular structure for email records management
+  - **Components**: EmailRecordsTable, EmailRecordsFilterBar, EmailRecordsBulkActions, StatusBadge
+  - **Hooks**: useEmailRecords, useEmailRecordActions, useEmailRecordSelection, useEmailRecordFilters
 
 ### Components
 
 - **Header/BrandingHeader**: Application navigation and branding
 - **DatabaseConnector**: Form for entering database credentials
-- **StatusSummary**: Dashboard widget showing email status statistics
+- **StatusSummary**: Dashboard widget showing email status statistics with enhanced visualizations
 - **ProtectedRoute**: Ensures routes are only accessible after database connection
-- **Sidebar**: Navigation sidebar with collapsible design
+- **Sidebar**: Navigation sidebar with collapsible design and improved interactions
 
 ### Utilities
 
@@ -167,8 +182,8 @@ frontend/
 The frontend communicates with the backend through several API clients:
 
 - **apiClient.js**: General API functions for database and email operations
-- **emailRecordsApi.js**: Specific functions for email records management
-- **automationApi.js**: Functions for email automation configuration
+- **emailRecordsApi.js**: Centralized API functions for email records management
+- **automationApi.js**: Functions for email automation configuration and status monitoring
 
 ## License
 

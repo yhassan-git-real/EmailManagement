@@ -23,11 +23,13 @@ class GoogleDriveService:
             credentials_file: Path to the Google OAuth 2.0 client credentials JSON file
             token_file: Path to the token pickle file
         """
-        # Default paths
-        self.credentials_file = credentials_file or os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 
-                                                             "credentials", "oauth_credentials.json")
-        self.token_file = token_file or os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 
-                                                 "credentials", "token.pickle")
+        # Get settings for default paths
+        settings = get_settings()
+        
+        # Use environment variables or provided paths for credentials and token
+        self.credentials_file = credentials_file or os.environ.get('GDRIVE_CREDENTIALS_FILE', settings.GDRIVE_CREDENTIALS_PATH)
+        self.token_file = token_file or os.environ.get('GDRIVE_TOKEN_FILE', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 
+                                                 "credentials", "token.pickle"))
         self.drive_service = None
         
     def authenticate(self) -> bool:
@@ -331,9 +333,9 @@ class GoogleDriveService:
         if not link_success:
             return False, None, link_error
         
-        # Log completion of the entire process
+        # Log completion of the entire process - only to internal logger, not email_logger
+        # This prevents duplicate messages as email_sender.py also logs a success message
         complete_message = f"File {file_name} ({formatted_size}) successfully uploaded and shared on Google Drive"
         logger.info(complete_message)
-        email_logger.log_info(complete_message)
         
         return True, shareable_link, None

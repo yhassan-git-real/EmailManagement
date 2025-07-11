@@ -364,11 +364,11 @@ def _process_email_queue():
             total_time = datetime.now() - _automation_state["start_time"]
             total_seconds = total_time.total_seconds()
             
-            # Add total time to the log with consistent emoji
+            # Add detailed statistics to the log with consistent emoji
             email_logger.log_info(
-                f"{process_emoji} {process_emoji} Automation process completed: {_automation_state['status']} - " +
-                f"Processed {summary['processed']} emails: {summary['successful']} successful, {summary['failed']} failed - " +
-                f"Processed {summary['processed']} emails (Total time: {total_seconds:.2f}s)",
+                f"{process_emoji} {process_emoji} Email processing statistics: " +
+                f"{summary['successful']} successful, {summary['failed']} failed out of {summary['processed']} emails - " +
+                f"Processing time: {total_seconds:.2f}s",
                 process_id=process_id
             )
             

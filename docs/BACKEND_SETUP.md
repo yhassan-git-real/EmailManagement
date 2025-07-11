@@ -8,8 +8,11 @@ The EmailManagement backend is built with FastAPI and provides a RESTful API tha
 - Database connection testing and management
 - Email record retrieval and management
 - Email template operations
-- Email automation configuration
+- Email automation configuration with scheduling capabilities
 - Integration with Google Drive for large file handling
+- Asynchronous email processing and retry mechanisms
+- Email archiving and storage management
+- Automated error handling and logging
 
 ## Prerequisites
 
@@ -61,11 +64,15 @@ backend/
       │   ├── __init__.py
       │   ├── automation_service.py
       │   ├── email_record_service.py
+      │   ├── email_sender.py
       │   ├── email_service.py
+      │   ├── gdrive_service.py
       │   └── template_service.py
       └── utils/               # Utility functions
           ├── __init__.py
-          └── db_utils.py      # Database utilities
+          ├── db_utils.py      # Database utilities
+          ├── email_logger.py  # Email logging utilities
+          └── file_utils.py    # File handling utilities
 ```
 
 ## Setup Methods
@@ -118,6 +125,15 @@ If you prefer to use your system's Python installation:
    # Email tables and columns
    EMAIL_TABLE=EmailRecords
    
+   # Email settings
+   SMTP_SERVER=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_TLS=true
+   EMAIL_USERNAME=your_email@gmail.com
+   EMAIL_PASSWORD=your_app_password
+   SENDER_EMAIL=your_email@gmail.com
+   EMAIL_ARCHIVE_PATH=./Email_Archive
+   
    # Optional Google Drive integration
    GDRIVE_CREDENTIALS_PATH=../credentials/oauth_credentials.json
    GDRIVE_FOLDER_ID=your_folder_id_here
@@ -125,6 +141,10 @@ If you prefer to use your system's Python installation:
    # API settings
    API_PORT=8000
    CORS_ORIGINS=["http://localhost:5173", "http://127.0.0.1:5173"]
+   
+   # Logging configuration
+   LOG_LEVEL=INFO
+   LOG_FILE=./logs/email_app.log
    ```
 
 5. Run the application:
@@ -183,6 +203,18 @@ The backend exposes the following API endpoints:
 - `POST /api/automation/start` - Start email automation
 - `POST /api/automation/stop` - Stop email automation
 - `POST /api/automation/restart-failed` - Retry failed emails
+- `GET /api/automation/schedule` - Get automation schedule settings
+- `POST /api/automation/schedule` - Update automation schedule settings
+- `POST /api/automation/schedule/enable` - Enable scheduled automation
+- `POST /api/automation/schedule/disable` - Disable scheduled automation
+- `GET /api/automation/logs` - Get automation process logs
+
+### Google Drive Integration Endpoints
+
+- `GET /api/gdrive/status` - Check Google Drive integration status
+- `POST /api/gdrive/upload` - Upload file to Google Drive
+- `GET /api/gdrive/shared-link/{file_id}` - Get shareable link for a file
+- `GET /api/gdrive/space-usage` - Get Google Drive space usage statistics
 
 ## Testing
 

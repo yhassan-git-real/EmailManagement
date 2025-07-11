@@ -27,10 +27,25 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Gmail's attachment size limit in bytes (25MB)
-GMAIL_MAX_SIZE = 25 * 1024 * 1024  # 25MB
-SAFE_MAX_SIZE = 20 * 1024 * 1024   # 20MB (conservative limit to account for email headers)
-GDRIVE_UPLOAD_THRESHOLD = 20 * 1024 * 1024  # 20MB - when to use Google Drive instead of email attachment
+# Get attachment size limits from settings
+settings = get_settings()
+
+# Convert MB values from environment variables to bytes
+MB_TO_BYTES = 1024 * 1024  # 1 MB = 1,048,576 bytes
+
+# Gmail's attachment size limit (25MB by default)
+EMAIL_MAX_SIZE_MB = int(os.environ.get('EMAIL_MAX_SIZE_MB', 25))
+GMAIL_MAX_SIZE = EMAIL_MAX_SIZE_MB * MB_TO_BYTES
+
+# Safe size limit (20MB by default)
+EMAIL_SAFE_SIZE_MB = int(os.environ.get('EMAIL_SAFE_SIZE_MB', 20))
+SAFE_MAX_SIZE = EMAIL_SAFE_SIZE_MB * MB_TO_BYTES
+
+# Google Drive upload threshold (20MB by default)
+GDRIVE_UPLOAD_THRESHOLD_MB = int(os.environ.get('GDRIVE_UPLOAD_THRESHOLD_MB', 20))
+GDRIVE_UPLOAD_THRESHOLD = GDRIVE_UPLOAD_THRESHOLD_MB * MB_TO_BYTES
+
+logger.info(f"Email size limits: Max={EMAIL_MAX_SIZE_MB}MB, Safe={EMAIL_SAFE_SIZE_MB}MB, GDrive threshold={GDRIVE_UPLOAD_THRESHOLD_MB}MB")
 
 def format_size(size_bytes):
     """Format size in bytes to a human-readable string (KB, MB, GB)"""
@@ -287,9 +302,10 @@ class EmailSender:
                                 gdrive_link = drive_link
                                 used_gdrive = True
                                 
-                                # Log success with size information
-                                success_message = f"Large file ({file_size_formatted}) uploaded to Google Drive - Link added to email"
-                                email_logger.log_info(f"SUCCESS: {success_message}")
+                                # Log success with size information and file details
+                                file_name = os.path.basename(attachment_path)
+                                success_message = f"✅ File '{file_name}' ({file_size_formatted}) successfully uploaded to Google Drive and linked in email"  
+                                email_logger.log_info(success_message)
                                 
                                 # Append download link information to the email body in Gmail Drive attachment style
                                 file_name = os.path.basename(attachment_path)
@@ -332,7 +348,7 @@ class EmailSender:
                                 email_body += link_html
                                 
                                 formatted_size = format_size(compressed_size)
-                                success_reason = f"SUCCESS: Large file ({formatted_size}) uploaded to Google Drive - Link added to email"
+                                success_reason = f"Large attachment handled via Google Drive sharing ({formatted_size})"
                                 email_logger.log_info(success_reason)
                             else:
                                 # If Google Drive upload failed, fall back to regular attachment if possible

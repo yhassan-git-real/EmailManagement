@@ -444,8 +444,12 @@ if __name__ == "__main__":
     logger.info(f"CONFIG: SMTP_TLS: {smtp_tls}")
     logger.info(f"CONFIG: SENDER_EMAIL: {sender_email}")
     
+    # Load settings
+    from app.core.config import get_settings
+    settings = get_settings()
+    
     # Create Email_Archive directory if it doesn't exist
-    email_archive_path = os.environ.get("EMAIL_ARCHIVE_PATH", os.path.join(os.getcwd(), "Email_Archive"))
+    email_archive_path = os.path.abspath(settings.EMAIL_ARCHIVE_PATH)
     os.makedirs(email_archive_path, exist_ok=True)
     logger.info(f"CONFIG: Email archive directory: {email_archive_path}")    
     # Load environment variables (if not already loaded)

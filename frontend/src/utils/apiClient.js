@@ -3,7 +3,8 @@
  * These functions connect to the real backend API
  */
 
-const API_BASE_URL = 'http://localhost:8000';
+// Use environment variable for API base URL with fallback to localhost
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Default templates if the API call fails
 const DEFAULT_TEMPLATES = [

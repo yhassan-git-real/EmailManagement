@@ -6,8 +6,10 @@ This guide provides detailed instructions for setting up Google Drive integratio
 
 When an email attachment exceeds 20MB (Gmail's limit), the EmailManagement application can:
 1. Upload the file to Google Drive
-2. Generate a shareable link
+2. Generate a shareable link with customizable permissions
 3. Include the link in the email instead of attaching the file directly
+4. Track links and downloads through the email records system
+5. Automatically manage file sharing permissions based on recipient emails
 
 ## Prerequisites
 
@@ -109,6 +111,8 @@ Update your `.env` file in the backend directory with the folder ID displayed by
 GDRIVE_CREDENTIALS_PATH=../credentials/oauth_credentials.json
 GDRIVE_TOKEN_PATH=../credentials/token.pickle
 GDRIVE_FOLDER_ID=your_folder_id_here
+GDRIVE_SHARING_OPTION=anyone # Options: anyone, domain, or private
+GDRIVE_FILE_EXPIRY_DAYS=30 # Number of days before access expires (0 for never)
 ```
 
 ## Method 2: Service Account (Alternative)
@@ -156,6 +160,9 @@ Update your `.env` file in the backend directory:
 GDRIVE_CREDENTIALS_PATH=../credentials/gdrive_credentials.json
 GDRIVE_USE_SERVICE_ACCOUNT=true
 GDRIVE_FOLDER_ID=your_folder_id_here
+GDRIVE_SHARING_OPTION=anyone # Options: anyone, domain, or private
+GDRIVE_FILE_EXPIRY_DAYS=30 # Number of days before access expires (0 for never)
+GDRIVE_NOTIFICATION_EMAIL=false # Whether to send notification emails when sharing
 ```
 
 ## Testing the Integration
@@ -232,3 +239,44 @@ To verify your setup is working correctly:
   3. The script will refresh your tokens
 
 - Regularly check that your integration is working by testing large file uploads
+
+## Advanced Features
+
+### File Sharing Options
+
+The application supports different sharing permission levels configured via the `GDRIVE_SHARING_OPTION` environment variable:
+
+- `anyone`: Anyone with the link can access the file (most permissive)
+- `domain`: Only users in your organization can access the file
+- `private`: Only specific email addresses can access the file
+
+### Expiring Links
+
+For enhanced security, you can set file links to expire after a certain number of days using the `GDRIVE_FILE_EXPIRY_DAYS` setting:
+
+- Set to a positive integer (e.g., `30`) to make links expire after that many days
+- Set to `0` to create permanent links with no expiration
+
+### Access Control by Email
+
+When using the `private` sharing option, the application will automatically:
+
+1. Extract recipient email addresses from the email being sent
+2. Grant access to the Google Drive file only to those specific email addresses
+3. Track permissions in the email records database
+
+### File Organization
+
+Files are organized in Google Drive according to these rules:
+
+1. All files are uploaded to the folder specified by `GDRIVE_FOLDER_ID`
+2. Within that folder, files are organized into dated subfolders (YYYY-MM-DD format)
+3. Each file is named with a prefix of the email ID for easy tracking
+
+### API Usage Monitoring
+
+The application includes a usage monitoring system to help track Google Drive API quota usage:
+
+- View current usage statistics via the `/api/gdrive/usage` endpoint
+- Set up alerts for approaching quota limits via the automation system
+- Monitor failed uploads due to quota limitations

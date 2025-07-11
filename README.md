@@ -1,6 +1,6 @@
 # EmailManagement Application
 
-A full-stack application for managing and sending emails to clients by retrieving data from a SQL Server database.
+A full-stack application for managing and sending emails to clients by retrieving data from a SQL Server database, with advanced automation capabilities and Google Drive integration for large attachments.
 
 ## Project Overview
 
@@ -17,6 +17,13 @@ EmailManagement/
 │   │    ├── assets/        # Image and media assets
 │   │    ├── components/    # Reusable React components
 │   │    ├── pages/         # Page components
+│   │    │    ├── AutomateEmail/  # Email automation module (modular structure)
+│   │    │    │    ├── components/  # UI components for automation
+│   │    │    │    └── hooks/       # Custom hooks for automation state
+│   │    │    ├── EmailRecords/   # Email records module (modular structure)
+│   │    │    │    ├── components/  # UI components for records
+│   │    │    │    └── hooks/       # Custom hooks for records state
+│   │    │    └── Home/           # Home dashboard module
 │   │    ├── styles/        # Styling for the application
 │   │    └── utils/         # Utility functions and hooks
 │   ├── public/             # Static files
@@ -67,19 +74,25 @@ EmailManagement/
 
 ## Features
 
-- **Database Connection Interface**: Connect to SQL Server databases
-- **Email Status Report Viewer**: View sent, failed, and pending email statistics
-- **Modern UI/UX**: Clean, responsive home page with collapsible sidebar
-- **Email Automation**: Set up automated email workflows and rules
-- **Template Management**: Create and manage email templates
+- **Database Connection Interface**: Connect to SQL Server databases with secure credential management
+- **Email Status Report Viewer**: View sent, failed, and pending email statistics with interactive charts
+- **Modern UI/UX**: Clean, responsive home page with collapsible sidebar, enhanced animations, and interactive elements
+- **Email Automation**: Set up automated email workflows, scheduling, and recurring rules with a modular component structure
+- **Email Records Management**: Comprehensive interface for viewing, filtering, and editing email records with modular components
+- **Template Management**: Create, preview, and manage reusable email templates
 - **Large File Handling**: Google Drive integration for attachments over 20MB
+- **Retry Mechanism**: Automated retry for failed emails with configurable intervals
+- **Email Archiving**: Local archiving of sent email attachments for record keeping
+- **Customizable Dashboard**: Interactive analytics and performance metrics with modern design elements
 
 ## Tech Stack
 
-- **Frontend**: React.js with Tailwind CSS, Vite for build tooling
-- **Backend**: FastAPI (Python 3.11)
-- **Database**: Microsoft SQL Server
-- **Integrations**: Google Drive API for large file storage
+- **Frontend**: React.js with Tailwind CSS, Vite for build tooling, Chart.js for analytics
+- **Backend**: FastAPI (Python 3.11) with async processing for email automation
+- **Database**: Microsoft SQL Server with stored procedures for efficient data processing
+- **Email**: SMTP integration with major email providers including Gmail
+- **Integrations**: Google Drive API for large file storage and sharing
+- **Authentication**: Secure credential management and session handling
 
 ## Quick Start
 

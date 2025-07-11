@@ -6,10 +6,12 @@ This guide provides detailed instructions for setting up the EmailManagement fro
 
 The EmailManagement frontend provides a modern, responsive user interface for:
 - Database connection interface
-- Email status dashboard
-- Email records management
-- Email automation configuration
-- Template management
+- Interactive email status dashboard with analytics
+- Email records management with filtering and sorting
+- Email automation configuration with scheduling
+- Template management and preview
+- Google Drive integration for large attachments
+- Performance monitoring and metrics visualization
 
 ## Prerequisites
 
@@ -30,16 +32,20 @@ frontend/
 │   ├── components/            # Reusable UI components
 │   │   ├── Alert.jsx          # Alert message component
 │   │   ├── BrandingHeader.jsx # Header for login page
+│   │   ├── Breadcrumb.jsx     # Navigation breadcrumb
 │   │   ├── DatabaseConnector.jsx # Database connection form
+│   │   ├── EmailChart.jsx     # Chart for email analytics
 │   │   ├── EmailStatusCard.jsx # Email status display card
 │   │   ├── Footer.jsx         # Application footer
 │   │   ├── Header.jsx         # Main application header
 │   │   ├── HeaderNav.jsx      # Navigation in header
+│   │   ├── MetricsPanel.jsx   # Dashboard metrics panel
 │   │   ├── ProtectedRoute.jsx # Route protection wrapper
 │   │   ├── Sidebar.jsx        # Application sidebar
 │   │   ├── StatusBadge.jsx    # Status indicator
 │   │   ├── StatusSummary.jsx  # Email status summary
 │   │   ├── TemplateEditor.jsx # Email template editor
+│   │   ├── TemplatePreview.jsx # Email template preview
 │   │   └── Welcome.jsx        # Welcome message component
 │   ├── features/              # Feature-specific components
 │   │   └── email-records/     # Email records feature
@@ -48,14 +54,23 @@ frontend/
 │   │       ├── EmailRecordsView.jsx # Main view component
 │   │       └── index.js       # Feature entry point
 │   ├── pages/                 # Page components
-│   │   ├── AutomatePage.jsx   # Email automation page
+│   │   ├── AutomateEmail/     # Email automation pages
+│   │   │   ├── AutomationDashboard.jsx # Automation dashboard
+│   │   │   ├── AutomationSchedule.jsx # Schedule configuration
+│   │   │   └── AutomationSettings.jsx # Automation settings
+│   │   ├── EmailRecords/     # Email records pages
+│   │   │   ├── EmailDetails.jsx # Email details view
+│   │   │   └── EmailList.jsx # Email list view
 │   │   ├── HomePage.jsx       # Main dashboard page
 │   │   └── LoginPage.jsx      # Login/connection page
 │   ├── utils/                 # Utility functions
 │   │   ├── apiClient.js       # API communication
 │   │   ├── automationApi.js   # Automation API client
+│   │   ├── chartUtils.js      # Chart data formatting
 │   │   ├── constants.js       # Application constants
 │   │   ├── dateUtils.js       # Date formatting utilities
+│   │   ├── fileUtils.js       # File handling utilities
+│   │   ├── gdriveApi.js       # Google Drive API client
 │   │   └── sessionUtils.js    # Session management
 │   ├── App.js                 # Main application component
 │   ├── index.css              # Global styles
@@ -139,13 +154,16 @@ The frontend follows a logical flow:
 
 3. **Email Records**:
    - Lists all email records with pagination
-   - Allows filtering and searching
-   - Provides editing capabilities
+   - Allows filtering, sorting, and searching
+   - Provides editing and status management capabilities
+   - Displays detailed email information and attachment links
 
 4. **Automation**:
    - Configure email automation settings
-   - Set up schedules for sending emails
-   - Manage automation rules
+   - Set up schedules for sending emails with recurring options
+   - Manage automation rules and retry settings
+   - Monitor automation processes with real-time status
+   - View logs of automation activities
 
 ## Key Components and Their Purposes
 
@@ -177,6 +195,8 @@ The frontend communicates with the backend through several API clients:
 - **apiClient.js**: General API functions for database and email operations
 - **emailRecordsApi.js**: Specific functions for email records management
 - **automationApi.js**: Functions for email automation configuration
+- **gdriveApi.js**: Functions for Google Drive integration
+- **templateApi.js**: Functions for email template management
 
 ## Customization
 

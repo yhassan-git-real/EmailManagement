@@ -7,6 +7,7 @@ from logging.handlers import RotatingFileHandler
 from typing import List, Dict, Any, Optional
 from .file_utils import format_file_size
 import time
+from ..core.config import get_settings
 
 # Try to import colorama, but don't fail if it's not available
 try:
@@ -61,8 +62,9 @@ class EmailLogger:
         
     def _setup_logger(self):
         """Set up a dedicated logger for email transactions"""
-        # Create logs directory if it doesn't exist
-        logs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs')
+        # Get log directory path from settings
+        settings = get_settings()
+        logs_dir = os.path.abspath(settings.LOG_DIR_PATH)
         os.makedirs(logs_dir, exist_ok=True)
         
         # Create a logger
@@ -322,8 +324,8 @@ class EmailLogger:
         if len(self._log_entries) > self._max_cache_size:
             self._log_entries = self._log_entries[-self._max_cache_size:]
     
-    def get_recent_logs(self, limit: int = 100, status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Get the most recent log entries, optionally filtered by status"""
+    def get_recent_logs(self, limit: int = 1000, status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get the most recent log entries, optionally filtered by status and deduplicated"""
         if len(self._log_entries) == 0:
             self._load_logs_from_file()
             
@@ -332,10 +334,40 @@ class EmailLogger:
         # Apply status filter if provided
         if status_filter:
             filtered_logs = [log for log in filtered_logs if log.get("status") == status_filter]
-            
-        # Sort by timestamp (newest first) and limit the results
+        
+        # Sort by timestamp (newest first)
         sorted_logs = sorted(filtered_logs, key=lambda x: x.get("timestamp", ""), reverse=True)
-        return sorted_logs[:limit]
+        
+        # Deduplicate logs with similar messages within a short time window
+        deduplicated_logs = []
+        processed_email_ids = {}
+        
+        for log in sorted_logs:
+            # Extract key fields
+            email_id = log.get("email_id")
+            status = log.get("status", "")
+            
+            # Skip if we already have a log for this email_id within a short time window
+            # This handles all types of duplicate logs for the same email
+            if email_id is not None and email_id in processed_email_ids:
+                prev_status = processed_email_ids[email_id]
+                
+                # If statuses match, it's likely a duplicate
+                if status == prev_status:
+                    continue
+            
+            # Add to deduplicated logs
+            deduplicated_logs.append(log)
+            
+            # Track this email_id and status
+            if email_id is not None:
+                processed_email_ids[email_id] = status
+            
+            # Stop once we reach the limit
+            if len(deduplicated_logs) >= limit:
+                break
+        
+        return deduplicated_logs
     
     def _load_logs_from_file(self):
         """Load logs from file into memory cache if needed"""

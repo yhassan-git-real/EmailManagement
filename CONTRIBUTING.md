@@ -18,9 +18,11 @@ Please be respectful and considerate of others when contributing to this project
 ## Pull Request Process
 
 1. Ensure your code follows the existing style conventions
-2. Update the README.md with details of changes if appropriate
-3. The PR should work across major browsers
-4. Ensure all tests pass (if implemented)
+2. Update documentation (README.md, setup guides, etc.) with details of changes if appropriate
+3. The PR should work across major browsers (Chrome, Firefox, Edge, Safari)
+4. Ensure all tests pass and add new tests for new functionality
+5. Verify that your changes don't break existing functionality
+6. Include screenshots for UI changes
 
 ## Commit Message Guidelines
 
@@ -44,9 +46,41 @@ Please refer to the main README.md for development setup instructions.
 
 ## Coding Standards
 
+### Frontend (React)
 - Use consistent indentation (2 spaces)
 - Write meaningful variable and function names
-- Include comments for complex code sections
+- Use functional components with hooks over class components
+- Organize imports: React first, then external libraries, then local components/utils
+- Keep components focused on single responsibilities
+- Use proper TypeScript types where available
+- Implement proper error handling in async operations
+
+### Backend (Python/FastAPI)
+- Follow PEP 8 style guidelines
+- Use type hints for function parameters and return values
+- Document functions with docstrings using Google style
+- Handle exceptions explicitly with appropriate status codes
+- Log errors and significant events for debugging
 - Keep functions focused on single responsibilities
+
+## Testing Guidelines
+
+### Frontend Testing
+- Write unit tests for utility functions using Jest
+- Use React Testing Library for component tests
+- Test key user flows and interactions
+
+### Backend Testing
+- Write unit tests for services and utilities using pytest
+- Test API endpoints with FastAPI TestClient
+- Mock external dependencies (database, email services, etc.)
+
+## Branch Naming Convention
+
+Use the following naming convention for branches:
+- `feature/short-description` - For new features
+- `bugfix/issue-description` - For bug fixes
+- `docs/update-description` - For documentation changes
+- `refactor/component-name` - For code refactoring
 
 Thank you for contributing to EmailManagement!

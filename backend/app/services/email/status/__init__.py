@@ -1,0 +1,1 @@
+"""Email status management package"""

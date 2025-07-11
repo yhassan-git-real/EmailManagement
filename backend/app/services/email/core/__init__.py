@@ -1,0 +1,1 @@
+"""Email core components package"""

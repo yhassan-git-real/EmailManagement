@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     # Path configurations - must be read from environment variables
     EMAIL_ARCHIVE_PATH: str
     LOG_DIR_PATH: str
-    DEFAULT_EMAIL_TEMPLATE_PATH: Optional[str] = "./templates/default_template.txt"
+    DEFAULT_EMAIL_TEMPLATE_PATH: Optional[str] = "templates/default_template.txt"
     
     # Email attachment size limits (in MB)
     EMAIL_MAX_SIZE_MB: int = 25
@@ -47,8 +47,8 @@ class Settings(BaseSettings):
     GDRIVE_UPLOAD_THRESHOLD_MB: int = 20
     
     # Google Drive configuration
-    GDRIVE_CREDENTIALS_PATH: Optional[str] = "./credentials/oauth_credentials.json"
-    GDRIVE_TOKEN_PATH: Optional[str] = "./credentials/token.pickle"
+    GDRIVE_CREDENTIALS_PATH: Optional[str] = "credentials/oauth_credentials.json"
+    GDRIVE_TOKEN_PATH: Optional[str] = "credentials/token.pickle"
     GDRIVE_FOLDER_ID: Optional[str] = None  # Optional folder ID for uploads
     
     @validator('EMAIL_ARCHIVE_PATH')

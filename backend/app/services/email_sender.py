@@ -8,7 +8,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, Union
 from pathlib import Path
 from ..core.config import get_settings
 from ..utils.db_utils import get_db_connection
@@ -108,14 +108,16 @@ class EmailSender:
             
         # Create archive directory if it doesn't exist
         os.makedirs(self.archive_path, exist_ok=True)
-        
+
     def send_email(self, 
                   recipient: str, 
                   subject: str, 
                   body: str, 
                   folder_path: Optional[str] = None,
                   sender: Optional[str] = None,
-                  email_id: Optional[int] = None) -> Tuple[bool, Optional[str]]:
+                  email_id: Optional[int] = None,
+                  gdrive_share_type: str = 'anyone',
+                  specific_emails: Optional[Any] = None) -> Tuple[bool, Optional[str]]:
         """
         Send an email with optional compressed folder attachment
         
@@ -230,8 +232,55 @@ class EmailSender:
                             
                             email_logger.log_info(f"Preparing to upload large file ({file_size_formatted}) to Google Drive...")
                             
-                            # Upload file to Google Drive and get shareable link
-                            upload_success, drive_link, error_msg = gdrive.upload_and_get_link(attachment_path)
+                            # Determine the correct sharing behavior based on the parameters
+                            if gdrive_share_type == 'restricted':
+                                # Restricted to only the recipient
+                                upload_success, drive_link, error_msg = gdrive.upload_and_get_link(
+                                    attachment_path, 
+                                    share_type='restricted',
+                                    recipient_email=recipient
+                                )
+                                email_logger.log_info(f"Shared file with restricted access to {recipient}")
+                            elif gdrive_share_type == 'specific' and specific_emails:
+                                # Share with specific emails (in addition to the recipient)
+                                # First, add access for the recipient
+                                upload_success, drive_link, error_msg = gdrive.upload_and_get_link(
+                                    attachment_path,
+                                    share_type='restricted',
+                                    recipient_email=recipient
+                                )
+                                
+                                if upload_success and drive_link:
+                                    # Then add access for each additional email
+                                    # Handle specific_emails whether it's a string or a list
+                                    email_list = []
+                                    if isinstance(specific_emails, str):
+                                        # If it's a comma-separated string, split it
+                                        email_list = [email.strip() for email in specific_emails.split(',') if email.strip()]
+                                    elif isinstance(specific_emails, list):
+                                        email_list = specific_emails
+                                    
+                                    for email in email_list:
+                                        if email != recipient:  # Skip recipient as they already have access
+                                            try:
+                                                file_id = drive_link.split('/')[-2]  # Extract file ID from URL
+                                                # Add permission for this email
+                                                permission = {
+                                                    'type': 'user',
+                                                    'role': 'reader',
+                                                    'emailAddress': email
+                                                }
+                                                gdrive.drive_service.permissions().create(
+                                                    fileId=file_id,
+                                                    body=permission
+                                                ).execute()
+                                                email_logger.log_info(f"Added specific access for {email}")
+                                            except Exception as e:
+                                                email_logger.log_warning(f"Failed to share with {email}: {str(e)}")
+                                                # Continue with other emails even if one fails
+                            else:
+                                # Default: Anyone with link
+                                upload_success, drive_link, error_msg = gdrive.upload_and_get_link(attachment_path)
                             
                             if upload_success and drive_link:
                                 # If successful, add the link to the email body
@@ -409,15 +458,14 @@ class EmailSender:
             )
             
             return False, formatted_reason
-    
-    def send_email_with_validation(self, 
-                               recipient: str, 
-                               subject: str, 
-                               body: str, 
-                               folder_path: Optional[str] = None,
-                               sender: Optional[str] = None,
-                               email_id: Optional[int] = None,
-                               validate_mapping: bool = True) -> Tuple[bool, Optional[str]]:
+
+    def send_email_with_validation(self, recipient: str, subject: str, body: str, 
+                                   folder_path: Optional[str] = None,
+                                   sender: Optional[str] = None,
+                                   email_id: Optional[int] = None,
+                                   validate_mapping: bool = True,
+                                   gdrive_share_type: str = 'anyone',
+                                   specific_emails: Optional[Union[List[str], str]] = None) -> Tuple[bool, Optional[str]]:
         """
         Send an email with full validation before compression and sending
         
@@ -432,6 +480,8 @@ class EmailSender:
             sender: Sender email address (defaults to SMTP username)
             email_id: Database ID of the email record for logging
             validate_mapping: Whether to validate recipient mapping against database
+            gdrive_share_type: Type of sharing permission ('anyone', 'restricted', or 'specific')
+            specific_emails: List of specific emails to share with (for 'specific' share_type)
             
         Returns:
             Tuple[bool, Optional[str]]: (success, reason_if_failed)
@@ -508,7 +558,7 @@ class EmailSender:
                         email_logger.log_warning(f"Google Drive not available: {gdrive_error}. Will try regular attachment.")
             
             # Now that all validations have passed, proceed with the actual sending
-            return self.send_email(recipient, subject, body, folder_path, sender, email_id)
+            return self.send_email(recipient, subject, body, folder_path, sender, email_id, gdrive_share_type, specific_emails)
                 
         except Exception as e:
             error_message = f"Failed to validate email: {str(e)}"
@@ -639,216 +689,129 @@ class EmailSender:
                     email_logger.log_error(error_msg)
                     return None, None
                 
-            email_logger.log_info(f"Folder compressed successfully: {archive_file_path}, size: {formatted_size} ({compressed_size} bytes)")
-            return archive_file_path, compressed_size
-            
-        except Exception as e:
-            error_msg = f"Failed to compress folder {folder_path}: {str(e)}"
+                # Return the path and size of the compressed file
+                return archive_file_path, compressed_size
+        except Exception as compression_error:
+            error_msg = f"Error compressing folder: {str(compression_error)}"
             logger.error(error_msg)
             email_logger.log_error(error_msg)
             return None, None
-        
-    def _validate_attachment_path(self, folder_path: str) -> Tuple[bool, Optional[str]]:
-        """
-        Validate that a folder path exists and contains files
-        
-        Args:
-            folder_path: Path to the folder to validate
-            
-        Returns:
-            Tuple[bool, str]: (is_valid, error_reason_if_invalid)
-        """
-        # Check if folder path is provided
-        if not folder_path:
-            return False, "No attachment path provided"
-            
-        # Check if folder exists
-        if not os.path.exists(folder_path):
-            return False, f"Folder path does not exist: {folder_path}"
-            
-        # If it's a file, check if it exists and is not empty
-        if os.path.isfile(folder_path):
-            if os.path.getsize(folder_path) == 0:
-                return False, f"Attachment file exists but is empty: {folder_path}"
-            return True, None
-            
-        # If it's a folder, check if it has files
-        has_files = False
-        for _, _, files in os.walk(folder_path):
-            if files:
-                has_files = True
-                break
-                
-        if not has_files:
-            return False, f"Folder exists but is empty: {folder_path}"
-            
-        return True, None
     
-    def _validate_email(self, email: str) -> Tuple[bool, Optional[str]]:
+    def _check_smtp_connection(self) -> Tuple[bool, str]:
         """
-        Validate email format and content
+        Check if connection to SMTP server can be established.
+        
+        Returns:
+            Tuple[bool, str]: (True, "") if successful, (False, error message) if not
+        """
+        try:
+            with smtplib.SMTP(self.smtp_server, self.port) as server:
+                if self.use_tls:
+                    server.starttls()
+                server.login(self.username, self.password)
+            return True, ""
+        except Exception as e:
+            return False, str(e)
+    
+    def _validate_email(self, email: str) -> Tuple[bool, str]:
+        """
+        Validate an email address format.
         
         Args:
             email: Email address to validate
-            
+        
         Returns:
-            Tuple[bool, str]: (is_valid, error_reason_if_invalid)
+            Tuple[bool, str]: (True, "") if valid, (False, error message) if invalid
         """
-        if not email:
-            return False, "Email address is empty"
-            
-        # Simple regex for email validation
         import re
-        email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-        if not email_pattern.match(email):
-            return False, f"Invalid email format: {email}"
-            
-        return True, None
-
-    def _check_smtp_connection(self) -> Tuple[bool, Optional[str]]:
-        """
-        Verify SMTP server connectivity before attempting to send
-        
-        Returns:
-            Tuple[bool, str]: (is_connected, error_reason_if_not)
-        """
-        try:
-            # Try to connect to the SMTP server
-            with smtplib.SMTP(self.smtp_server, self.port, timeout=10) as server:
-                if self.use_tls:
-                    server.starttls()
-                server.ehlo()  # Just say hello, don't login yet
-            return True, None
-        except Exception as e:
-            error_msg = f"Cannot connect to SMTP server: {str(e)}"
-            return False, error_msg
-
-    def _check_gdrive_availability(self) -> Tuple[bool, Optional[str]]:
-        """
-        Verify Google Drive API is available
-        
-        Returns:
-            Tuple[bool, str]: (is_available, error_reason_if_not)
-        """
-        if not GDRIVE_AVAILABLE:
-            return False, "Google Drive service not available"
-            
-        try:
-            # Try to initialize the Google Drive service
-            gdrive = GoogleDriveService()
-            # Just check if we can initialize it
-            return True, None
-        except Exception as e:
-            error_msg = f"Cannot connect to Google Drive: {str(e)}"
-            return False, error_msg
-
-# Functions to handle email records from the database
-def get_email_status_summary() -> Dict[str, int]:
-    """
-    Get a summary count of emails by status
+        if re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            return True, ""
+        else:
+            return False, "Invalid email format"
     
-    Returns:
-        Dict with counts for each status
-    """
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        settings = get_settings()
-        
-        query = f"""
-            SELECT Email_Status, COUNT(*) as Count
-            FROM {settings.EMAIL_TABLE}
-            GROUP BY Email_Status
+    def _validate_attachment_path(self, path: str) -> Tuple[bool, str]:
         """
+        Validate that an attachment path exists and is accessible.
         
-        cursor.execute(query)
+        Args:
+            path: Path to validate
         
-        # Initialize with zeros for all possible statuses
-        summary = {
-            "total": 0,
-            "pending": 0, 
-            "success": 0, 
-            "failed": 0
-        }
+        Returns:
+            Tuple[bool, str]: (True, "") if valid, (False, error message) if invalid
+        """
+        if os.path.exists(path) and os.path.isdir(path):
+            return True, ""
+        else:
+            return False, "Attachment path does not exist or is not a directory"
+    
+    def _check_gdrive_availability(self) -> Tuple[bool, str]:
+        """
+        Check if Google Drive is available for uploading.
         
-        # Update with actual counts from database
-        for status, count in cursor.fetchall():
-            status_lower = status.lower()
-            if status_lower in summary:
-                summary[status_lower] = count
-                summary["total"] += count
-        
-        return summary
-        
-    except Exception as e:
-        logger.error(f"Error getting email status summary: {str(e)}")
-        email_logger.log_error(f"Error getting email status summary: {str(e)}")
-        raise
-    finally:
-        if 'conn' in locals():
-            conn.close()
+        Returns:
+            Tuple[bool, str]: (True, "") if available, (False, error message) if not
+        """
+        return GDRIVE_AVAILABLE, "Google Drive service not imported"
 
 
-def update_email_status(email_id: int, status: str, reason: Optional[str] = None, 
-                       send_date: Optional[datetime] = None, date: Optional[datetime] = None) -> bool:
+# Function to update email status in the database
+def update_email_status(
+    email_id: int, 
+    status: str, 
+    reason: Optional[str] = None,
+    send_date: Optional[datetime] = None,
+    date: Optional[datetime] = None
+) -> bool:
     """
-    Update the status of an email record
+    Update the status of an email record in the database.
     
     Args:
         email_id: ID of the email record
-        status: New status value
-        reason: Optional reason for the status update (e.g., error message)
-        send_date: Optional date when the email was sent (for Email_Send_Date column)
-        date: Optional date for the Date column update timestamp
-    
+        status: New status ('Success', 'Failed', 'Pending')
+        reason: Optional reason for the status change
+        send_date: Optional date when the email was sent
+        date: Optional date to update the record's date field
+        
     Returns:
-        bool: True if update was successful
+        bool: True if update was successful, False otherwise
     """
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         settings = get_settings()
         
-        # Check which dates are provided
-        current_time = datetime.now()
-        parameters = [status, reason]
+        # Build the update statement dynamically based on what fields are provided
+        update_fields = ["Email_Status = ?"] 
+        params = [status]
         
-        # Build the update query based on which parameters are provided
-        update_parts = ["Email_Status = ?", "Reason = ?"]
-        
-        # Include Date column update (operation timestamp)
-        update_date = date if date is not None else current_time
-        update_parts.append("Date = ?")
-        parameters.append(update_date)
-        
-        # Include Email_Send_Date in the update if provided
-        if send_date is not None:
-            update_parts.append("Email_Send_Date = ?")
-            parameters.append(send_date)
+        if reason is not None:
+            update_fields.append("Reason = ?")
+            params.append(reason)
             
-        # Build the final query
-        update_query = f"""
+        if send_date is not None:
+            update_fields.append("Email_Send_Date = ?")
+            params.append(send_date)
+            
+        if date is not None:
+            update_fields.append("Date = ?")
+            params.append(date)
+            
+        # Add the WHERE clause parameter
+        params.append(email_id)
+        
+        # Construct the complete query
+        query = f"""
             UPDATE {settings.EMAIL_TABLE}
-            SET {", ".join(update_parts)}
+            SET {', '.join(update_fields)}
             WHERE Email_ID = ?
         """
         
-        # Add the email_id to the parameters
-        parameters.append(email_id)
-        
-        # Execute the update
-        cursor.execute(update_query, parameters)
+        cursor.execute(query, params)
         conn.commit()
         
-        email_logger.log_info(f"Updated email ID {email_id} status to {status}" + 
-                             (f" with reason: {reason}" if reason else ""))
-        
         return cursor.rowcount > 0
-        
     except Exception as e:
-        error_msg = f"Error updating email status: {str(e)}"
-        logger.error(error_msg)
-        email_logger.log_error(error_msg)
+        logger.error(f"Error updating email status for record {email_id}: {str(e)}")
         return False
     finally:
         if 'conn' in locals():

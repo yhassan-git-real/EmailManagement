@@ -27,6 +27,19 @@ const useAutomationSettings = () => {
       if (savedSettings) {
         try {
           localSettings = JSON.parse(savedSettings);
+          // Ensure specificEmails is an array if it exists in local settings
+          if (localSettings.specificEmails && !Array.isArray(localSettings.specificEmails)) {
+            if (typeof localSettings.specificEmails === 'string') {
+              // Convert comma-separated string to array if needed
+              localSettings.specificEmails = localSettings.specificEmails
+                .split(',')
+                .map(email => email.trim())
+                .filter(email => email.length > 0);
+            } else {
+              // If it's neither an array nor a string, initialize as empty array
+              localSettings.specificEmails = [];
+            }
+          }
         } catch (e) {
           console.error('Error parsing saved email settings', e);
         }
@@ -35,6 +48,23 @@ const useAutomationSettings = () => {
       const settingsResponse = await getEmailAutomationSettings();
       
       if (settingsResponse.success) {
+        // Ensure specificEmails is an array in backend response
+        if (settingsResponse.data.specificEmails && !Array.isArray(settingsResponse.data.specificEmails)) {
+          if (typeof settingsResponse.data.specificEmails === 'string') {
+            // Convert comma-separated string to array if needed
+            settingsResponse.data.specificEmails = settingsResponse.data.specificEmails
+              .split(',')
+              .map(email => email.trim())
+              .filter(email => email.length > 0);
+          } else {
+            // If it's neither an array nor a string, initialize as empty array
+            settingsResponse.data.specificEmails = [];
+          }
+        } else if (!settingsResponse.data.specificEmails) {
+          // Initialize as empty array if undefined
+          settingsResponse.data.specificEmails = [];
+        }
+        
         // Merge backend settings with locally stored email settings
         const mergedSettings = {
           ...settingsResponse.data,
@@ -56,8 +86,35 @@ const useAutomationSettings = () => {
   // Save settings
   const saveSettings = async (settings) => {
     try {
-      const response = await saveEmailAutomationSettings(settings);
+      // Ensure specificEmails is always an array before saving
+      const settingsToSave = { ...settings };
+      
+      if (settingsToSave.specificEmails) {
+        if (!Array.isArray(settingsToSave.specificEmails)) {
+          if (typeof settingsToSave.specificEmails === 'string') {
+            // Convert comma-separated string to array if needed
+            settingsToSave.specificEmails = settingsToSave.specificEmails
+              .split(',')
+              .map(email => email.trim())
+              .filter(email => email.length > 0);
+          } else {
+            // If it's neither an array nor a string, initialize as empty array
+            settingsToSave.specificEmails = [];
+          }
+        }
+      } else if (settingsToSave.sharingOption === 'specific') {
+        // If sharing option is 'specific' but no emails provided, initialize as empty array
+        settingsToSave.specificEmails = [];
+      }
+      
+      const response = await saveEmailAutomationSettings(settingsToSave);
       if (response.success) {
+        // Ensure specificEmails is an array in the response
+        if (response.data.specificEmails && !Array.isArray(response.data.specificEmails)) {
+          response.data.specificEmails = Array.isArray(settingsToSave.specificEmails) ? 
+            settingsToSave.specificEmails : [];
+        }
+        
         setAutomationSettings(response.data);
         return { success: true, data: response.data };
       }

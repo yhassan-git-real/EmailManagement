@@ -37,7 +37,9 @@ _automation_state = {
     "settings": {
         "retry_on_failure": True,
         "retry_interval": "15min",
-        "template_id": "default"
+        "template_id": "default",
+        "sharing_option": "anyone",
+        "specific_emails": []
     },
     # New schedule settings
     "schedule": {
@@ -117,6 +119,10 @@ def _process_email_queue():
     """
     global _automation_state
     
+    # Determine if this is a restart process or normal process
+    is_restart = _automation_state["status"] == "restarting"
+    process_emoji = "🔄" if is_restart else "🚀"
+    
     _automation_state["status"] = "running"
     _automation_state["start_time"] = datetime.now()
     
@@ -191,9 +197,9 @@ def _process_email_queue():
                     _automation_state["email_queue"].task_done()
                     continue
                 
-                # Log with process_id
+                # Log with process_id and consistent emoji
                 email_logger.log_info(
-                    f"Processing email ID {email_record['Email_ID']} to {email_record['Email']}",
+                    f"{process_emoji} Processing email ID {email_record['Email_ID']} to {email_record['Email']}",
                     email_id=email_record["Email_ID"],
                     recipient=email_record["Email"],
                     subject=email_record["Subject"],
@@ -265,6 +271,10 @@ def _process_email_queue():
                     _automation_state["summary"]["failed"] += 1
                     continue
                 
+                # Get the sharing options from the automation state
+                sharing_option = _automation_state["settings"].get("sharing_option", "anyone")
+                specific_emails = _automation_state["settings"].get("specific_emails", [])
+                
                 # Send email with validation - we already validated recipient mapping here
                 # so we set validate_mapping=False to avoid duplicate validation
                 success, reason = email_sender.send_email_with_validation(
@@ -274,7 +284,9 @@ def _process_email_queue():
                     folder_path=email_record["File_Path"],
                     sender=sender_email,
                     email_id=email_record["Email_ID"],
-                    validate_mapping=False  # Already validated above
+                    validate_mapping=False,  # Already validated above
+                    gdrive_share_type=sharing_option,
+                    specific_emails=specific_emails
                 )
                 
                 # Update status based on result
@@ -314,6 +326,16 @@ def _process_email_queue():
                     process_id=process_id
                 )
                 
+                # Add additional detailed log for failures with the process emoji
+                if not success:
+                    email_logger.log_error(
+                        f"{process_emoji} Email ID {email_record['Email_ID']} to {email_record['Email']} FAILED: {reason}",
+                        email_id=email_record["Email_ID"],
+                        recipient=email_record["Email"],
+                        subject=email_record["Subject"],
+                        process_id=process_id
+                    )
+                
                 # Mark task as done in queue
                 _automation_state["email_queue"].task_done()
                 
@@ -321,28 +343,42 @@ def _process_email_queue():
                 # Queue is empty, continue to next loop iteration
                 continue
             except Exception as e:
-                # Log the error with process_id
+                # Log the error with process_id and consistent emoji
                 email_logger.log_error(
-                    f"Error processing email: {str(e)}",
+                    f"{process_emoji} Error processing email: {str(e)}",
                     email_id=email_record.get("Email_ID"),
                     process_id=process_id
                 )
                 # Continue with next email
                 continue
-                
+        
         # All emails processed - update status and end the process
         _automation_state["status"] = "idle"
         _automation_state["last_run"] = datetime.now()
         _automation_state["is_running"] = False
         _automation_state["stop_requested"] = False
         
-        # End the process successfully if a process_id exists
+        # End the process with success if a process_id exists
         if process_id:
             summary = _automation_state["summary"]
+            total_time = datetime.now() - _automation_state["start_time"]
+            total_seconds = total_time.total_seconds()
+            
+            # Add total time to the log with consistent emoji
+            email_logger.log_info(
+                f"{process_emoji} {process_emoji} Automation process completed: {_automation_state['status']} - " +
+                f"Processed {summary['processed']} emails: {summary['successful']} successful, {summary['failed']} failed - " +
+                f"Processed {summary['processed']} emails (Total time: {total_seconds:.2f}s)",
+                process_id=process_id
+            )
+            
+            # End the process with a summary description
             description = (f"Processed {summary['processed']} emails: " +
                           f"{summary['successful']} successful, {summary['failed']} failed")
             email_logger.end_process(process_id, "success", description)
         
+        # Update pending count after finishing
+        _update_summary()
     except Exception as e:
         error_msg = f"Error in email automation process: {str(e)}"
         logger.error(error_msg)
@@ -355,9 +391,6 @@ def _process_email_queue():
         _automation_state["last_run"] = datetime.now()
         _automation_state["is_running"] = False
         _automation_state["stop_requested"] = False
-    
-    # Update pending count after finishing
-    _update_summary()
 
 
 def _update_summary():
@@ -537,8 +570,9 @@ def restart_failed_emails() -> Dict[str, Any]:
         # Generate a unique process ID for this automation run
         process_id = f"retry_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Start process tracking in the logger
+        # Start process tracking in the logger with a more descriptive name and emoji
         email_logger.start_process(process_id, "Failed Email Retry Process")
+        email_logger.log_info("🔄 Starting automation process: Failed Email Retry Process", process_id=process_id)
         
         # Get failed emails only
         conn = get_db_connection()
@@ -555,11 +589,11 @@ def restart_failed_emails() -> Dict[str, Any]:
         failed_count = cursor.fetchone()[0]
         
         if failed_count == 0:
-            email_logger.log_info("No failed emails to restart", process_id=process_id)
+            email_logger.log_info("❌ No failed emails to restart", process_id=process_id)
             email_logger.end_process(process_id, "completed", "No failed emails to restart")
             return get_automation_status()
             
-        email_logger.log_info(f"Found {failed_count} failed emails to restart", process_id=process_id)
+        email_logger.log_info(f"❌ Found {failed_count} failed emails to restart", process_id=process_id)
         
         # Get all failed emails
         failed_emails = _load_emails_by_status(EmailStatus.FAILED.value)
@@ -602,12 +636,27 @@ def restart_failed_emails() -> Dict[str, Any]:
         )
         _automation_state["automation_thread"].start()
         
-        email_logger.log_info(f"Started reprocessing of {len(failed_emails)} previously failed emails", process_id=process_id)
+        # Enhanced logging with more details and consistent formatting with normal process
+        email_logger.log_info(f"🔄 Started reprocessing of {len(failed_emails)} previously failed emails", process_id=process_id)
+        
+        # Log details about each email being reprocessed
+        for email in failed_emails:
+            email_id = email.get('Email_ID')
+            recipient = email.get('Email')
+            if email_id and recipient:
+                email_logger.log_info(
+                    f"🔄 Reprocessing email ID {email_id} to {recipient}",
+                    email_id=email_id,
+                    recipient=recipient,
+                    subject=email.get('Subject'),
+                    process_id=process_id
+                )
+        
         return get_automation_status()
             
     except Exception as e:
         error_msg = f"Error restarting failed emails: {str(e)}"
-        email_logger.log_error(error_msg, process_id=process_id if 'process_id' in locals() else None)
+        email_logger.log_error(f"❌ {error_msg}", process_id=process_id if 'process_id' in locals() else None)
         
         # End the process with error if a process_id exists
         if 'process_id' in locals():

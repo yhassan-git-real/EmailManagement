@@ -222,12 +222,14 @@ class GoogleDriveService:
             logger.error(error_message)
             return False, None, error_message
     
-    def generate_shareable_link(self, file_id: str) -> Tuple[bool, Optional[str], Optional[str]]:
+    def generate_shareable_link(self, file_id: str, share_type: str = 'anyone', recipient_email: Optional[str] = None) -> Tuple[bool, Optional[str], Optional[str]]:
         """
-        Generate a shareable link for a file in Google Drive
+        Generate a shareable link for a file in Google Drive with specified permissions
         
         Args:
             file_id: ID of the file in Google Drive
+            share_type: Type of sharing permission ('anyone', 'restricted', or 'specific')
+            recipient_email: Email address of the recipient (used for 'restricted' or 'specific' share_type)
             
         Returns:
             Tuple[bool, Optional[str], Optional[str]]: 
@@ -238,11 +240,31 @@ class GoogleDriveService:
                 return False, None, "Failed to authenticate with Google Drive"
         
         try:
-            # Update permissions to make the file accessible via link
-            permission = {
-                'type': 'anyone',
-                'role': 'reader'
-            }
+            # Update permissions based on the specified share_type
+            if share_type == 'restricted' and recipient_email:
+                # Only the specific recipient can access the file
+                permission = {
+                    'type': 'user',
+                    'role': 'reader',
+                    'emailAddress': recipient_email
+                }
+                logger.info(f"Setting restricted access for file {file_id} to {recipient_email}")
+            elif share_type == 'specific' and recipient_email:
+                # The specific recipient can access the file and can share with others
+                # First, add the specific recipient
+                permission = {
+                    'type': 'user',
+                    'role': 'reader',
+                    'emailAddress': recipient_email
+                }
+                logger.info(f"Setting specific access for file {file_id} to {recipient_email}")
+            else:
+                # Default: Anyone with the link can access the file
+                permission = {
+                    'type': 'anyone',
+                    'role': 'reader'
+                }
+                logger.info(f"Setting 'anyone with the link' access for file {file_id}")
             
             self.drive_service.permissions().create(
                 fileId=file_id,
@@ -271,13 +293,15 @@ class GoogleDriveService:
             logger.error(error_message)
             return False, None, error_message
     
-    def upload_and_get_link(self, file_path: str, folder_id: Optional[str] = None) -> Tuple[bool, Optional[str], Optional[str]]:
+    def upload_and_get_link(self, file_path: str, folder_id: Optional[str] = None, share_type: str = 'anyone', recipient_email: Optional[str] = None) -> Tuple[bool, Optional[str], Optional[str]]:
         """
-        Upload a file to Google Drive and generate a shareable link
+        Upload a file to Google Drive and generate a shareable link with specified permissions
         
         Args:
             file_path: Path to the file to upload
             folder_id: Optional folder ID to upload to (root folder if None)
+            share_type: Type of sharing permission ('anyone', 'restricted', or 'specific')
+            recipient_email: Email address of the recipient (used for 'restricted' or 'specific' share_type)
             
         Returns:
             Tuple[bool, Optional[str], Optional[str]]: 
@@ -301,8 +325,8 @@ class GoogleDriveService:
         # Log progress
         email_logger.log_info(f"Generating shareable link for {file_name}...")
         
-        # Generate shareable link
-        link_success, shareable_link, link_error = self.generate_shareable_link(file_id)
+        # Generate shareable link with specified sharing permissions
+        link_success, shareable_link, link_error = self.generate_shareable_link(file_id, share_type, recipient_email)
         
         if not link_success:
             return False, None, link_error

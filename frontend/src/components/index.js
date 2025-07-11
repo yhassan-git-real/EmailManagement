@@ -47,6 +47,10 @@ import { DatabaseConnector } from './database';
 // File Components
 import { FilePreviewer } from './file';
 
+// GDrive Components
+import GDriveShareSettings from './gdrive/GDriveShareSettings';
+import GDriveShareButton from './gdrive/GDriveShareButton';
+
 // Scheduler Components
 import { SchedulerSettings } from './scheduler';
 
@@ -90,6 +94,10 @@ export {
   
   // File
   FilePreviewer,
+  
+  // Google Drive
+  GDriveShareSettings,
+  GDriveShareButton,
   
   // Scheduler
   SchedulerSettings,

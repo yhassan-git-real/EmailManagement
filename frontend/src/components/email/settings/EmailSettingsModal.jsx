@@ -17,14 +17,15 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
     }
 
     // Use initialData from props or default values
-    return {
+return {
       senderEmail: initialData.senderEmail || '',
       smtpServer: initialData.smtpServer || '',
       port: initialData.port || '587',
       authType: initialData.authType || 'login',
       username: initialData.username || '',
       password: initialData.password || '',
-      useTLS: initialData.useTLS !== undefined ? initialData.useTLS : true
+      useTLS: initialData.useTLS !== undefined ? initialData.useTLS : true,
+      // Google Drive sharing options removed - now handled in control panel
     };
   });
 
@@ -253,7 +254,8 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
                 </label>
               </div>
 
-              {/* Validation status display */}
+              {/* Google Drive Sharing Options removed - now in Control Panel */}
+              
               {validationStatus.message && (
                 <div className={`rounded-md p-3 flex items-center ${validationStatus.isValid === true
                   ? 'bg-green-50 text-green-700'

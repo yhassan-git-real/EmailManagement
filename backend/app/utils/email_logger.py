@@ -178,6 +178,26 @@ class EmailLogger:
                 message = f"[Process: {process_info.get('description', 'Unknown')}] WARNING: {message} (Elapsed: {elapsed_formatted})"
             
         self._log_with_data(logging.WARNING, message, email_id, recipient, subject, status, file_name, file_path)
+        
+    def log_error(self, message: str, email_id: Optional[int] = None, recipient: Optional[str] = None,
+                 subject: Optional[str] = None, status: Optional[str] = None, 
+                 file_name: Optional[str] = None, file_path: Optional[str] = None,
+                 process_id: Optional[str] = None):
+        """Log an error message with additional email-specific data"""
+        # Add process information if available
+        if process_id:
+            if process_id in self._active_processes:
+                # Get process information
+                process_info = self._active_processes[process_id]
+                
+                # Calculate elapsed time
+                elapsed_time = time.time() - process_info.get('start_time', time.time())
+                elapsed_formatted = self._format_time(elapsed_time)
+                
+                # Add process info to message
+                message = f"[Process: {process_info.get('description', 'Unknown')}] ❌ {message} (Elapsed: {elapsed_formatted})"
+            
+        self._log_with_data(logging.ERROR, message, email_id, recipient, subject, status, file_name, file_path)
     
     def _log_with_data(self, level: int, message: str, email_id: Optional[int] = None, 
                        recipient: Optional[str] = None, subject: Optional[str] = None,

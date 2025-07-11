@@ -5,7 +5,8 @@ import {
   Breadcrumb,
   EmailSettingsModal,
   TemplateSelector,
-  SchedulerSettings
+  SchedulerSettings,
+  GDriveShareSettings
 } from '../../components';
 import { HomeIcon } from '@heroicons/react/24/outline';
 
@@ -136,6 +137,9 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
                             onRefreshStatus={() => handleRefreshStatus(fetchAutomationStatus)}
                             onOpenSettings={() => setShowSettingsModal(true)}
                             onOpenTemplateSelector={() => setShowTemplateSelector(true)}
+                            sharingOption={automationSettings.sharingOption || 'anyone'}
+                            specificEmails={automationSettings.specificEmails || []}
+                            onUpdateSharingSettings={settings => saveSettings({...automationSettings, ...settings})}
                         />
 
                         {/* Status Summary */}
@@ -147,7 +151,8 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
                             onOpenTemplateSelector={() => setShowTemplateSelector(true)}
                         />
 
-                        {/* Scheduler Settings (using existing component) */}
+
+{/* Scheduler Settings (using existing component) */}
                         <div className="my-6">
                             <hr className="my-6 border-t border-gray-200" />
                             <SchedulerSettings

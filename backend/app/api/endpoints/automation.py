@@ -29,6 +29,8 @@ class AutomationSettings(BaseModel):
     retryOnFailure: Optional[bool] = None
     retryInterval: Optional[str] = None
     templateId: Optional[str] = None
+    sharingOption: Optional[str] = "anyone"
+    specificEmails: Optional[List[str]] = []
 
 
 class RetrySettings(BaseModel):
@@ -198,11 +200,13 @@ async def update_settings(settings: AutomationSettings):
                 # Set environment variable
                 os.environ[env_key] = value
         
-        # Update other settings in the service
+# Update other settings in the service
         automation_settings = {
             "retry_on_failure": settings_dict.get("retryOnFailure"),
             "retry_interval": settings_dict.get("retryInterval"),
-            "template_id": settings_dict.get("templateId")
+            "template_id": settings_dict.get("templateId"),
+            "sharing_option": settings_dict.get("sharingOption"),
+            "specific_emails": settings_dict.get("specificEmails")
         }
         
         # Filter out None values

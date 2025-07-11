@@ -1,5 +1,5 @@
 import React from 'react';
-import { StatusBadge } from '../../../components';
+import { StatusBadge, GDriveShareButton } from '../../../components';
 import {
   CogIcon,
   PlayIcon,
@@ -20,7 +20,10 @@ const AutomationControlPanel = ({
   onRestartFailed,
   onRefreshStatus,
   onOpenSettings,
-  onOpenTemplateSelector
+  onOpenTemplateSelector,
+  sharingOption,
+  specificEmails,
+  onUpdateSharingSettings
 }) => {
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 mb-6 border border-gray-100">
@@ -50,12 +53,15 @@ const AutomationControlPanel = ({
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <button
             onClick={onStartAutomation}
-            disabled={isLoading.start || automationStatus.status === 'running'}
-            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 hover:shadow"
+            disabled={isLoading.start || automationStatus.status === 'running' || automationStatus.status === 'restarting'}
+            className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${isLoading.start || automationStatus.status === 'running' || automationStatus.status === 'restarting'
+                ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                : 'text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 hover:shadow'
+              }`}
             title="Process only pending emails, never emails with status 'Failed' or 'Success'"
           >
             <div className="relative">
-              <PlayIcon className={`h-5 w-5 mr-2 transition-transform duration-200 ${!isLoading.start && automationStatus.status !== 'running' ? 'group-hover:scale-110' : ''}`} />
+              <PlayIcon className={`h-5 w-5 mr-2 transition-transform duration-200 ${!isLoading.start && automationStatus.status !== 'running' && automationStatus.status !== 'restarting' ? 'group-hover:scale-110' : ''}`} />
               {isLoading.start && <span className="absolute inset-0 flex items-center justify-center animate-ping h-2 w-2 rounded-full bg-white opacity-75"></span>}
             </div>
             <span>{isLoading.start ? 'Starting...' : 'Start Pending Emails'}</span>
@@ -63,8 +69,8 @@ const AutomationControlPanel = ({
 
           <button
             onClick={onRestartFailed}
-            disabled={isLoading.restart || automationStatus.status === 'restarting'}
-            className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${automationStatus.status === 'restarting'
+            disabled={isLoading.restart || automationStatus.status === 'restarting' || automationStatus.status === 'running' || automationStatus.summary.failed === 0}
+            className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${isLoading.restart || automationStatus.status === 'restarting' || automationStatus.status === 'running' || automationStatus.summary.failed === 0
                 ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                 : 'text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-amber-500 hover:shadow'
               }`}
@@ -101,6 +107,13 @@ const AutomationControlPanel = ({
             <DocumentTextIcon className="h-5 w-5 mr-2 text-gray-500 transition-transform duration-200 group-hover:scale-110 group-hover:text-primary-500" />
             <span>Use Template Editor</span>
           </button>
+
+          {/* Google Drive Sharing Button */}
+          <GDriveShareButton
+            sharingOption={sharingOption}
+            specificEmails={specificEmails}
+            onChange={onUpdateSharingSettings}
+          />
 
           <button
             onClick={onRefreshStatus}

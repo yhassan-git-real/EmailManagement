@@ -173,13 +173,13 @@ const LogTable = ({
                     if (input) input.indeterminate = someSelected;
                   }}
                   onChange={handleSelectAll}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded transition-colors"
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded transition-colors cursor-pointer hover:border-primary-400 transform hover:scale-110 duration-200"
                 />
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-48">
                 <div className="flex items-center">
                   <svg className="w-3 h-3 mr-1 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   Timestamp
                 </div>
@@ -258,16 +258,17 @@ const LogTable = ({
               parsedLogs.map((log) => (
                 <React.Fragment key={log.id}>
                   <tr
-                    className={`divide-x divide-gray-100 border-b border-gray-100 hover:bg-blue-50 transition-all duration-200 ${
-                      selectedRows.includes(log.id) ? 'bg-primary-50 border-primary-200' : 'hover:shadow-sm'
+                    className={`divide-x divide-gray-100 border-b border-gray-100 hover:bg-blue-50 transition-all duration-200 cursor-pointer ${
+                      selectedRows.includes(log.id) ? 'bg-primary-50 border-primary-200' : 'hover:shadow-md'
                     }`}
+                    onClick={() => handleRowClick(log.id)}
                   >
                     <td className="px-4 py-3 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={selectedRows.includes(log.id)}
                         onChange={() => handleRowClick(log.id)}
-                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded transition-colors"
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded transition-colors cursor-pointer hover:border-primary-400 transform hover:scale-110 duration-200"
                         onClick={(e) => e.stopPropagation()}
                       />
                     </td>
@@ -309,7 +310,7 @@ const LogTable = ({
                           e.stopPropagation();
                           toggleRowExpansion(log.id);
                         }}
-                        className="text-primary-600 hover:text-primary-900 transition-colors p-1 rounded-md hover:bg-primary-100"
+                        className="text-primary-600 hover:text-primary-900 transition-all p-1 rounded-md hover:bg-primary-100 active:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transform hover:scale-110 duration-200"
                         title="View details"
                       >
                         <svg 
@@ -414,14 +415,14 @@ const LogTable = ({
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 active:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:scale-100"
           >
             Previous
           </button>
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === Math.ceil(totalRows / pageSize)}
-            className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 active:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:scale-100"
           >
             Next
           </button>
@@ -444,7 +445,7 @@ const LogTable = ({
               <button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 active:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:scale-100"
               >
                 <span className="sr-only">Previous</span>
                 <svg
@@ -461,7 +462,7 @@ const LogTable = ({
               <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === Math.ceil(totalRows / pageSize)}
-                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 transform hover:scale-105 active:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:scale-100"
               >
                 <span className="sr-only">Next</span>
                 <svg

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Header, Footer, Breadcrumb } from '../../components';
 import { HomeIcon } from '@heroicons/react/24/outline';
-import LogFilter from '../../components/LogPage/LogFilter';
 import LogActions from '../../components/LogPage/LogActions';
 import LogTable from '../../components/LogPage/LogTable';
 
@@ -52,10 +51,16 @@ const LogManagementPage = ({ connectionInfo, onDisconnect }) => {
     
     try {
       // TODO: Replace with actual API call to backend
+      // In a real implementation, this would fetch logs from the backend based on the file pattern
       // const response = await fetch('/api/logs', {
       //   method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ filters, page: currentPage, pageSize })
+      //   body: JSON.stringify({ 
+      //     filters, 
+      //     filePattern: filters.filePattern, 
+      //     page: currentPage, 
+      //     pageSize 
+      //   })
       // });
       // const data = await response.json();
       
@@ -65,9 +70,30 @@ const LogManagementPage = ({ connectionInfo, onDisconnect }) => {
       // Use sample data for now
       const sampleData = generateSampleLogs();
       
-      setLogs(sampleData.map(log => log.raw));
-      setFilteredLogs(sampleData.map(log => log.raw));
-      setTotalLogs(sampleData.length);
+      // Simulate filtering based on filePattern
+      let filteredData = sampleData;
+      if (filters.filePattern) {
+        console.log(`Filtering logs by pattern: ${filters.filePattern}`);
+        
+        // Filter logs based on the file pattern (for demonstration purposes)
+        filteredData = sampleData.filter(log => {
+          const logText = log.raw.toLowerCase();
+          
+          if (filters.filePattern.includes('email_automation')) {
+            return logText.includes('automation');
+          } else if (filters.filePattern.includes('error')) {
+            return logText.includes('error');
+          } else if (filters.filePattern.includes('success')) {
+            return logText.includes('success');
+          }
+          
+          return true;
+        });
+      }
+      
+      setLogs(filteredData.map(log => log.raw));
+      setFilteredLogs(filteredData.map(log => log.raw));
+      setTotalLogs(filteredData.length);
       setLastRefresh(new Date());
     } catch (err) {
       setError(`Failed to load logs: ${err.message}`);
@@ -264,6 +290,41 @@ const LogManagementPage = ({ connectionInfo, onDisconnect }) => {
     }
   };
 
+  // Handle start button click to fetch logs with specified type and date
+  const handleStart = (logType, date) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Construct the filename pattern based on selected log type and date
+      // "Automation Logs" → corresponds to email_automation_YYYYMMDD.log
+      // "Error Logs" → corresponds to error_YYYYMMDD.log
+      // "Success Logs" → corresponds to success_YYYYMMDD.log
+      let filePattern = '';
+      
+      if (logType === 'automation') {
+        filePattern = `email_automation_${date || ''}`;
+      } else if (logType === 'error') {
+        filePattern = `error_${date || ''}`;
+      } else if (logType === 'success') {
+        filePattern = `success_${date || ''}`;
+      }
+      
+      console.log(`Starting log fetch with pattern: ${filePattern || 'All logs'}`);
+      
+      // TODO: Replace with actual API call to backend
+      // In a real implementation, this would fetch logs from the backend based on the file pattern
+      // For now, we'll use the existing loadLogs function with a simulated delay
+      setTimeout(() => {
+        loadLogs({ filePattern });
+      }, 1000);
+      
+    } catch (err) {
+      setError(`Failed to start log fetching: ${err.message}`);
+      setIsLoading(false);
+    }
+  };
+
 
   // Real-time updates
   useEffect(() => {
@@ -362,14 +423,6 @@ const LogManagementPage = ({ connectionInfo, onDisconnect }) => {
                 </div>
               )}
 
-              {/* Log Filter Section */}
-              <LogFilter
-                onFilter={handleFilter}
-                onClearFilters={handleClearFilters}
-                isLoading={isLoading}
-                totalLogs={totalLogs}
-                filteredLogs={filteredLogs.length}
-              />
 
               {/* Log Actions Section */}
               <LogActions
@@ -380,6 +433,7 @@ const LogManagementPage = ({ connectionInfo, onDisconnect }) => {
                 onCleanup={handleCleanup}
                 onRefresh={handleRefresh}
                 onSearch={handleQuickSearch}
+                onStart={handleStart}
                 isLoading={isLoading}
               />
 

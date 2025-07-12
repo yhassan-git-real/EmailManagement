@@ -309,3 +309,146 @@ aside nav ul li a:hover {
 #root {
   overflow-x: hidden;
 }
+
+/* Enhanced Log Management Page Layout */
+.log-management-container {
+  @apply grid grid-cols-1 gap-4 max-w-6xl mx-auto;
+}
+
+/* Responsive grid utilities for log management */
+.log-header-grid {
+  @apply grid grid-cols-1 lg:grid-cols-12 gap-4 items-start lg:items-center;
+}
+
+.log-title-section {
+  @apply lg:col-span-8;
+}
+
+.log-controls-section {
+  @apply lg:col-span-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 lg:justify-end;
+}
+
+/* Consistent spacing utilities */
+.section-spacing {
+  @apply mb-4;
+}
+
+.compact-spacing {
+  @apply gap-4;
+}
+
+.responsive-padding {
+  @apply py-3 px-3 sm:py-4 sm:px-4 lg:py-5 lg:px-6;
+}
+
+/* Enhanced component spacing */
+.log-component {
+  @apply bg-white border border-gray-200 rounded-lg shadow-sm;
+}
+
+/* Responsive text sizing for better readability */
+.responsive-title {
+  @apply text-2xl sm:text-3xl font-bold;
+}
+
+.responsive-subtitle {
+  @apply text-sm sm:text-base;
+}
+
+.responsive-caption {
+  @apply text-xs sm:text-sm;
+}
+
+/* Grid layout enhancements for mobile */
+@media (max-width: 640px) {
+  .log-management-container {
+    @apply gap-3;
+  }
+  
+  .log-header-grid {
+    @apply gap-3;
+  }
+  
+  .responsive-padding {
+    @apply py-2 px-2;
+  }
+  
+  .log-component {
+    @apply rounded-md;
+  }
+}
+
+/* Medium screen optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .log-management-container {
+    @apply max-w-5xl;
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1025px) {
+  .log-management-container {
+    @apply max-w-6xl;
+  }
+  
+  .section-spacing {
+    @apply mb-5;
+  }
+}
+
+/* Ultra-wide screen support */
+@media (min-width: 1536px) {
+  .log-management-container {
+    @apply max-w-7xl;
+  }
+}
+
+/* Visual balance improvements */
+.balanced-layout {
+  @apply space-y-4;
+}
+
+/* Component visual hierarchy */
+.log-section {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.log-section:hover {
+  @apply shadow-md;
+}
+
+/* Improved focus states for accessibility */
+.log-component:focus-within {
+  @apply ring-2 ring-blue-500 ring-opacity-50;
+}
+
+/* Better spacing for nested components */
+.nested-spacing > * + * {
+  margin-top: 1rem;
+}
+
+@media (min-width: 768px) {
+  .nested-spacing > * + * {
+    margin-top: 1.25rem;
+  }
+}
+
+/* Enhanced card styling for log components */
+.log-card {
+  @apply log-component transition-all duration-200 hover:shadow-md;
+}
+
+/* Improved mobile spacing */
+@media (max-width: 480px) {
+  .responsive-padding {
+    @apply py-2 px-3;
+  }
+  
+  .section-spacing {
+    @apply mb-3;
+  }
+  
+  .compact-spacing {
+    @apply gap-3;
+  }
+}

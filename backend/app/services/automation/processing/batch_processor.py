@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def _update_summary():
     """Update the summary counts from the database"""
     try:
-        from ....services.email_service import get_email_status_summary
+        from ....services.database.repositories.email_repository import get_email_status_summary
         summary = get_email_status_summary()
         
         automation_state = get_automation_state()

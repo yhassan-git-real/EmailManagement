@@ -59,6 +59,7 @@ class EmailLogger:
         self._process_start_times = {}  # Dictionary to track process start times
         self._current_process_id = None  # Track the current automation process
         self._active_processes = {}  # Track active processes with their details
+        self._recent_messages = {}  # Track recent messages to prevent duplicates
         
     def _setup_logger(self):
         """Set up a dedicated logger for email transactions"""
@@ -156,7 +157,7 @@ class EmailLogger:
                 elapsed_formatted = self._format_time(elapsed_time)
                 
                 # Add process info to message
-                if not "Start" in message and not "Starting" in message:
+                if not "Start" in message and not "Starting" in message and not "automation process" in message.lower():
                     message = f"[Process: {process_info.get('description', 'Unknown')}] {message} (Elapsed: {elapsed_formatted})"
         
         self._log_with_data(logging.INFO, message, email_id, recipient, subject, status, file_name, file_path)
@@ -201,11 +202,47 @@ class EmailLogger:
             
         self._log_with_data(logging.ERROR, message, email_id, recipient, subject, status, file_name, file_path)
     
-    def _log_with_data(self, level: int, message: str, email_id: Optional[int] = None, 
-                       recipient: Optional[str] = None, subject: Optional[str] = None,
-                       status: Optional[str] = None, file_name: Optional[str] = None,
-                       file_path: Optional[str] = None):
+    def _is_duplicate_message(self, message: str, email_id: Optional[int] = None) -> bool:
+        """Check if this message is a duplicate of a recent message"""
+        import time
+        current_time = time.time()
+        
+        # Clean up old messages (older than 30 seconds)
+        cutoff_time = current_time - 30
+        keys_to_remove = []
+        for key, timestamp in self._recent_messages.items():
+            if timestamp < cutoff_time:
+                keys_to_remove.append(key)
+        
+        for key in keys_to_remove:
+            del self._recent_messages[key]
+        
+        # Create a key for this message
+        message_key = f"{email_id}_{message}" if email_id else message
+        
+        # Check if we've seen this message recently
+        if message_key in self._recent_messages:
+            return True
+        
+        # Add this message to recent messages
+        self._recent_messages[message_key] = current_time
+        return False
+    
+    def _log_with_data(self, level: int, message: str, email_id: Optional[int] = None, recipient: Optional[str] = None,
+                      subject: Optional[str] = None, status: Optional[str] = None, 
+                      file_name: Optional[str] = None, file_path: Optional[str] = None):
         """Internal method to log with additional structured data"""
+        # Add emoji prefix for key message types to make them more visible
+        if "direct attachment" in message.lower() and level == logging.INFO:
+            if not message.startswith("📎"):
+                message = f"📎 {message}"
+        elif "success" in message.lower() and level == logging.INFO:
+            if not message.startswith("✅"):
+                message = f"✅ {message}"
+                
+        # Check for duplicate messages to reduce spam
+        if self._is_duplicate_message(message, email_id):
+            return  # Skip duplicate messages
         log_data = {
             "timestamp": datetime.now().isoformat(),
             "message": message,
@@ -287,12 +324,18 @@ class EmailLogger:
             elif "completed" in message or "Completed" in message or "finished" in message:
                 emoji = "🏁 "
             
-            # Add process ID if available
+            # Add process ID if available - but only for important messages
             process_info = ""
-            if self._current_process_id and "process" not in message.lower():
+            if (self._current_process_id and 
+                ("Starting" in message or "started" in message or 
+                 "completed" in message or "failed" in message or 
+                 "statistics" in message or "authentication" in message or 
+                 "Google Drive" in message)):
                 process_info = f"{Fore.YELLOW}[PID:{self._current_process_id[-6:]}]{Style.RESET_ALL} "
             
-            print(f"EMAIL AUTOMATION: {process_info}{prefix}{emoji}{message}")
+            # Only print to console if it's not a redundant process message
+            if not ("[Process:" in message and "Processing email" in message):
+                print(f"EMAIL AUTOMATION: {process_info}{prefix}{emoji}{message}")
                 
         elif level == logging.ERROR:
             self.logger.error(json_data)
@@ -338,36 +381,101 @@ class EmailLogger:
         # Sort by timestamp (newest first)
         sorted_logs = sorted(filtered_logs, key=lambda x: x.get("timestamp", ""), reverse=True)
         
-        # Deduplicate logs with similar messages within a short time window
+        # Enhanced deduplication for frontend display
         deduplicated_logs = []
-        processed_email_ids = {}
+        processed_items = set()  # Track processed items to avoid duplicates
+        email_final_states = {}  # Track final states for each email
         
+        # First pass: identify final states for each email
         for log in sorted_logs:
-            # Extract key fields
             email_id = log.get("email_id")
-            status = log.get("status", "")
+            message = log.get("message", "")
             
-            # Skip if we already have a log for this email_id within a short time window
-            # This handles all types of duplicate logs for the same email
-            if email_id is not None and email_id in processed_email_ids:
-                prev_status = processed_email_ids[email_id]
+            if email_id is not None:
+                # Check if this is a final result message
+                if ("Email transaction:" in message or 
+                    "FAILED:" in message or 
+                    "Email sent successfully" in message or
+                    "Email processing result" in message):
+                    
+                    # Only keep the most recent final state
+                    if email_id not in email_final_states:
+                        email_final_states[email_id] = log
+        
+        # Second pass: deduplicate and prioritize important messages
+        for log in sorted_logs:
+            email_id = log.get("email_id")
+            message = log.get("message", "")
+            
+            # Create a unique key for this log entry
+            log_key = self._create_log_key(log)
+            
+            # Skip if we've already processed this exact log
+            if log_key in processed_items:
+                continue
+            
+            # Skip verbose processing messages for individual emails
+            if email_id is not None and self._is_verbose_message(message):
+                continue
                 
-                # If statuses match, it's likely a duplicate
-                if status == prev_status:
+            # Skip duplicate template messages
+            if "Using template" in message and email_id is not None:
+                template_key = f"template_{email_id}"
+                if template_key in processed_items:
+                    continue
+                processed_items.add(template_key)
+            
+            # For email transactions, only keep the final state
+            if email_id is not None and "Email transaction:" in message:
+                if email_id in email_final_states and email_final_states[email_id] == log:
+                    # This is the final state for this email, keep it
+                    pass
+                else:
+                    # This is not the final state, skip it
                     continue
             
             # Add to deduplicated logs
             deduplicated_logs.append(log)
-            
-            # Track this email_id and status
-            if email_id is not None:
-                processed_email_ids[email_id] = status
+            processed_items.add(log_key)
             
             # Stop once we reach the limit
             if len(deduplicated_logs) >= limit:
                 break
         
         return deduplicated_logs
+    
+    def _create_log_key(self, log: Dict[str, Any]) -> str:
+        """Create a unique key for a log entry to detect duplicates"""
+        email_id = log.get("email_id")
+        message = log.get("message", "")
+        timestamp = log.get("timestamp", "")
+        
+        # For process-level messages, use message + timestamp
+        if email_id is None:
+            return f"process_{message}_{timestamp}"
+        
+        # For email-specific messages, create a more specific key
+        if "Email transaction:" in message:
+            return f"transaction_{email_id}_{log.get('status', '')}"
+        elif "FAILED:" in message or "Email sent successfully" in message:
+            return f"result_{email_id}_{log.get('status', '')}"
+        elif "Processing email" in message:
+            return f"processing_{email_id}"
+        elif "Using template" in message:
+            return f"template_{email_id}"
+        else:
+            return f"email_{email_id}_{message}_{timestamp}"
+    
+    def _is_verbose_message(self, message: str) -> bool:
+        """Check if a message is too verbose for frontend display"""
+        verbose_patterns = [
+            "Processing email ID",
+            "[Process:",
+            "(Elapsed:",
+            "Email processing statistics"
+        ]
+        
+        return any(pattern in message for pattern in verbose_patterns)
     
     def _load_logs_from_file(self):
         """Load logs from file into memory cache if needed"""

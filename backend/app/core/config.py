@@ -46,10 +46,13 @@ class Settings(BaseSettings):
     EMAIL_SAFE_SIZE_MB: int = 20
     GDRIVE_UPLOAD_THRESHOLD_MB: int = 20
     
-    # Google Drive configuration
+# Google Drive configuration
     GDRIVE_CREDENTIALS_PATH: Optional[str] = "credentials/oauth_credentials.json"
     GDRIVE_TOKEN_PATH: Optional[str] = "credentials/token.pickle"
     GDRIVE_FOLDER_ID: Optional[str] = None  # Optional folder ID for uploads
+
+    # Server environment flag
+    SERVER_ENV: Optional[str] = "false"  # Use 'true' to enable non-interactive mode
     
     @validator('EMAIL_ARCHIVE_PATH')
     def validate_archive_path(cls, v):

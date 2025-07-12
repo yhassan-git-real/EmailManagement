@@ -1,4 +1,16 @@
-"""Main automation manager"""
+"""
+Email automation management system.
+
+This module provides the core automation functionality including:
+- Starting and stopping automation processes
+- Processing email queues
+- Managing automation state
+- Handling failed email retries
+- Status tracking and reporting
+
+The automation manager coordinates between different components to provide
+a complete email automation solution.
+"""
 
 import logging
 import queue
@@ -167,19 +179,6 @@ def restart_failed_emails() -> Dict[str, Any]:
         
         # Enhanced logging with more details and consistent formatting with normal process
         email_logger.log_info(f"🔄 Started reprocessing of {len(failed_emails)} previously failed emails", process_id=process_id)
-        
-        # Log details about each email being reprocessed
-        for email in failed_emails:
-            email_id = email.get('Email_ID')
-            recipient = email.get('Email')
-            if email_id and recipient:
-                email_logger.log_info(
-                    f"🔄 Reprocessing email ID {email_id} to {recipient}",
-                    email_id=email_id,
-                    recipient=recipient,
-                    subject=email.get('Subject'),
-                    process_id=process_id
-                )
         
         return get_automation_status()
             

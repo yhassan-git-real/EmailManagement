@@ -1,10 +1,10 @@
 """
-Email Record Service - Business logic for email records management
+Email Record Repository - Data access layer for email records management.
 """
 import pyodbc
 import logging
 from typing import List, Dict, Any, Tuple, Optional
-from ..models.email_record import EmailRecord, EmailRecordUpdate
+from ....models.email_record import EmailRecord, EmailRecordUpdate
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -450,5 +450,3 @@ def delete_email_record(connection: pyodbc.Connection, record_id: int) -> bool:
         raise
     finally:
         cursor.close()
-
-# create_email_record function has been moved to email_record_create_service.py

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAutomationLogs, clearAutomationLogs } from '../../../utils/automationApi';
+import { getFrontendLogs, clearAutomationLogs } from '../../../utils/automationApi';
 import { toast } from 'react-toastify';
 import { XCircleIcon, CheckCircleIcon, ClockIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
@@ -13,7 +13,7 @@ const EmailLogViewer = ({ maxHeight = '300px', autoRefresh = true, isActive = fa
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const response = await getAutomationLogs(100, filterStatus || null);
+      const response = await getFrontendLogs(50, filterStatus || null);
       
       if (response.success) {
         setLogs(response.data);

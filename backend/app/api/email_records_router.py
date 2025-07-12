@@ -8,7 +8,7 @@ import pyodbc
 import logging
 from ..core.database import get_db_connection
 from ..models.email_record import EmailRecord, EmailRecordUpdate, EmailRecordStatusUpdate
-from ..services.email_record_service import (
+from ..services.database.repositories.email_record_repository import (
     get_email_records_paginated,
     get_email_record_by_id,
     update_email_record,

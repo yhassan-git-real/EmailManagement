@@ -118,7 +118,7 @@ export const updateAutomationTemplate = async (templateId) => {
   }
 };
 
-// Get automation logs
+// Get automation logs (full logs)
 export const getAutomationLogs = async (limit = 100, filterStatus = null) => {
   try {
     const queryParams = new URLSearchParams();
@@ -126,6 +126,21 @@ export const getAutomationLogs = async (limit = 100, filterStatus = null) => {
     if (filterStatus) queryParams.append('filter_status', filterStatus);
     
     const response = await apiClient.get(`${API_BASE}/logs?${queryParams.toString()}`);
+    return response;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Get cleaned and deduplicated logs for frontend display
+export const getFrontendLogs = async (limit = 50, filterStatus = null) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (limit) queryParams.append('limit', limit);
+    if (filterStatus) queryParams.append('filter_status', filterStatus);
+    
+    const response = await apiClient.get(`${API_BASE}/logs/frontend?${queryParams.toString()}`);
     return response;
   } catch (error) {
     console.error('API Error:', error);

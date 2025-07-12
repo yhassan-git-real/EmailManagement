@@ -1,10 +1,21 @@
+"""
+Template management system for email templates.
+
+This module provides comprehensive template management including:
+- Template CRUD operations
+- Template listing and pagination
+- Template metadata management
+- File system integration
+- Template validation and error handling
+"""
+
 import logging
 import os
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
 
-from ..core.config import get_settings
+from ....core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +41,8 @@ def get_email_templates(
     Returns:
         List of template dictionaries with id, name, and file path
     """
+    from .template_loader import _get_template_name, _get_template_subject, _get_template_preview
+    
     templates = []
     settings = get_settings()
     template_dir = os.path.dirname(settings.DEFAULT_EMAIL_TEMPLATE_PATH)
@@ -75,6 +88,8 @@ def get_template_by_id(template_id: str) -> Optional[Dict[str, Any]]:
     Returns:
         Template dictionary or None if not found
     """
+    from .template_loader import _get_template_name, _get_template_subject
+    
     settings = get_settings()
     template_dir = os.path.dirname(settings.DEFAULT_EMAIL_TEMPLATE_PATH)
     
@@ -177,89 +192,3 @@ def update_email_template(template_id: str, template_data: Dict[str, Any]) -> bo
     except Exception as e:
         logger.error(f"Error updating email template {template_id}: {str(e)}")
         raise
-
-
-def load_template_content(template_id: str) -> str:
-    """
-    Load template content from file.
-    
-    Args:
-        template_id: ID of the template
-    
-    Returns:
-        String content of the template or empty string if not found
-    """
-    template = get_template_by_id(template_id)
-    
-    if template and "body_template" in template:
-        return template["body_template"]
-    
-    # If template not found, return empty string
-    return ""
-
-
-def _get_template_name(template_id: str) -> str:
-    """
-    Get a human-readable name for a template ID
-    
-    Args:
-        template_id: Template ID
-        
-    Returns:
-        Human-readable name
-    """
-    template_names = {
-        "default": "Default Template",
-        "followup": "Follow-up Template",
-        "escalation": "Escalation Template",
-        "reminder": "Payment Reminder Template",
-        "custom": "Custom Template"
-    }
-    
-    return template_names.get(template_id, f"Template {template_id}")
-
-
-def _get_template_subject(template_id: str) -> str:
-    """
-    Get the subject prefix for a template ID
-    
-    Args:
-        template_id: Template ID
-        
-    Returns:
-        Subject prefix
-    """
-    subject_prefixes = {
-        "default": "",
-        "followup": "Follow-up: ",
-        "escalation": "URGENT: ",
-        "reminder": "Payment Reminder: ",
-        "custom": "Custom: "
-    }
-    
-    return subject_prefixes.get(template_id, "")
-
-
-def _get_template_preview(file_path: str, max_length: int = 100) -> str:
-    """
-    Get a preview of the template content
-    
-    Args:
-        file_path: Path to the template file
-        max_length: Maximum length of the preview
-        
-    Returns:
-        Template preview
-    """
-    try:
-        if os.path.exists(file_path):
-            with open(file_path, "r", encoding="utf-8") as file:
-                content = file.read()
-                
-            if len(content) > max_length:
-                return content[:max_length] + "..."
-            return content
-    except Exception as e:
-        logger.error(f"Error reading template preview: {str(e)}")
-        
-    return "Error reading template"

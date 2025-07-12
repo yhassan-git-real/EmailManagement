@@ -1,3 +1,14 @@
+"""
+Email sending functionality with attachment and Google Drive integration.
+
+This module provides comprehensive email sending capabilities including:
+- SMTP email delivery
+- File attachment handling with compression
+- Google Drive integration for large files
+- Email validation and logging
+- Status tracking and error handling
+"""
+
 import os
 import logging
 from email.mime.multipart import MIMEMultipart
@@ -16,6 +27,25 @@ from ..gdrive.gdrive_integration import GDriveIntegration, GDRIVE_UPLOAD_THRESHO
 logger = logging.getLogger(__name__)
 
 class EmailSender:
+    """
+    Comprehensive email sending service with attachment and Google Drive integration.
+    
+    This class provides a complete email sending solution that includes:
+    - SMTP configuration and connection management
+    - File attachment handling with compression
+    - Google Drive integration for large files
+    - Email validation and delivery tracking
+    - Archive management for sent emails
+    
+    Args:
+        smtp_server: SMTP server hostname
+        port: SMTP server port
+        username: SMTP username for authentication
+        password: SMTP password for authentication
+        use_tls: Whether to use TLS encryption (default: True)
+        archive_path: Path for storing email archives (optional)
+    """
+    
     def __init__(self, 
                  smtp_server: str, 
                  port: int, 
@@ -123,7 +153,27 @@ class EmailSender:
                     is_available, gdrive_error = self.gdrive_integration.check_gdrive_availability()
                     
                     if not is_available:
-                        email_logger.log_warning(f"Google Drive not available: {gdrive_error}. Will try regular attachment.")
+                        formatted_size = format_size(compressed_size)
+                        
+                        # For very large files that exceed safe limits, fail immediately if GDrive is not available
+                        if compressed_size > SAFE_MAX_SIZE:
+                            reason = f"ERROR: Attachment too large ({formatted_size}) - exceeds limit of {format_size(SAFE_MAX_SIZE)} and Google Drive is not available"
+                            email_logger.log_error(f"Cannot send email: {reason}")
+                            email_logger.log_email_transaction(
+                                email_id=email_id,
+                                email=recipient,
+                                subject=subject,
+                                file_path=folder_path,
+                                status="Failed",
+                                reason=reason,
+                                original_size=original_size,
+                                compressed_size=compressed_size
+                            )
+                            return False, reason
+                            
+                        # For files that are large but within safe limits, we can try direct attachment
+                        warning_msg = f"Google Drive not available: {gdrive_error}. Will try regular attachment ({formatted_size})."
+                        email_logger.log_warning(warning_msg)
                     else:
                         try:
                             upload_success, drive_link, success_msg = self.gdrive_integration.handle_large_file_upload(
@@ -177,7 +227,14 @@ class EmailSender:
                     if compressed_size > SAFE_MAX_SIZE:
                         formatted_size = format_size(compressed_size)
                         safe_limit = format_size(SAFE_MAX_SIZE)
-                        reason = f"ERROR: Attachment too large ({formatted_size}) - exceeds limit of {safe_limit}"
+                        
+                        # More descriptive error message with advice
+                        reason = f"ERROR: Attachment too large ({formatted_size}) - exceeds email limit of {safe_limit}. Please split the files into smaller batches."
+                        
+                        # Log a more detailed error message with clear error icon
+                        error_message = f"⚠️ ATTACHMENT TOO LARGE: {formatted_size} exceeds {safe_limit} limit and Google Drive upload is not available. Email not sent."
+                        email_logger.log_error(error_message, email_id=email_id)
+                        
                         email_logger.log_email_transaction(
                             email_id=email_id,
                             email=recipient,
@@ -191,6 +248,12 @@ class EmailSender:
                         return False, reason
                     
                     filename = os.path.basename(attachment_path)
+                    formatted_size = format_size(compressed_size)
+                    
+                    # Log that we're attaching the file directly
+                    direct_attach_msg = f"📎 Attaching file directly: {filename} ({formatted_size})"
+                    email_logger.log_info(direct_attach_msg, email_id=email_id)
+                    logger.info(direct_attach_msg)
                     
                     with open(attachment_path, 'rb') as file:
                         attach = MIMEApplication(file.read(), _subtype='zip')
@@ -299,7 +362,7 @@ class EmailSender:
                     return False, error_message
                     
             if validate_mapping and email_id is not None:
-                from ....services.automation_service import _validate_recipient_mapping
+                from ....services.automation.validation.mapping_validator import _validate_recipient_mapping
                 is_valid, error_reason = _validate_recipient_mapping(email_id, recipient, folder_path)
                 if not is_valid:
                     error_message = f"ERROR: {error_reason}"
@@ -318,6 +381,25 @@ class EmailSender:
                 if original_size > GDRIVE_UPLOAD_THRESHOLD:
                     is_available, gdrive_error = self.gdrive_integration.check_gdrive_availability()
                     if not is_available:
+                        # Predict if the compressed size will exceed safe limits
+                        # Compression typically reduces size by ~30-50% for most files
+                        # Using conservative estimate of 10% reduction to be safe
+                        estimated_compressed_size = int(original_size * 0.9)  # Conservative estimate
+                        
+                        if estimated_compressed_size > SAFE_MAX_SIZE:
+                            reason = f"ERROR: Attachment likely too large (est. {format_size(estimated_compressed_size)}) - exceeds limit of {format_size(SAFE_MAX_SIZE)} and Google Drive is not available"
+                            email_logger.log_error(f"Pre-validation failed: {reason}")
+                            email_logger.log_email_transaction(
+                                email_id=email_id,
+                                email=recipient,
+                                subject=subject,
+                                file_path=folder_path,
+                                status="Failed",
+                                reason=reason,
+                                original_size=original_size
+                            )
+                            return False, reason
+                            
                         email_logger.log_warning(f"Google Drive not available: {gdrive_error}. Will try regular attachment.")
             
             return self.send_email(recipient, subject, body, folder_path, sender, email_id, gdrive_share_type, specific_emails)

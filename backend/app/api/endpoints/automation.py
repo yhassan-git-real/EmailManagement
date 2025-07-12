@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from enum import Enum
 
-from ...services.automation_service import (
+from ...services.automation import (
     start_automation,
     stop_automation,
     restart_failed_emails,
@@ -306,7 +306,7 @@ async def get_templates():
     """
     Get all available email templates.
     """
-    from ...services.template_service import get_email_templates
+    from ...services.templates import get_email_templates
     
     try:
         templates = get_email_templates()
@@ -324,7 +324,7 @@ async def get_template(template_id: str):
     """
     Get a specific template by ID.
     """
-    from ...services.template_service import get_template_by_id
+    from ...services.templates import get_template_by_id
     
     try:
         template = get_template_by_id(template_id)
@@ -352,7 +352,7 @@ async def update_template(template_id: str, data: TemplateData):
     """
     Update a specific template by ID.
     """
-    from ...services.template_service import update_email_template
+    from ...services.templates import update_email_template
     
     try:
         template_data = {"body": data.body}
@@ -425,6 +425,90 @@ async def get_logs(limit: int = 100, filter_status: Optional[str] = None):
         raise HTTPException(status_code=500, detail="Failed to retrieve logs")
 
 
+@router.get("/logs/frontend")
+async def get_frontend_logs(limit: int = 50, filter_status: Optional[str] = None):
+    """
+    Get cleaned and deduplicated logs specifically for frontend display.
+    
+    Args:
+        limit: Maximum number of log entries to return
+        filter_status: Filter logs by status (success, failed, pending)
+        
+    Returns:
+        List of cleaned log entries optimized for frontend display
+    """
+    try:
+        from ...utils.email_logger import email_logger
+        raw_logs = email_logger.get_recent_logs(limit * 3, filter_status)  # Get more to filter
+        
+        # Clean and format logs for frontend
+        cleaned_logs = []
+        for log in raw_logs:
+            # Clean the message for better frontend display
+            cleaned_log = _clean_log_for_frontend(log)
+            if cleaned_log:  # Only add non-empty cleaned logs
+                cleaned_logs.append(cleaned_log)
+                
+            # Stop once we have enough logs
+            if len(cleaned_logs) >= limit:
+                break
+        
+        return {
+            "success": True,
+            "data": cleaned_logs
+        }
+    except Exception as e:
+        logger.error(f"Error retrieving frontend logs: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve frontend logs")
+
+
+def _clean_log_for_frontend(log: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Clean and format a log entry for frontend display"""
+    message = log.get("message", "")
+    
+    # Skip verbose or redundant messages
+    skip_patterns = [
+        "[Process:",
+        "(Elapsed:",
+        "Email processing statistics",
+        "Processing email ID",
+        "Started reprocessing",
+        "Using template ID default"
+    ]
+    
+    if any(pattern in message for pattern in skip_patterns):
+        return None
+    
+    # Clean the message
+    cleaned_message = message
+    
+    # Remove process information that clutters the frontend
+    if "[Process: Failed Email Retry Process]" in cleaned_message:
+        cleaned_message = cleaned_message.replace("[Process: Failed Email Retry Process]", "").strip()
+    
+    # Remove redundant emoji for cleaner display
+    if "🔄 🔄" in cleaned_message:
+        cleaned_message = cleaned_message.replace("🔄 🔄", "🔄")
+    
+    # Clean up spacing
+    cleaned_message = " ".join(cleaned_message.split())
+    
+    # Create cleaned log entry
+    cleaned_log = {
+        "timestamp": log.get("timestamp"),
+        "message": cleaned_message,
+        "email_id": log.get("email_id"),
+        "recipient": log.get("recipient"),
+        "subject": log.get("subject"),
+        "status": log.get("status")
+    }
+    
+    # Remove None values
+    cleaned_log = {k: v for k, v in cleaned_log.items() if v is not None}
+    
+    return cleaned_log
+
+
 @router.post("/logs/clear")
 async def clear_logs():
     """
@@ -461,7 +545,7 @@ async def cleanup_archive(days: int = Body(30)):
         import os
         import time
         from datetime import datetime, timedelta
-        from ...services.email_sender import get_archive_path
+        from ...services.email import get_archive_path
         from pathlib import Path
         
         archive_path = get_archive_path()
@@ -514,7 +598,7 @@ async def update_schedule(settings: ScheduleSettings):
         Updated schedule settings
     """
     try:
-        from ...services.automation_service import update_schedule_settings
+        from ...services.automation import update_schedule_settings
         updated_settings = update_schedule_settings(settings.dict())
         
         return {
@@ -535,7 +619,7 @@ async def get_schedule():
         Current schedule settings
     """
     try:
-        from ...services.automation_service import get_schedule_settings
+        from ...services.automation import get_schedule_settings
         settings = get_schedule_settings()
         
         return {

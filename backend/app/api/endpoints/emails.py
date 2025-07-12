@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from ...models.email import EmailRecord, EmailStatus
-from ...services.email_service import (
+from ...services.database.repositories.email_repository import (
     get_email_records,
     get_email_record_by_id, 
     update_email_status,

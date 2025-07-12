@@ -1,21 +1,31 @@
+"""
+Email Repository - Data access layer for email records.
+"""
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 
-from ..utils.db_utils import get_db_connection
-from ..core.config import get_settings
+from ....utils.db_utils import get_db_connection
+from ....core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
 
-# Email Records Functions
 def get_email_records(
     status: Optional[str] = None, 
     limit: int = 100, 
     offset: int = 0
-) -> List[Dict[str, Any]]:
+) -> Tuple[List[Dict[str, Any]], int]:
     """
     Retrieve email records with optional status filter using the stored procedure.
+    
+    Args:
+        status: Optional status filter
+        limit: Maximum number of records to return
+        offset: Number of records to skip
+        
+    Returns:
+        Tuple of (records list, total count)
     """
     try:
         conn = get_db_connection()
@@ -80,9 +90,15 @@ def get_email_records(
             conn.close()
 
 
-def get_email_record_by_id(email_id: int) -> Dict[str, Any]:
+def get_email_record_by_id(email_id: int) -> Optional[Dict[str, Any]]:
     """
     Retrieve a specific email record by its ID.
+    
+    Args:
+        email_id: ID of the email record to retrieve
+        
+    Returns:
+        Email record as dictionary or None if not found
     """
     try:
         conn = get_db_connection()
@@ -116,6 +132,12 @@ def get_email_record_by_id(email_id: int) -> Dict[str, Any]:
 def create_email_record(record_data: Dict[str, Any]) -> int:
     """
     Create a new email record.
+    
+    Args:
+        record_data: Dictionary containing email record data
+        
+    Returns:
+        ID of the newly created record
     """
     try:
         conn = get_db_connection()
@@ -151,6 +173,14 @@ def create_email_record(record_data: Dict[str, Any]) -> int:
 def update_email_status(email_id: int, status: str, reason: Optional[str] = None) -> bool:
     """
     Update the status of an email record.
+    
+    Args:
+        email_id: ID of the email record to update
+        status: New status value
+        reason: Optional reason for the status change
+        
+    Returns:
+        True if successful, False otherwise
     """
     try:
         conn = get_db_connection()
@@ -178,6 +208,9 @@ def update_email_status(email_id: int, status: str, reason: Optional[str] = None
 def get_email_status_summary() -> Dict[str, int]:
     """
     Get a summary of email statuses.
+    
+    Returns:
+        Dictionary with status counts
     """
     try:
         conn = get_db_connection()
@@ -230,6 +263,14 @@ def get_email_records_by_status(
     """
     Retrieve email records with optional status filter using stored procedure.
     Returns both the records and total count.
+    
+    Args:
+        status: Optional status filter
+        limit: Maximum number of records to return
+        offset: Number of records to skip
+        
+    Returns:
+        Dictionary with 'rows' and 'total' keys
     """
     try:
         conn = get_db_connection()

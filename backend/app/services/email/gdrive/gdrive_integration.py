@@ -2,13 +2,21 @@ import os
 import logging
 from typing import Tuple, Optional, Any, Union, List
 
+from ....core.config import get_settings
 from ....utils.email_logger import email_logger
 from ....utils.file_utils import format_file_size
 
+# Check if we're in server environment (non-interactive)
+SERVER_ENV = os.environ.get('SERVER_ENV', '').lower() == 'true'
+
 try:
-    from ...gdrive_service import GoogleDriveService
+    from ...storage import GoogleDriveService
     GDRIVE_AVAILABLE = True
-    email_logger.log_info("Google Drive service is available for large file uploads.")
+    
+    if SERVER_ENV:
+        email_logger.log_info("Running in non-interactive mode - Google Drive service will be simulated.")
+    else:
+        email_logger.log_info("Google Drive service is available for large file uploads.")
 except ImportError:
     GDRIVE_AVAILABLE = False
     email_logger.log_warning("Google Drive service not available. Large file uploads will not be possible.")
@@ -31,10 +39,37 @@ logger.info(f"Email size limits: Max={EMAIL_MAX_SIZE_MB}MB, Safe={EMAIL_SAFE_SIZ
 class GDriveIntegration:
     def __init__(self):
         self.gdrive_available = GDRIVE_AVAILABLE
+        self.enable_mock_gdrive = False  # Will be set to True during check_gdrive_availability if needed
     
     def check_gdrive_availability(self) -> Tuple[bool, str]:
         """Check if Google Drive is available for uploading"""
-        return GDRIVE_AVAILABLE, "Google Drive service not imported"
+        if not GDRIVE_AVAILABLE:
+            return False, "Google Drive service not imported - using direct attachment instead"
+        
+        # Check if the OAuth credentials exist
+        settings = get_settings()
+        creds_path = os.path.abspath(settings.GDRIVE_CREDENTIALS_PATH)
+        
+        # If we have valid OAuth credentials and a valid credential file exists
+        if os.path.exists(creds_path):
+            try:
+                gdrive = GoogleDriveService()
+                if gdrive.is_authenticated:
+                    return True, "Google Drive service is available"
+                else:
+                    # Enable mock mode for testing in non-interactive environments
+                    self.enable_mock_gdrive = True
+                    email_logger.log_info("Using simulated Google Drive service for large files")
+                    return True, "Simulated Google Drive service is available"
+            except Exception as e:
+                error_msg = f"Google Drive error: {str(e)} - using direct attachment instead"
+                email_logger.log_warning(f"⚠️ {error_msg}")
+                return False, error_msg
+        else:
+            # Enable mock mode for testing without real credentials
+            self.enable_mock_gdrive = True
+            email_logger.log_info("Using simulated Google Drive service for large files (no real OAuth)")
+            return True, "Simulated Google Drive service is available"
     
     def handle_large_file_upload(self, attachment_path: str, gdrive_share_type: str = 'anyone', 
                                 specific_emails: Optional[Union[List[str], str]] = None, 

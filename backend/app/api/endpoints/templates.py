@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Dict, Any, Optional
 import logging
 import os
-from ...services.template_service import get_email_templates, get_template_by_id
+from ...services.templates import get_email_templates, get_template_by_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

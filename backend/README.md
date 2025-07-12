@@ -59,9 +59,21 @@ backend/
       ├── services/            # Business logic services
       │   ├── __init__.py
       │   ├── automation_service.py
-      │   ├── email_record_service.py
-      │   ├── email_service.py
-      │   └── template_service.py
+      │   ├── database/         # Database layer services
+      │   │   ├── __init__.py
+      │   │   ├── core/         # Core database functionality
+      │   │   └── repositories/ # Data access repositories
+      │   │       ├── email_repository.py
+      │   │       └── email_record_repository.py
+      │   ├── email/            # Email handling services
+      │   │   ├── core/         # Core email functionality
+      │   │   ├── gdrive/       # Google Drive integration
+      │   │   └── status/       # Email status management
+      │   ├── storage/          # Storage services
+      │   │   └── gdrive/       # Google Drive storage
+      │   └── templates/        # Template services
+      │       ├── core/         # Core template functionality
+      │       └── validation/   # Template validation
       └── utils/               # Utility functions
           ├── __init__.py
           └── db_utils.py      # Database utilities

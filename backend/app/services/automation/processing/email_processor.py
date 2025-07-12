@@ -1,4 +1,10 @@
-"""Email processor for handling email queue processing"""
+"""
+Email queue processing and automation execution.
+
+This module handles the actual processing of emails in the automation queue,
+including template processing, validation, sending, and status updates.
+It runs in a separate thread to avoid blocking the main application.
+"""
 
 import logging
 import queue
@@ -6,8 +12,8 @@ from datetime import datetime
 from typing import Optional
 
 from ....models.email import EmailStatus
-from ....services.email_sender import EmailSender
-from ....services.template_service import get_template_by_id
+from ....services.email import EmailSender
+from ....services.templates import get_template_by_id
 from ....utils.email_logger import email_logger
 from ..core.state_manager import get_automation_state
 from ..core.settings_manager import _get_smtp_settings
@@ -155,7 +161,7 @@ def _process_email_queue():
                     error_message = f"ERROR: {error_reason}"
                     
                     # Update status to failed
-                    from ....services.email_sender import update_email_status as update_status
+                    from ....services.email import update_email_status as update_status
                     update_status(
                         email_id=email_record["Email_ID"],
                         status=EmailStatus.FAILED.value,
@@ -200,7 +206,7 @@ def _process_email_queue():
                 # Update the database with current timestamp
                 if success:
                     # For success, update both Email_Send_Date and Date columns
-                    from ....services.email_sender import update_email_status as update_status
+                    from ....services.email import update_email_status as update_status
                     update_status(
                         email_id=email_record["Email_ID"],
                         status=new_status.value,
@@ -210,7 +216,7 @@ def _process_email_queue():
                     )
                     automation_state["summary"]["successful"] += 1
                 else:
-                    from ....services.email_sender import update_email_status as update_status
+                    from ....services.email import update_email_status as update_status
                     update_status(
                         email_id=email_record["Email_ID"],
                         status=new_status.value,
@@ -270,7 +276,7 @@ def _process_email_queue():
             
             # Add detailed statistics to the log with consistent emoji
             email_logger.log_info(
-                f"{process_emoji} {process_emoji} Email processing statistics: " +
+                f"{process_emoji} Email processing statistics: " +
                 f"{summary['successful']} successful, {summary['failed']} failed out of {summary['processed']} emails - " +
                 f"Processing time: {total_seconds:.2f}s",
                 process_id=process_id

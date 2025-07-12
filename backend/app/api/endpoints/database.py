@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 import logging
 
-from ...services import db_service
+from ...services import database
 from ...utils.db_utils import test_connection
 
 router = APIRouter()

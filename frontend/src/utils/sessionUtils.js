@@ -4,46 +4,84 @@
  */
 
 /**
- * Save database connection info to session storage
+ * Save database connection info to both session and local storage
  * @param {boolean} isConnected - Whether the user is connected to the database
  * @param {Object} connectionInfo - Database connection information
  */
 export const saveConnectionToSession = (isConnected, connectionInfo) => {
   try {
+    // Save to sessionStorage for same-tab persistence
     sessionStorage.setItem('isConnected', JSON.stringify(isConnected));
     sessionStorage.setItem('connectionInfo', JSON.stringify(connectionInfo));
+    
+    // Save to localStorage for cross-tab sharing
+    localStorage.setItem('emailMgmt_isConnected', JSON.stringify(isConnected));
+    localStorage.setItem('emailMgmt_connectionInfo', JSON.stringify(connectionInfo));
+    localStorage.setItem('emailMgmt_lastActivity', Date.now().toString());
+    
     return true;
   } catch (error) {
-    console.error('Error saving connection to session storage:', error);
+    console.error('Error saving connection to storage:', error);
     return false;
   }
 };
 
 /**
- * Load database connection info from session storage
+ * Load database connection info from session storage, fallback to localStorage
  * @returns {Object} Object containing isConnected and connectionInfo
  */
 export const loadConnectionFromSession = () => {
   try {
-    const isConnected = JSON.parse(sessionStorage.getItem('isConnected')) || false;
-    const connectionInfo = JSON.parse(sessionStorage.getItem('connectionInfo')) || null;
-    return { isConnected, connectionInfo };
+    // Try sessionStorage first (same tab)
+    let isConnected = JSON.parse(sessionStorage.getItem('isConnected'));
+    let connectionInfo = JSON.parse(sessionStorage.getItem('connectionInfo'));
+    
+    // If not found in sessionStorage, try localStorage (cross-tab)
+    if (!isConnected || !connectionInfo) {
+      const lastActivity = parseInt(localStorage.getItem('emailMgmt_lastActivity') || '0');
+      const currentTime = Date.now();
+      const maxAge = 8 * 60 * 60 * 1000; // 8 hours
+      
+      // Check if localStorage data is still valid
+      if (lastActivity && (currentTime - lastActivity) < maxAge) {
+        isConnected = JSON.parse(localStorage.getItem('emailMgmt_isConnected'));
+        connectionInfo = JSON.parse(localStorage.getItem('emailMgmt_connectionInfo'));
+        
+        // Update sessionStorage with localStorage data
+        if (isConnected && connectionInfo) {
+          sessionStorage.setItem('isConnected', JSON.stringify(isConnected));
+          sessionStorage.setItem('connectionInfo', JSON.stringify(connectionInfo));
+        }
+      }
+    }
+    
+    return { 
+      isConnected: isConnected || false, 
+      connectionInfo: connectionInfo || null 
+    };
   } catch (error) {
-    console.error('Error loading connection from session storage:', error);
+    console.error('Error loading connection from storage:', error);
     return { isConnected: false, connectionInfo: null };
   }
 };
 
 /**
- * Clear database connection info from session storage
+ * Clear database connection info from both session and local storage
  */
 export const clearConnectionSession = () => {
   try {
+    // Clear sessionStorage
     sessionStorage.removeItem('isConnected');
     sessionStorage.removeItem('connectionInfo');
+    
+    // Clear localStorage
+    localStorage.removeItem('emailMgmt_isConnected');
+    localStorage.removeItem('emailMgmt_connectionInfo');
+    localStorage.removeItem('emailMgmt_lastActivity');
+    
     return true;
   } catch (error) {
-    console.error('Error clearing connection from session storage:', error);
+    console.error('Error clearing connection from storage:', error);
     return false;
   }
 };
@@ -96,5 +134,38 @@ export const isEmailStatusStale = (maxAgeMinutes = 5) => {
   } catch (error) {
     console.error('Error checking if email status is stale:', error);
     return true; // Default to stale on error
+  }
+};
+
+/**
+ * Update activity timestamp to maintain localStorage session
+ */
+export const updateActivityTimestamp = () => {
+  try {
+    localStorage.setItem('emailMgmt_lastActivity', Date.now().toString());
+    return true;
+  } catch (error) {
+    console.error('Error updating activity timestamp:', error);
+    return false;
+  }
+};
+
+/**
+ * Check if the localStorage session is still valid
+ * @param {number} maxAgeHours - Maximum age in hours (default: 8)
+ * @returns {boolean} True if session is still valid
+ */
+export const isSessionValid = (maxAgeHours = 8) => {
+  try {
+    const lastActivity = parseInt(localStorage.getItem('emailMgmt_lastActivity') || '0');
+    if (!lastActivity) return false;
+    
+    const currentTime = Date.now();
+    const maxAge = maxAgeHours * 60 * 60 * 1000;
+    
+    return (currentTime - lastActivity) < maxAge;
+  } catch (error) {
+    console.error('Error checking session validity:', error);
+    return false;
   }
 };

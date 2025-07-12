@@ -123,7 +123,7 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
                         <Breadcrumb
                             items={[
                                 { label: 'Home', path: '/home', icon: <HomeIcon /> },
-                                { label: 'Automate Email', path: '/automate' }
+                                { label: 'Automate Email' }
                             ]}
                         />
 

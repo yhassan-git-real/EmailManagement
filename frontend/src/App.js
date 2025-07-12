@@ -4,7 +4,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/animations.css';
 import AppRoutes from './routes';
-import { saveConnectionToSession, loadConnectionFromSession, clearConnectionSession } from './utils/sessionUtils';
+import { saveConnectionToSession, loadConnectionFromSession, clearConnectionSession, updateActivityTimestamp } from './utils/sessionUtils';
 
 // Silence React Router warnings for future version
 const originalConsoleWarn = console.warn;
@@ -32,6 +32,37 @@ function App() {
   useEffect(() => {
     saveConnectionToSession(isConnected, connectionInfo);
   }, [isConnected, connectionInfo]);
+
+  // Update activity timestamp periodically to maintain localStorage session
+  useEffect(() => {
+    const updateActivity = () => {
+      if (isConnected) {
+        updateActivityTimestamp();
+      }
+    };
+
+    // Update activity every 5 minutes
+    const interval = setInterval(updateActivity, 5 * 60 * 1000);
+    
+    // Update activity on user interactions
+    const handleUserActivity = () => {
+      if (isConnected) {
+        updateActivityTimestamp();
+      }
+    };
+
+    // Listen for user activity
+    window.addEventListener('click', handleUserActivity);
+    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('scroll', handleUserActivity);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('click', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('scroll', handleUserActivity);
+    };
+  }, [isConnected]);
 
   const handleConnect = (connected, info) => {
     setIsConnected(connected);

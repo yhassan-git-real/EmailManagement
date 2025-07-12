@@ -59,6 +59,18 @@ const Header = ({ connectionInfo, onDisconnect }) => {
           <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clipRule="evenodd" />
         </svg>
       )
+    },
+    {
+      id: 'logs',
+      label: 'Log Management',
+      path: '/logs',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+          className="w-5 h-5">
+          <path fillRule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" clipRule="evenodd" />
+          <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
+        </svg>
+      )
     }
   ];
   
@@ -70,6 +82,10 @@ const Header = ({ connectionInfo, onDisconnect }) => {
     }
     // Email Records is active for both /email-records and /records (for backward compatibility)
     if (path === '/email-records' && (currentPath === '/email-records' || currentPath === '/records')) {
+      return true;
+    }
+    // Log Management is active for /logs path
+    if (path === '/logs' && currentPath === '/logs') {
       return true;
     }
     // Otherwise, check for exact path match
@@ -100,27 +116,53 @@ const Header = ({ connectionInfo, onDisconnect }) => {
           {/* Navigation items - now on same line as header */}
           <div className="hidden md:flex items-center">
             {navItems.map((item) => (
-              <Link
-                key={item.id}
-                to={item.path}
-                className={`group flex items-center px-3 py-1.5 mx-1 relative ${isActive(item.path)
-                  ? 'text-primary-600'
-                  : 'text-gray-500 hover:text-primary-600'
-                } transition-all duration-300 hover:scale-105`}
-              >
-                <div className={`p-1 rounded-full mr-1.5 ${isActive(item.path) 
-                  ? 'bg-primary-100 text-primary-600 shadow-sm' 
-                  : 'text-gray-400 group-hover:text-primary-500 group-hover:bg-primary-50'} 
-                  transition-all duration-300 transform`}>
-                  {item.icon}
-                </div>
-                <span className={`text-sm font-medium tracking-wide ${isActive(item.path) ? 'font-semibold' : ''}`}>
-                  {item.label}
-                </span>
-                {isActive(item.path) && (
-                  <span className="absolute -bottom-1.5 left-0 w-full h-0.5 bg-gradient-to-r from-primary-400 to-primary-600 rounded-full"></span>
-                )}
-              </Link>
+              item.id === 'logs' ? (
+                <a
+                  key={item.id}
+                  href={item.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`group flex items-center px-3 py-1.5 mx-1 relative ${isActive(item.path)
+                    ? 'text-primary-600'
+                    : 'text-gray-500 hover:text-primary-600'
+                  } transition-all duration-300 hover:scale-105`}
+                >
+                  <div className={`p-1 rounded-full mr-1.5 ${isActive(item.path) 
+                    ? 'bg-primary-100 text-primary-600 shadow-sm' 
+                    : 'text-gray-400 group-hover:text-primary-500 group-hover:bg-primary-50'} 
+                    transition-all duration-300 transform`}>
+                    {item.icon}
+                  </div>
+                  <span className={`text-sm font-medium tracking-wide ${isActive(item.path) ? 'font-semibold' : ''}`}>
+                    {item.label}
+                  </span>
+                  {isActive(item.path) && (
+                    <span className="absolute -bottom-1.5 left-0 w-full h-0.5 bg-gradient-to-r from-primary-400 to-primary-600 rounded-full"></span>
+                  )}
+                </a>
+              ) : (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className={`group flex items-center px-3 py-1.5 mx-1 relative ${isActive(item.path)
+                    ? 'text-primary-600'
+                    : 'text-gray-500 hover:text-primary-600'
+                  } transition-all duration-300 hover:scale-105`}
+                >
+                  <div className={`p-1 rounded-full mr-1.5 ${isActive(item.path) 
+                    ? 'bg-primary-100 text-primary-600 shadow-sm' 
+                    : 'text-gray-400 group-hover:text-primary-500 group-hover:bg-primary-50'} 
+                    transition-all duration-300 transform`}>
+                    {item.icon}
+                  </div>
+                  <span className={`text-sm font-medium tracking-wide ${isActive(item.path) ? 'font-semibold' : ''}`}>
+                    {item.label}
+                  </span>
+                  {isActive(item.path) && (
+                    <span className="absolute -bottom-1.5 left-0 w-full h-0.5 bg-gradient-to-r from-primary-400 to-primary-600 rounded-full"></span>
+                  )}
+                </Link>
+              )
             ))}
           </div>
           
@@ -223,20 +265,39 @@ const Header = ({ connectionInfo, onDisconnect }) => {
         <div className="md:hidden bg-white border-t border-gray-100 shadow-md animate-fadeIn">
           <div className="px-3 pt-2 pb-3 space-y-1">
             {navItems.map((item) => (
-              <Link
-                key={item.id}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-2 rounded-lg text-sm font-medium flex items-center ${isActive(item.path)
-                  ? 'bg-primary-50 text-primary-600 border-l-4 border-primary-500 pl-3'
-                  : 'text-gray-600 hover:bg-primary-50/30 hover:text-primary-700'
-                } transition-all duration-200`}
-              >
-                <span className={`mr-3 ${isActive(item.path) ? 'text-primary-500' : 'text-gray-400'}`}>
-                  {item.icon}
-                </span>
-                {item.label}
-              </Link>
+              item.id === 'logs' ? (
+                <a
+                  key={item.id}
+                  href={item.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-2 rounded-lg text-sm font-medium flex items-center ${isActive(item.path)
+                    ? 'bg-primary-50 text-primary-600 border-l-4 border-primary-500 pl-3'
+                    : 'text-gray-600 hover:bg-primary-50/30 hover:text-primary-700'
+                  } transition-all duration-200`}
+                >
+                  <span className={`mr-3 ${isActive(item.path) ? 'text-primary-500' : 'text-gray-400'}`}>
+                    {item.icon}
+                  </span>
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-2 rounded-lg text-sm font-medium flex items-center ${isActive(item.path)
+                    ? 'bg-primary-50 text-primary-600 border-l-4 border-primary-500 pl-3'
+                    : 'text-gray-600 hover:bg-primary-50/30 hover:text-primary-700'
+                  } transition-all duration-200`}
+                >
+                  <span className={`mr-3 ${isActive(item.path) ? 'text-primary-500' : 'text-gray-400'}`}>
+                    {item.icon}
+                  </span>
+                  {item.label}
+                </Link>
+              )
             ))}
           </div>
         </div>

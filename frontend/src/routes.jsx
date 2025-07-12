@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import AutomatePage from './pages/AutomateEmail';
 import EmailRecordsPage from './pages/EmailRecords/EmailRecordsPage';
+import LogManagementPage from './pages/LogManagement';
 
 /**
  * Centralized route definitions for the application
@@ -90,6 +91,19 @@ const AppRoutes = ({ isConnected, connectionInfo, onConnect, onDisconnect }) => 
         element={
           <ProtectedRoute isConnected={isConnected}>
             <EmailRecordsPage
+              connectionInfo={connectionInfo}
+              onDisconnect={onDisconnect}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Log Management Page */}
+      <Route
+        path="/logs"
+        element={
+          <ProtectedRoute isConnected={isConnected}>
+            <LogManagementPage
               connectionInfo={connectionInfo}
               onDisconnect={onDisconnect}
             />

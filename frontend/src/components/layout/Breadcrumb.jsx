@@ -47,6 +47,38 @@ const Breadcrumb = ({ items = [] }) => {
                       )}
                     </span>
                   </span>
+                ) : item.external ? (
+                  <a
+                    href={item.path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center text-gray-600 hover:text-primary-700 px-2 py-0.5 rounded-md hover:bg-primary-50/70 transition-all duration-200"
+                  >
+                    {item.icon && (
+                      <span className="mr-1.5 inline-flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+                        {item.icon}
+                      </span>
+                    )}
+                    <span className="relative inline-block">
+                      {item.label}
+                      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-300 rounded-full transform scale-x-0 origin-left transition-transform group-hover:scale-x-100"></span>
+                    </span>
+                    {/* External link indicator */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-3 w-3 ml-1 text-gray-400 group-hover:text-primary-600 transition-colors duration-200"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </a>
                 ) : (
                   <Link
                     to={item.path}

@@ -74,7 +74,7 @@ const EmailRecordsPage = ({ connectionInfo, onDisconnect }) => {
                         <Breadcrumb
                             items={[
                                 { label: 'Home', path: '/home', icon: <HomeIcon /> },
-                                { label: 'Email Records', path: '/email-records', icon: <EnvelopeIcon className="h-3.5 w-3.5" /> }
+                                { label: 'Email Records', icon: <EnvelopeIcon className="h-3.5 w-3.5" /> }
                             ]}
                         />
 

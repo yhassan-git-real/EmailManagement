@@ -54,7 +54,7 @@ const HomePage = ({ connectionInfo, onDisconnect }) => {
                         {/* Breadcrumb Navigation */}
                         <Breadcrumb
                             items={[
-                                { label: 'Home', path: '/home', icon: <HomeIcon /> }
+                                { label: 'Home', icon: <HomeIcon /> }
                             ]}
                         />
                         

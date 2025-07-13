@@ -5,6 +5,10 @@ scripts/portable_env/downloads/
 backend/portable_python/
 backend/portable_venv/
 
+# Portable Node.js environment
+portable_node/
+scripts/portable_node/downloads/
+
 # Node.js dependencies and build outputs
 /node_modules
 **/node_modules

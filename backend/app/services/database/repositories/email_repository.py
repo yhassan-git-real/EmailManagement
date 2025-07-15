@@ -448,7 +448,7 @@ def get_email_records_by_status(
         
         # Call the stored procedure
         cursor.execute(
-            "{CALL GetEmailRecordsByStatus(?, ?, ?)}",
+            f"{{CALL {settings.SP_EMAIL_RECORDS_BY_STATUS}(?, ?, ?)}}",
             (status if status and status != 'All' else None, offset, limit)
         )
         

@@ -47,6 +47,9 @@ def _process_email_queue():
         "pending": 0
     }
     
+    # Initialize processed emails tracking
+    automation_state["processed_emails"] = []
+    
     # Get template
     template = None
     template_id = automation_state["settings"]["template_id"]
@@ -236,15 +239,30 @@ def _process_email_queue():
                     process_id=process_id
                 )
                 
-                # Add additional detailed log for failures with the process emoji
-                if not success:
-                    email_logger.log_error(
-                        f"{process_emoji} Email ID {email_record['Email_ID']} to {email_record['Email']} FAILED: {reason}",
+                # Add detailed log for both success and failures with the process emoji
+                if success:
+                    email_logger.log_info(
+                        f"{process_emoji} ✅ Email ID {email_record['Email_ID']} to {email_record['Email']} SENT SUCCESSFULLY",
                         email_id=email_record["Email_ID"],
                         recipient=email_record["Email"],
                         subject=email_record["Subject"],
                         process_id=process_id
                     )
+                else:
+                    email_logger.log_error(
+                        f"{process_emoji} ❌ Email ID {email_record['Email_ID']} to {email_record['Email']} FAILED: {reason}",
+                        email_id=email_record["Email_ID"],
+                        recipient=email_record["Email"],
+                        subject=email_record["Subject"],
+                        process_id=process_id
+                    )
+                
+                # Track this email in processed emails list with success status
+                processed_email = email_record.copy()
+                processed_email["success"] = success
+                processed_email["reason"] = reason
+                processed_email["process_time"] = datetime.now()
+                automation_state["processed_emails"].append(processed_email)
                 
                 # Mark task as done in queue
                 automation_state["email_queue"].task_done()
@@ -274,13 +292,38 @@ def _process_email_queue():
             total_time = datetime.now() - automation_state["start_time"]
             total_seconds = total_time.total_seconds()
             
+            # Track email IDs for summary
+            successful_emails = []
+            failed_emails = []
+            
+            # Collect email IDs from the queue history
+            for email_record in automation_state.get("processed_emails", []):
+                if email_record.get("success"):
+                    successful_emails.append(email_record.get("Email_ID"))
+                else:
+                    failed_emails.append(email_record.get("Email_ID"))
+            
             # Add detailed statistics to the log with consistent emoji
             email_logger.log_info(
                 f"{process_emoji} Email processing statistics: " +
                 f"{summary['successful']} successful, {summary['failed']} failed out of {summary['processed']} emails - " +
-                f"Processing time: {total_seconds:.2f}s",
+                f"Processing time: {total_seconds:.2f}s (Elapsed: {total_seconds:.2f}s)",
                 process_id=process_id
             )
+            
+            # Log successful email IDs if any
+            if successful_emails:
+                email_logger.log_info(
+                    f"{process_emoji} ✅ Successfully sent emails with IDs: {', '.join(map(str, successful_emails))}",
+                    process_id=process_id
+                )
+            
+            # Log failed email IDs if any
+            if failed_emails:
+                email_logger.log_warning(
+                    f"{process_emoji} ❌ Failed to send emails with IDs: {', '.join(map(str, failed_emails))}",
+                    process_id=process_id
+                )
             
             # End the process with a summary description
             description = (f"Processed {summary['processed']} emails: " +

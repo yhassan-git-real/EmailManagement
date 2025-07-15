@@ -5,6 +5,7 @@ import pyodbc
 import logging
 from typing import List, Dict, Any, Tuple, Optional
 from ....models.email_record import EmailRecord, EmailRecordUpdate
+from ....core.config import get_settings
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -32,12 +33,15 @@ def get_email_records_paginated(
     cursor = connection.cursor()
     
     try:
+        # Get settings for stored procedure names
+        settings = get_settings()
+        
         # Try to use stored procedure first
         try:
             logger.info(f"Attempting to get email records using stored procedure: limit={limit}, offset={offset}, search={search}, status={status}")
             
-            query = """
-            EXEC sp_EmailRecords_Get
+            query = f"""
+            EXEC {settings.SP_EMAIL_RECORDS_GET}
                 @limit = ?,
                 @offset = ?,
                 @search = ?,
@@ -67,14 +71,14 @@ def get_email_records_paginated(
             logger.warning(f"Failed to use stored procedure for get_email_records: {str(sp_error)}. Falling back to direct SQL.")
             
             # Build the base query for counting total records
-            count_sql = """
+            count_sql = f"""
             SELECT COUNT(*)
-            FROM [EmailRecords]
+            FROM {settings.EMAIL_TABLE}
             WHERE 1=1
             """
             
             # Build the main query
-            query_sql = """
+            query_sql = f"""
             SELECT 
                 Email_ID as id, 
                 Company_Name as company_name, 
@@ -85,7 +89,7 @@ def get_email_records_paginated(
                 Reason as reason, 
                 Email_Send_Date as email_send_date, 
                 Date as date
-            FROM [EmailRecords]
+            FROM {settings.EMAIL_TABLE}
             WHERE 1=1
             """
             
@@ -158,7 +162,7 @@ def get_email_record_by_id(connection: pyodbc.Connection, record_id: int) -> Opt
     cursor = connection.cursor()
     
     try:
-        query = """
+        query = f"""
         SELECT 
             Email_ID as id, 
             Company_Name as company_name, 
@@ -169,7 +173,7 @@ def get_email_record_by_id(connection: pyodbc.Connection, record_id: int) -> Opt
             Reason as reason, 
             Email_Send_Date as email_send_date, 
             Date as date
-        FROM [EmailRecords]
+        FROM {settings.EMAIL_TABLE}
         WHERE Email_ID = ?
         """
         
@@ -217,10 +221,13 @@ def update_email_record(
         # Log what we're trying to update
         logger.info(f"Updating email record ID {record_id} with data: {data_dict}")
         
+        # Get settings for stored procedure names
+        settings = get_settings()
+        
         # Try to use stored procedure
         try:
-            query = """
-            EXEC sp_EmailRecords_CreateOrUpdate
+            query = f"""
+            EXEC {settings.SP_EMAIL_RECORDS_CREATE_UPDATE}
                 @id = ?,
                 @company_name = ?,
                 @email = ?,
@@ -260,7 +267,7 @@ def update_email_record(
             logger.warning(f"Stored procedure call failed: {str(sp_error)}. Falling back to direct SQL.")
             
             # Start with the base query
-            query = "UPDATE [EmailRecords] SET "
+            query = f"UPDATE {settings.EMAIL_TABLE} SET "
             
             # Build the SET clause dynamically based on provided fields
             set_clauses = []
@@ -339,10 +346,13 @@ def update_email_record_status(
         
         logger.info(f"Updating status of email record ID {record_id} to '{status}'")
         
+        # Get settings for stored procedure names
+        settings = get_settings()
+        
         # Try to use stored procedure
         try:
-            query = """
-            EXEC sp_EmailRecords_UpdateStatus @id = ?, @status = ?
+            query = f"""
+            EXEC {settings.SP_EMAIL_RECORDS_UPDATE_STATUS} @id = ?, @status = ?
             """
             
             logger.info(f"Executing stored procedure for status update with ID={record_id}, status={status}")
@@ -364,8 +374,8 @@ def update_email_record_status(
             # If stored procedure fails, fall back to direct SQL
             logger.warning(f"Stored procedure call failed: {str(sp_error)}. Falling back to direct SQL.")
             
-            query = """
-            UPDATE [EmailRecords]
+            query = f"""
+            UPDATE {settings.EMAIL_TABLE}
             SET Email_Status = ?
             WHERE Email_ID = ?
             """
@@ -404,10 +414,13 @@ def delete_email_record(connection: pyodbc.Connection, record_id: int) -> bool:
     try:
         logger.info(f"Attempting to delete email record with ID: {record_id}")
         
+        # Get settings for stored procedure names
+        settings = get_settings()
+        
         # Try to use stored procedure
         try:
-            query = """
-            EXEC sp_EmailRecords_Delete @id = ?
+            query = f"""
+            EXEC {settings.SP_EMAIL_RECORDS_DELETE} @id = ?
             """
             
             logger.info(f"Executing stored procedure for delete with ID={record_id}")
@@ -429,8 +442,8 @@ def delete_email_record(connection: pyodbc.Connection, record_id: int) -> bool:
             # If stored procedure fails, fall back to direct SQL
             logger.warning(f"Stored procedure call failed: {str(sp_error)}. Falling back to direct SQL.")
             
-            query = """
-            DELETE FROM [EmailRecords]
+            query = f"""
+            DELETE FROM {settings.EMAIL_TABLE}
             WHERE Email_ID = ?
             """
             

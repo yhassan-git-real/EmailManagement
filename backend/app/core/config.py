@@ -66,7 +66,11 @@ class Settings(BaseSettings):
         return v
     
     # Stored Procedures
-    SP_EMAIL_RECORDS_BY_STATUS: str = "GetEmailRecordsByStatus" 
+    SP_EMAIL_RECORDS_BY_STATUS: str = "GetEmailRecordsByStatus"
+    SP_EMAIL_RECORDS_GET: str = "sp_EmailRecords_Get"
+    SP_EMAIL_RECORDS_CREATE_UPDATE: str = "sp_EmailRecords_CreateOrUpdate"
+    SP_EMAIL_RECORDS_UPDATE_STATUS: str = "sp_EmailRecords_UpdateStatus"
+    SP_EMAIL_RECORDS_DELETE: str = "sp_EmailRecords_Delete"
     DB_SCHEMA: str = "dbo"
     
     # CORS settings - accepting string or list inputs

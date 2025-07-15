@@ -284,7 +284,11 @@ class EmailLogger:
             if "Google Drive" in message or "GDrive" in message:
                 prefix = f"{Fore.MAGENTA}[GDRIVE]{Style.RESET_ALL} "
             elif "Email transaction" in message or "Email sent" in message:
-                prefix = f"{Fore.BLUE}[EMAIL]{Style.RESET_ALL} "
+                # Use brighter coloring for email transactions
+                if "Success" in message or "success" in message.lower():
+                    prefix = f"{Fore.BLUE}{Style.BRIGHT}[EMAIL]{Style.RESET_ALL} "
+                else:
+                    prefix = f"{Fore.BLUE}[EMAIL]{Style.RESET_ALL} "
             elif "template" in message.lower():
                 prefix = f"{Fore.CYAN}[TEMPLATE]{Style.RESET_ALL} "
             elif "compressed" in message.lower() or "attachment" in message.lower():
@@ -335,7 +339,19 @@ class EmailLogger:
             
             # Only print to console if it's not a redundant process message
             if not ("[Process:" in message and "Processing email" in message):
-                print(f"EMAIL AUTOMATION: {process_info}{prefix}{emoji}{message}")
+                # Make success messages more prominent with bold formatting and separator line
+                if "Success" in message or "success" in message.lower():
+                    # Add a distinctive success banner for successful email sends
+                    if status == "Success":
+                        print(f"\n{Fore.GREEN}{Style.BRIGHT}{'*' * 30} EMAIL SENT SUCCESSFULLY {'*' * 30}{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}{Style.BRIGHT}▶ RECIPIENT: {log_data.get('recipient', 'N/A')}{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}{Style.BRIGHT}▶ SUBJECT: {log_data.get('subject', 'N/A')}{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}{Style.BRIGHT}▶ {message}{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}{Style.BRIGHT}{'*' * 80}{Style.RESET_ALL}\n")
+                    else:
+                        print(f"EMAIL AUTOMATION: {process_info}{prefix}{Style.BRIGHT}{emoji}{message}{Style.RESET_ALL}")
+                else:
+                    print(f"EMAIL AUTOMATION: {process_info}{prefix}{emoji}{message}")
                 
         elif level == logging.ERROR:
             self.logger.error(json_data)

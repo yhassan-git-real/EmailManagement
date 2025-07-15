@@ -169,3 +169,57 @@ export const isSessionValid = (maxAgeHours = 8) => {
     return false;
   }
 };
+
+/**
+ * Save data to session storage with a timestamp
+ * @param {string} key - Storage key
+ * @param {any} data - Data to store
+ * @returns {boolean} Success status
+ */
+export const saveToSessionStorage = (key, data) => {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(data));
+    sessionStorage.setItem(`${key}_timestamp`, new Date().toISOString());
+    return true;
+  } catch (error) {
+    console.error(`Error saving ${key} to session storage:`, error);
+    return false;
+  }
+};
+
+/**
+ * Load data from session storage
+ * @param {string} key - Storage key
+ * @returns {any} Stored data or null if not found
+ */
+export const loadFromSessionStorage = (key) => {
+  try {
+    const data = JSON.parse(sessionStorage.getItem(key));
+    return data;
+  } catch (error) {
+    console.error(`Error loading ${key} from session storage:`, error);
+    return null;
+  }
+};
+
+/**
+ * Check if stored data is stale (older than specified minutes)
+ * @param {string} key - Storage key
+ * @param {number} maxAgeMinutes - Maximum age of the data in minutes
+ * @returns {boolean} True if the data is stale or doesn't exist
+ */
+export const isDataStale = (key, maxAgeMinutes = 5) => {
+  try {
+    const timestamp = sessionStorage.getItem(`${key}_timestamp`);
+    if (!timestamp) return true;
+    
+    const lastUpdatedTime = new Date(timestamp).getTime();
+    const currentTime = new Date().getTime();
+    const maxAgeMs = maxAgeMinutes * 60 * 1000;
+    
+    return (currentTime - lastUpdatedTime) > maxAgeMs;
+  } catch (error) {
+    console.error(`Error checking if ${key} is stale:`, error);
+    return true; // Default to stale on error
+  }
+};

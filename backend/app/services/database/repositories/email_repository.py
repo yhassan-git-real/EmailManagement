@@ -255,6 +255,175 @@ def get_email_status_summary() -> Dict[str, int]:
             conn.close()
 
 
+def get_dashboard_metrics(start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> Dict[str, Any]:
+    """
+    Get dashboard metrics with optional date range filtering.
+    
+    Args:
+        start_date: Optional start date for filtering
+        end_date: Optional end date for filtering
+        
+    Returns:
+        Dictionary with dashboard metrics and trends
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        settings = get_settings()
+        
+        # Build date filter condition
+        date_filter = ""
+        params = []
+        
+        if start_date and end_date:
+            date_filter = "WHERE Date BETWEEN ? AND ?"
+            params = [start_date, end_date]
+        elif start_date:
+            date_filter = "WHERE Date >= ?"
+            params = [start_date]
+        elif end_date:
+            date_filter = "WHERE Date <= ?"
+            params = [end_date]
+        
+        # Get status summary for the date range
+        status_query = f"""
+            SELECT Email_Status, COUNT(*) as Count 
+            FROM {settings.EMAIL_TABLE}
+            {date_filter}
+            GROUP BY Email_Status
+        """
+        
+        cursor.execute(status_query, params)
+        
+        status_results = {
+            "Success": 0,
+            "Pending": 0,
+            "Failed": 0
+        }
+        
+        total_count = 0
+        for row in cursor.fetchall():
+            status_key = row[0]
+            count = row[1]
+            total_count += count
+            
+            if status_key.lower() == "success":
+                status_results["Success"] = count
+            elif status_key.lower() == "pending":
+                status_results["Pending"] = count
+            elif status_key.lower() == "failed":
+                status_results["Failed"] = count
+        
+        # Calculate metrics
+        delivery_rate = 0
+        bounce_rate = 0
+        
+        if total_count > 0:
+            delivery_rate = (status_results["Success"] / total_count) * 100
+            bounce_rate = (status_results["Failed"] / total_count) * 100
+        
+        # Get average processing time using only the Date column
+        time_query = f"""
+            SELECT 
+                AVG(DATEDIFF(SECOND, Date, GETDATE())) as AvgProcessingTime
+            FROM {settings.EMAIL_TABLE}
+            WHERE Email_Status IN ('Success', 'Failed')
+        """
+        
+        # Add date filter to the query if provided
+        if date_filter:
+            time_query = time_query.replace('WHERE', 'WHERE ' + date_filter.replace('WHERE', '') + ' AND')
+        
+        cursor.execute(time_query, params)
+        avg_time_row = cursor.fetchone()
+        
+        # Provide a default value if NULL is returned
+        avg_processing_time = avg_time_row[0] if avg_time_row and avg_time_row[0] is not None else 0
+        
+        # Log the result for debugging
+        logger.debug(f"Average processing time query result: {avg_time_row}")
+        
+        # Get daily trends for the last 7 days or specified date range
+        # Adjust the WHERE clause for trend query based on date filter
+        if date_filter:
+            # If there's already a date filter, don't add the default 7 days
+            trend_where = date_filter
+        else:
+            trend_where = "WHERE Date >= DATEADD(day, -7, GETDATE())"
+            
+        trend_query = """
+            SELECT 
+                CONVERT(date, Date) as Day,
+                Email_Status,
+                COUNT(*) as Count
+            FROM {0}
+            {1}
+            GROUP BY CONVERT(date, Date), Email_Status
+            ORDER BY Day
+        """.format(settings.EMAIL_TABLE, trend_where)
+        
+        cursor.execute(trend_query, params)
+        
+        trend_data = {}
+        for row in cursor.fetchall():
+            day = row[0].strftime('%Y-%m-%d')
+            status = row[1]
+            count = row[2]
+            
+            if day not in trend_data:
+                trend_data[day] = {"Success": 0, "Failed": 0, "Pending": 0}
+                
+            if status.lower() == "success":
+                trend_data[day]["Success"] = count
+            elif status.lower() == "failed":
+                trend_data[day]["Failed"] = count
+            elif status.lower() == "pending":
+                trend_data[day]["Pending"] = count
+        
+        # Format trend data for frontend
+        days = sorted(trend_data.keys())
+        formatted_trends = {
+            "labels": days,
+            "sent": [trend_data[day]["Success"] for day in days],
+            "failed": [trend_data[day]["Failed"] for day in days],
+            "pending": [trend_data[day]["Pending"] for day in days]
+        }
+        
+        # Calculate weekly change percentage
+        weekly_change = "0%"
+        if len(days) >= 2:
+            first_day_total = sum(trend_data[days[0]].values())
+            last_day_total = sum(trend_data[days[-1]].values())
+            
+            if first_day_total > 0:
+                change_pct = ((last_day_total - first_day_total) / first_day_total) * 100
+                weekly_change = f"{'+' if change_pct >= 0 else ''}{change_pct:.1f}%"
+        
+        return {
+            "metrics": {
+                "totalSent": total_count,
+                "weeklyChange": weekly_change,
+                "deliveryRate": f"{delivery_rate:.1f}%",
+                "bounceRate": f"{bounce_rate:.1f}%",
+                "processingTime": f"{avg_processing_time:.1f}s"
+            },
+            "statusSummary": {
+                "pending": status_results["Pending"],
+                "success": status_results["Success"],
+                "failed": status_results["Failed"],
+                "total": total_count
+            },
+            "trends": formatted_trends,
+            "last_updated": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting dashboard metrics: {str(e)}")
+        raise
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+
 def get_email_records_by_status(
     status: Optional[str] = None, 
     limit: int = 100, 

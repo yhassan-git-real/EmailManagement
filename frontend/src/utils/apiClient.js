@@ -131,6 +131,50 @@ export const connectToDatabase = async (credentials) => {
 };
 
 /**
+ * Fetch dashboard metrics from the API with optional date range filtering
+ * @param {Date|null} startDate - Optional start date for filtering
+ * @param {Date|null} endDate - Optional end date for filtering
+ * @returns {Promise} - Promise with dashboard metrics and trends
+ */
+export const fetchDashboardMetrics = async (startDate = null, endDate = null) => {
+  try {
+    let url = `${API_BASE_URL}/api/email/dashboard-metrics`;
+    
+    // Add date range parameters if provided
+    const params = new URLSearchParams();
+    if (startDate) {
+      params.append('start_date', startDate.toISOString());
+    }
+    if (endDate) {
+      params.append('end_date', endDate.toISOString());
+    }
+    
+    // Append parameters to URL if any exist
+    const queryString = params.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch dashboard metrics');
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to fetch dashboard metrics');
+    }
+    
+    return data.data;
+  } catch (error) {
+    console.error('Error fetching dashboard metrics:', error);
+    throw error;
+  }
+};
+
+/**
  * Fetch email status summary from the API
  * @returns {Promise} - Promise with email status data
  */

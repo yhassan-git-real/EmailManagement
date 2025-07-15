@@ -7,7 +7,8 @@ from ...services.database.repositories.email_repository import (
     get_email_records,
     get_email_record_by_id, 
     update_email_status,
-    get_email_status_summary
+    get_email_status_summary,
+    get_dashboard_metrics
 )
 import logging
 
@@ -93,3 +94,26 @@ async def get_status_summary():
     except Exception as e:
         logger.error(f"Error getting email status summary: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get email status summary")
+
+
+@router.get("/dashboard-metrics")
+async def get_dashboard_data(
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None
+):
+    """
+    Get dashboard metrics and trends with optional date range filtering.
+    
+    Args:
+        start_date: Optional start date for filtering (format: YYYY-MM-DD)
+        end_date: Optional end date for filtering (format: YYYY-MM-DD)
+    """
+    try:
+        metrics = get_dashboard_metrics(start_date, end_date)
+        return {
+            "success": True,
+            "data": metrics
+        }
+    except Exception as e:
+        logger.error(f"Error getting dashboard metrics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get dashboard metrics")

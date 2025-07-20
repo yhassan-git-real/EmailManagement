@@ -162,6 +162,7 @@ def get_email_record_by_id(connection: pyodbc.Connection, record_id: int) -> Opt
     cursor = connection.cursor()
     
     try:
+        settings = get_settings()
         query = f"""
         SELECT 
             Email_ID as id, 

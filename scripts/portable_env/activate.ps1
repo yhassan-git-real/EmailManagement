@@ -1,4 +1,4 @@
-# Activate the portable virtual environment for manual development work
+# Activate the portable virtual environment for manual production work
 
 # Set working directory and path variables using relative paths
 $RootDir = Join-Path $PSScriptRoot "..\..\"

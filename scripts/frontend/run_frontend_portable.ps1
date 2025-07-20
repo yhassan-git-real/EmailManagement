@@ -72,14 +72,14 @@ if (-not (Test-Path $NodeModulesDir)) {
     Write-Host "`nFrontend dependencies already installed" -ForegroundColor Green
 }
 
-Write-Host "`nStarting frontend development server with portable Node.js..." -ForegroundColor Cyan
+Write-Host "`nStarting frontend production server with portable Node.js..." -ForegroundColor Cyan
 Write-Host "Frontend will be available at: http://localhost:$FrontendPort" -ForegroundColor Cyan
 
 # Change directory to the frontend folder
 $CurrentLocation = Get-Location
 Set-Location -Path $FrontendDir
 
-# Run the frontend in development mode using portable Node.js
+# Run the frontend in production mode using portable Node.js
 npm run dev
 
 # Return to original directory when npm run dev is terminated

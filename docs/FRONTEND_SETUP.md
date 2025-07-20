@@ -94,7 +94,7 @@ frontend/
    This script automatically:
    - Checks for Node.js installation
    - Installs dependencies if needed
-   - Starts the development server
+   - Starts the production server
 
 2. The frontend will be available at: http://localhost:5173
 
@@ -114,7 +114,7 @@ If you prefer to set up the frontend manually:
    npm install
    ```
 
-3. Start the development server:
+3. Start the production server:
    ```powershell
    npm run dev
    ```
@@ -232,7 +232,7 @@ The application is designed to work with:
 
 2. **Port Conflict**
    - If port 5173 is already in use, Vite will automatically try the next available port
-   - Look for the URL in the terminal output when starting the development server
+   - Look for the URL in the terminal output when starting the production server
 
 3. **Backend Connection Issues**
    - Check if the backend server is running

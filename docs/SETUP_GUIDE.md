@@ -353,7 +353,7 @@ The EmailManagement application includes several features to manage data refresh
 
 2. **Port Conflict**
    - If port 5173 is already in use, Vite will automatically try the next available port
-   - Look for the URL in the terminal output when starting the development server
+   - Look for the URL in the terminal output when starting the production server
 
 3. **Backend Connection Issues**
    - Check if the backend server is running

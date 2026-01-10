@@ -75,7 +75,9 @@ class AttachmentManager:
                 email_logger.log_error(error_msg)
                 return None, None
                 
-            folder_name = os.path.basename(folder_path)
+            # Normalize path to remove trailing slashes before getting basename
+            normalized_path = os.path.normpath(folder_path)
+            folder_name = os.path.basename(normalized_path)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             zip_filename = f"{folder_name}_{timestamp}.zip"
             archive_file_path = os.path.join(self.archive_path, zip_filename)

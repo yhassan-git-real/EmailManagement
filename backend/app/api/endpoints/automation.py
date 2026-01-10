@@ -73,6 +73,19 @@ class SMTPValidationRequest(BaseModel):
     useTLS: bool = True
 
 
+class AttachmentSettingsModel(BaseModel):
+    """Settings for smart attachment behavior"""
+    fileCountThreshold: int = 5  # Files <= this: attach directly; > this: compress to ZIP
+    allowedExtensions: List[str] = ["all"]  # List of extensions or ["all"] for all files
+
+
+class EmailSizeSettingsModel(BaseModel):
+    """Settings for email attachment size limits"""
+    emailMaxSizeMB: int = 25  # Maximum email attachment size in MB
+    emailSafeSizeMB: int = 20  # Safe size limit for direct attachment in MB
+    gdriveUploadThresholdMB: int = 20  # Size threshold for uploading to Google Drive in MB
+
+
 @router.get("/status")
 async def get_status():
     """
@@ -632,4 +645,160 @@ async def get_schedule():
         raise HTTPException(status_code=500, detail="Failed to get schedule settings")
 
 
+@router.get("/attachment-settings")
+async def get_attachment_settings():
+    """
+    Get the current smart attachment settings.
+    
+    Returns:
+        Current attachment settings including file count threshold and allowed extensions.
+    """
+    try:
+        from ...core.config import get_settings
+        settings = get_settings()
+        
+        # Parse allowed extensions
+        ext_setting = settings.ATTACHMENT_ALLOWED_EXTENSIONS
+        if ext_setting.lower() == 'all':
+            allowed_extensions = ['all']
+        else:
+            allowed_extensions = [ext.strip().lower() for ext in ext_setting.split(',')]
+        
+        return {
+            "success": True,
+            "data": {
+                "fileCountThreshold": settings.ATTACHMENT_FILE_COUNT_THRESHOLD,
+                "allowedExtensions": allowed_extensions
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting attachment settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get attachment settings")
 
+
+@router.post("/attachment-settings")
+async def update_attachment_settings(settings: AttachmentSettingsModel):
+    """
+    Update smart attachment settings.
+    
+    These settings control whether files are attached directly or compressed to ZIP:
+    - If file count <= threshold: attach files directly
+    - If file count > threshold: compress to ZIP
+    
+    Args:
+        settings: New attachment settings
+        
+    Returns:
+        Updated settings
+    """
+    try:
+        import os
+        from functools import lru_cache
+        from ...core import config as config_module
+        
+        # Update environment variables
+        os.environ['ATTACHMENT_FILE_COUNT_THRESHOLD'] = str(settings.fileCountThreshold)
+        
+        # Convert extensions list to comma-separated string
+        if 'all' in [ext.lower() for ext in settings.allowedExtensions]:
+            os.environ['ATTACHMENT_ALLOWED_EXTENSIONS'] = 'all'
+        else:
+            os.environ['ATTACHMENT_ALLOWED_EXTENSIONS'] = ','.join(settings.allowedExtensions)
+        
+        # Clear the settings cache to reload with new values
+        if hasattr(config_module, 'get_settings'):
+            config_module.get_settings.cache_clear()
+        
+        logger.info(f"Updated attachment settings: threshold={settings.fileCountThreshold}, "
+                   f"extensions={settings.allowedExtensions}")
+        
+        return {
+            "success": True,
+            "message": "Attachment settings updated successfully",
+            "data": {
+                "fileCountThreshold": settings.fileCountThreshold,
+                "allowedExtensions": settings.allowedExtensions
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error updating attachment settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update attachment settings")
+
+
+@router.get("/size-settings")
+async def get_size_settings():
+    """
+    Get the current email size settings.
+    
+    Returns:
+        Current size settings including max size, safe size, and GDrive threshold.
+    """
+    try:
+        from ...core.config import get_settings
+        settings = get_settings()
+        
+        return {
+            "success": True,
+            "data": {
+                "emailMaxSizeMB": settings.EMAIL_MAX_SIZE_MB,
+                "emailSafeSizeMB": settings.EMAIL_SAFE_SIZE_MB,
+                "gdriveUploadThresholdMB": settings.GDRIVE_UPLOAD_THRESHOLD_MB
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting size settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get size settings")
+
+
+@router.post("/size-settings")
+async def update_size_settings(settings: EmailSizeSettingsModel):
+    """
+    Update email size settings.
+    
+    These settings control attachment size limits:
+    - emailMaxSizeMB: Maximum email attachment size
+    - emailSafeSizeMB: Safe size limit for direct attachment
+    - gdriveUploadThresholdMB: Threshold for uploading to Google Drive
+    
+    Args:
+        settings: New size settings
+        
+    Returns:
+        Updated settings
+    """
+    try:
+        import os
+        from ...core import config as config_module
+        
+        # Validate settings
+        if settings.emailSafeSizeMB > settings.emailMaxSizeMB:
+            raise HTTPException(status_code=400, detail="Safe size cannot exceed max size")
+        if settings.gdriveUploadThresholdMB > settings.emailMaxSizeMB:
+            raise HTTPException(status_code=400, detail="GDrive threshold cannot exceed max size")
+        
+        # Update environment variables
+        os.environ['EMAIL_MAX_SIZE_MB'] = str(settings.emailMaxSizeMB)
+        os.environ['EMAIL_SAFE_SIZE_MB'] = str(settings.emailSafeSizeMB)
+        os.environ['GDRIVE_UPLOAD_THRESHOLD_MB'] = str(settings.gdriveUploadThresholdMB)
+        
+        # Clear the settings cache to reload with new values
+        if hasattr(config_module, 'get_settings'):
+            config_module.get_settings.cache_clear()
+        
+        logger.info(f"Updated size settings: max={settings.emailMaxSizeMB}MB, "
+                   f"safe={settings.emailSafeSizeMB}MB, gdrive={settings.gdriveUploadThresholdMB}MB")
+        
+        return {
+            "success": True,
+            "message": "Size settings updated successfully",
+            "data": {
+                "emailMaxSizeMB": settings.emailMaxSizeMB,
+                "emailSafeSizeMB": settings.emailSafeSizeMB,
+                "gdriveUploadThresholdMB": settings.gdriveUploadThresholdMB
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating size settings: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update size settings")

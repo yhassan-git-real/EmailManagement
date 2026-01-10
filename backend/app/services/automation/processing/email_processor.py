@@ -188,18 +188,19 @@ def _process_email_queue():
                 sharing_option = automation_state["settings"].get("sharing_option", "anyone")
                 specific_emails = automation_state["settings"].get("specific_emails", [])
                 
-                # Send email with validation - we already validated recipient mapping here
-                # so we set validate_mapping=False to avoid duplicate validation
-                success, reason = email_sender.send_email_with_validation(
+                # Send email using smart attachment logic
+                # This will decide between direct file attachment and ZIP compression
+                # based on the configured file count threshold and allowed extensions
+                success, reason = email_sender.send_email_smart(
                     recipient=email_record["Email"],
                     subject=email_record["Subject"],
                     body=email_body,
                     folder_path=email_record["File_Path"],
                     sender=sender_email,
                     email_id=email_record["Email_ID"],
-                    validate_mapping=False,  # Already validated above
                     gdrive_share_type=sharing_option,
-                    specific_emails=specific_emails
+                    specific_emails=specific_emails,
+                    use_smart_attachment=True  # Enable smart attachment logic
                 )
                 
                 # Update status based on result

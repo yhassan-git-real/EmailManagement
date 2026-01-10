@@ -11,9 +11,12 @@ This module provides comprehensive email sending capabilities including:
 
 import os
 import logging
+import mimetypes
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+from email.mime.base import MIMEBase
+from email import encoders
 from typing import Dict, List, Optional, Any, Tuple, Union
 
 from ....core.config import get_settings
@@ -446,3 +449,282 @@ class EmailSender:
     def _check_gdrive_availability(self) -> Tuple[bool, str]:
         """Check if Google Drive is available for uploading"""
         return self.gdrive_integration.check_gdrive_availability()
+    
+    def _attach_individual_files(self, msg: MIMEMultipart, file_paths: List[str]) -> int:
+        """
+        Attach individual files to an email message.
+        
+        Args:
+            msg: The MIMEMultipart message to attach files to.
+            file_paths: List of absolute file paths to attach.
+            
+        Returns:
+            Total size of attached files in bytes.
+        """
+        total_size = 0
+        
+        for file_path in file_paths:
+            if not os.path.isfile(file_path):
+                logger.warning(f"Skipping non-existent file: {file_path}")
+                continue
+                
+            filename = os.path.basename(file_path)
+            file_size = os.path.getsize(file_path)
+            total_size += file_size
+            
+            # Guess the MIME type
+            mime_type, _ = mimetypes.guess_type(file_path)
+            if mime_type is None:
+                mime_type = 'application/octet-stream'
+            
+            main_type, sub_type = mime_type.split('/', 1)
+            
+            with open(file_path, 'rb') as f:
+                if main_type == 'application':
+                    attachment = MIMEApplication(f.read(), _subtype=sub_type)
+                else:
+                    attachment = MIMEBase(main_type, sub_type)
+                    attachment.set_payload(f.read())
+                    encoders.encode_base64(attachment)
+                
+                attachment.add_header('Content-Disposition', 'attachment', filename=filename)
+                msg.attach(attachment)
+                
+            logger.info(f"📎 Attached file: {filename} ({format_size(file_size)})")
+        
+        return total_size
+    
+    def send_email_smart(self, 
+                         recipient: str, 
+                         subject: str, 
+                         body: str, 
+                         folder_path: Optional[str] = None,
+                         sender: Optional[str] = None,
+                         email_id: Optional[int] = None,
+                         gdrive_share_type: str = 'anyone',
+                         specific_emails: Optional[Any] = None,
+                         use_smart_attachment: bool = True) -> Tuple[bool, Optional[str]]:
+        """
+        Send an email using smart attachment logic.
+        
+        If use_smart_attachment is True and file count <= threshold:
+            - Attach files directly without compression
+        If use_smart_attachment is True and file count > threshold:
+            - Compress to ZIP before attaching
+        If use_smart_attachment is False:
+            - Always compress to ZIP (legacy behavior)
+        
+        Args:
+            recipient: Email recipient address.
+            subject: Email subject.
+            body: Email body (HTML).
+            folder_path: Path to folder containing attachments.
+            sender: Sender email address (optional).
+            email_id: Database email ID for logging.
+            gdrive_share_type: Google Drive sharing type.
+            specific_emails: Specific emails for restricted sharing.
+            use_smart_attachment: Whether to use smart attachment logic.
+            
+        Returns:
+            Tuple of (success, message).
+        """
+        if not use_smart_attachment:
+            # Fall back to legacy behavior
+            return self.send_email(recipient, subject, body, folder_path, sender, 
+                                   email_id, gdrive_share_type, specific_emails)
+        
+        try:
+            # Validate email
+            is_valid, error_reason = self.validation_utils.validate_email(recipient)
+            if not is_valid:
+                error_message = f"ERROR: {error_reason}"
+                email_logger.log_email_transaction(
+                    email_id=email_id,
+                    email=recipient,
+                    subject=subject,
+                    file_path=folder_path,
+                    status="Failed",
+                    reason=error_message
+                )
+                return False, error_message
+            
+            # Check SMTP connection
+            is_connected, error_reason = self.smtp_manager.check_smtp_connection()
+            if not is_connected:
+                error_message = f"ERROR: {error_reason}"
+                email_logger.log_email_transaction(
+                    email_id=email_id,
+                    email=recipient,
+                    subject=subject,
+                    file_path=folder_path,
+                    status="Failed",
+                    reason=error_message
+                )
+                return False, error_message
+            
+            # Create message
+            msg = MIMEMultipart()
+            msg['From'] = sender or self.smtp_manager.username
+            msg['To'] = recipient
+            msg['Subject'] = subject
+            
+            email_body = body
+            original_size = None
+            attachment_size = None
+            used_compression = False
+            used_gdrive = False
+            attachment_info = ""
+            
+            if folder_path:
+                # Validate folder path
+                is_valid, error_reason = self.attachment_manager.validate_attachment_path(folder_path)
+                if not is_valid:
+                    error_message = f"ERROR: {error_reason}"
+                    email_logger.log_email_transaction(
+                        email_id=email_id,
+                        email=recipient,
+                        subject=subject,
+                        file_path=folder_path,
+                        status="Failed",
+                        reason=error_message
+                    )
+                    return False, error_message
+                
+                # Use smart attachment logic
+                direct_files, zip_path, total_size, was_compressed = \
+                    self.attachment_manager.prepare_smart_attachments(folder_path)
+                
+                # Check if folder is empty or has no matching files
+                if not direct_files and not zip_path:
+                    error_message = "ERROR: Folder is empty or contains no matching files"
+                    email_logger.log_email_transaction(
+                        email_id=email_id,
+                        email=recipient,
+                        subject=subject,
+                        file_path=folder_path,
+                        status="Failed",
+                        reason=error_message
+                    )
+                    return False, error_message
+                
+                original_size = self.attachment_manager.get_folder_size(folder_path)
+                
+                if was_compressed:
+                    # Compressed to ZIP
+                    used_compression = True
+                    attachment_size = total_size
+                    
+                    if not zip_path or not total_size:
+                        error_message = "ERROR: Failed to compress attachment folder"
+                        email_logger.log_email_transaction(
+                            email_id=email_id,
+                            email=recipient,
+                            subject=subject,
+                            file_path=folder_path,
+                            status="Failed",
+                            reason=error_message
+                        )
+                        return False, error_message
+                    
+                    # Check if need Google Drive for large files
+                    if total_size > GDRIVE_UPLOAD_THRESHOLD:
+                        is_available, gdrive_error = self.gdrive_integration.check_gdrive_availability()
+                        
+                        if is_available:
+                            try:
+                                upload_success, drive_link, success_msg = self.gdrive_integration.handle_large_file_upload(
+                                    zip_path, gdrive_share_type, specific_emails, recipient
+                                )
+                                
+                                if upload_success and drive_link:
+                                    used_gdrive = True
+                                    link_html = self.gdrive_integration.create_drive_link_html(drive_link, zip_path)
+                                    email_body += link_html
+                                    attachment_info = f"Google Drive link - {os.path.basename(zip_path)} ({format_size(total_size)})"
+                            except Exception as e:
+                                logger.error(f"Google Drive upload failed: {str(e)}")
+                                if total_size > SAFE_MAX_SIZE:
+                                    reason = f"ERROR: File too large ({format_size(total_size)}) and Google Drive failed"
+                                    email_logger.log_email_transaction(
+                                        email_id=email_id,
+                                        email=recipient,
+                                        subject=subject,
+                                        file_path=folder_path,
+                                        status="Failed",
+                                        reason=reason
+                                    )
+                                    return False, reason
+                        elif total_size > SAFE_MAX_SIZE:
+                            reason = f"ERROR: Attachment too large ({format_size(total_size)}) and Google Drive unavailable"
+                            email_logger.log_email_transaction(
+                                email_id=email_id,
+                                email=recipient,
+                                subject=subject,
+                                file_path=folder_path,
+                                status="Failed",
+                                reason=reason
+                            )
+                            return False, reason
+                    
+                    # Attach ZIP if not using Google Drive
+                    if not used_gdrive:
+                        filename = os.path.basename(zip_path)
+                        with open(zip_path, 'rb') as file:
+                            attach = MIMEApplication(file.read(), _subtype='zip')
+                            attach.add_header('Content-Disposition', f'attachment; filename="{filename}"')
+                            msg.attach(attach)
+                        attachment_info = f"ZIP attachment - {filename} ({format_size(total_size)})"
+                        email_logger.log_info(f"📎 Attached ZIP: {filename} ({format_size(total_size)})", email_id=email_id)
+                else:
+                    # Direct file attachment
+                    if direct_files:
+                        attachment_size = self._attach_individual_files(msg, direct_files)
+                        file_count = len(direct_files)
+                        attachment_info = f"{file_count} files attached directly ({format_size(attachment_size)})"
+                        email_logger.log_info(f"📎 Attached {file_count} files directly ({format_size(attachment_size)})", email_id=email_id)
+            
+            # Add HTML body
+            html_part = MIMEText(email_body, 'html')
+            html_part.add_header('Content-Type', 'text/html; charset=utf-8')
+            msg.attach(html_part)
+            
+            # Send email
+            self.smtp_manager.send_message(msg)
+            
+            # Build success message
+            if used_gdrive:
+                success_reason = f"SUCCESS: Email sent with {attachment_info}"
+            elif attachment_info:
+                success_reason = f"SUCCESS: Email sent with {attachment_info}"
+            else:
+                success_reason = "SUCCESS: Email sent without attachments"
+            
+            email_logger.log_email_transaction(
+                email_id=email_id,
+                email=recipient,
+                subject=subject,
+                file_path=folder_path,
+                status="Success",
+                reason=success_reason,
+                original_size=original_size,
+                compressed_size=attachment_size if used_compression else None
+            )
+            
+            logger.info(f"Email sent successfully to {recipient}")
+            return True, success_reason
+            
+        except Exception as e:
+            error_message = f"Failed to send email to {recipient}: {str(e)}"
+            logger.error(error_message)
+            
+            formatted_reason = f"ERROR: {e.__class__.__name__} - {str(e)}"
+            email_logger.log_email_transaction(
+                email_id=email_id,
+                email=recipient,
+                subject=subject,
+                file_path=folder_path,
+                status="Failed",
+                reason=formatted_reason
+            )
+            
+            return False, formatted_reason

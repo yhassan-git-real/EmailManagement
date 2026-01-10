@@ -4,10 +4,10 @@ import {
   CogIcon,
   PlayIcon,
   StopIcon,
-  ArrowPathIcon,
-  DocumentTextIcon
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import { CogIcon as CogIconSolid, PlayIcon as PlayIconSolid } from '@heroicons/react/24/solid';
+import { CogIcon as CogIconSolid } from '@heroicons/react/24/solid';
+import ConsolidatedSettingsPanel from './ConsolidatedSettingsPanel';
 
 /**
  * AutomationControlPanel - Contains control buttons and status display for email automation
@@ -23,7 +23,11 @@ const AutomationControlPanel = ({
   onOpenTemplateSelector,
   sharingOption,
   specificEmails,
-  onUpdateSharingSettings
+  onUpdateSharingSettings,
+  automationSettings,
+  cleanupDays,
+  setCleanupDays,
+  onCleanupArchive
 }) => {
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 mb-6 border border-gray-100">
@@ -49,14 +53,14 @@ const AutomationControlPanel = ({
       </div>
 
       <div className="p-5">
-        {/* Control Buttons - Enhanced with modern UI, tooltips, and improved responsive layout */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
+        {/* Control Buttons - Enhanced with modern UI */}
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={onStartAutomation}
             disabled={isLoading.start || automationStatus.status === 'running' || automationStatus.status === 'restarting'}
             className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${isLoading.start || automationStatus.status === 'running' || automationStatus.status === 'restarting'
-                ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                : 'text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 hover:shadow'
+              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+              : 'text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 hover:shadow'
               }`}
             title="Process only pending emails, never emails with status 'Failed' or 'Success'"
           >
@@ -71,8 +75,8 @@ const AutomationControlPanel = ({
             onClick={onRestartFailed}
             disabled={isLoading.restart || automationStatus.status === 'restarting' || automationStatus.status === 'running' || automationStatus.summary.failed === 0}
             className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${isLoading.restart || automationStatus.status === 'restarting' || automationStatus.status === 'running' || automationStatus.summary.failed === 0
-                ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                : 'text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-amber-500 hover:shadow'
+              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+              : 'text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-amber-500 hover:shadow'
               }`}
             title="Process only emails with status 'Failed', never pending emails"
           >
@@ -84,8 +88,8 @@ const AutomationControlPanel = ({
             onClick={onStopAutomation}
             disabled={isLoading.stop || automationStatus.status !== 'running'}
             className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${automationStatus.status !== 'running'
-                ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                : 'text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 hover:shadow'
+              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+              : 'text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 hover:shadow'
               }`}
           >
             <StopIcon className="h-5 w-5 mr-2 transition-transform duration-200 group-hover:scale-110" />
@@ -98,14 +102,6 @@ const AutomationControlPanel = ({
           >
             <CogIcon className="h-5 w-5 mr-2 text-gray-500 transition-transform duration-300 group-hover:rotate-45 group-hover:text-primary-500" />
             <span>Configure Email Settings</span>
-          </button>
-
-          <button
-            onClick={onOpenTemplateSelector}
-            className="group inline-flex items-center px-3 py-1.5 border border-gray-200 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition-all duration-200 transform hover:-translate-y-0.5 hover:border-primary-200 hover:shadow"
-          >
-            <DocumentTextIcon className="h-5 w-5 mr-2 text-gray-500 transition-transform duration-200 group-hover:scale-110 group-hover:text-primary-500" />
-            <span>Use Template Editor</span>
           </button>
 
           {/* Google Drive Sharing Button */}
@@ -124,6 +120,16 @@ const AutomationControlPanel = ({
             <span>{isLoading.refresh ? 'Refreshing...' : 'Refresh Status'}</span>
           </button>
         </div>
+
+        {/* Consolidated Settings Panel - Template, Scheduler, Archive, Attachment */}
+        <ConsolidatedSettingsPanel
+          automationSettings={automationSettings}
+          onOpenTemplateSelector={onOpenTemplateSelector}
+          cleanupDays={cleanupDays}
+          setCleanupDays={setCleanupDays}
+          onCleanupArchive={onCleanupArchive}
+          isCleanupLoading={isLoading.archive}
+        />
       </div>
     </div>
   );

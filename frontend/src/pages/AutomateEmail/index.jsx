@@ -1,12 +1,10 @@
 import React from 'react';
 import {
-  Header,
-  Footer,
-  Breadcrumb,
-  EmailSettingsModal,
-  TemplateSelector,
-  SchedulerSettings,
-  GDriveShareSettings
+    Header,
+    Footer,
+    Breadcrumb,
+    EmailSettingsModal,
+    TemplateSelector
 } from '../../components';
 import { HomeIcon } from '@heroicons/react/24/outline';
 
@@ -18,8 +16,6 @@ import useAutomationActions from './hooks/useAutomationActions';
 // Page components
 import AutomationControlPanel from './components/AutomationControlPanel';
 import StatusSummary from './components/StatusSummary';
-import TemplateSettings from './components/TemplateSettings';
-import ArchiveManagement from './components/ArchiveManagement';
 import EmailLogs from './components/EmailLogs';
 
 /**
@@ -127,7 +123,7 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
                             ]}
                         />
 
-                        {/* Control Panel */}
+                        {/* Control Panel - Now includes Template, Scheduler, Archive, and Attachment settings */}
                         <AutomationControlPanel
                             automationStatus={automationStatus}
                             isLoading={isLoading}
@@ -139,36 +135,15 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
                             onOpenTemplateSelector={() => setShowTemplateSelector(true)}
                             sharingOption={automationSettings.sharingOption || 'anyone'}
                             specificEmails={automationSettings.specificEmails || []}
-                            onUpdateSharingSettings={settings => saveSettings({...automationSettings, ...settings})}
+                            onUpdateSharingSettings={settings => saveSettings({ ...automationSettings, ...settings })}
+                            automationSettings={automationSettings}
+                            cleanupDays={cleanupDays}
+                            setCleanupDays={setCleanupDays}
+                            onCleanupArchive={handleCleanupArchive}
                         />
 
                         {/* Status Summary */}
                         <StatusSummary automationStatus={automationStatus} />
-
-                        {/* Template Settings */}
-                        <TemplateSettings
-                            automationSettings={automationSettings}
-                            onOpenTemplateSelector={() => setShowTemplateSelector(true)}
-                        />
-
-
-{/* Scheduler Settings (using existing component) */}
-                        <div className="my-6">
-                            <hr className="my-6 border-t border-gray-200" />
-                            <SchedulerSettings
-                                onSettingsChange={(updatedSettings) => console.log("Scheduler settings updated:", updatedSettings)}
-                            />
-                        </div>
-
-                        {/* Archive Management */}
-                        <ArchiveManagement
-                            cleanupDays={cleanupDays}
-                            setCleanupDays={setCleanupDays}
-                            isCleanupConfigChanged={isCleanupConfigChanged}
-                            setIsCleanupConfigChanged={setIsCleanupConfigChanged}
-                            isLoading={isLoading.archive}
-                            onCleanupArchive={handleCleanupArchive}
-                        />
 
                         {/* Email Logs */}
                         <EmailLogs

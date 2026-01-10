@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     # Server environment flag
     SERVER_ENV: Optional[str] = "false"  # Use 'true' to enable non-interactive mode
     
+    # Smart Attachment Settings
+    ATTACHMENT_FILE_COUNT_THRESHOLD: int = 5  # Files <= this: attach directly; > this: compress to ZIP
+    ATTACHMENT_ALLOWED_EXTENSIONS: str = "all"  # Comma-separated list or 'all' for all files
+    
     @validator('EMAIL_ARCHIVE_PATH')
     def validate_archive_path(cls, v):
         """

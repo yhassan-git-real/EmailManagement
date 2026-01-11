@@ -649,3 +649,30 @@ select option:checked {
   background-color: rgba(99, 102, 241, 0.4);
   color: #ffffff;
 }
+
+/* Dark Form Inputs for Login/Database Connector */
+.dark-form-input {
+  background-color: rgba(15, 23, 42, 0.7) !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.3s ease;
+}
+
+.dark-form-input:focus {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+
+.dark-form-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Fix for browser autofill background */
+.dark-form-input:-webkit-autofill,
+.dark-form-input:-webkit-autofill:hover,
+.dark-form-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f8fafc !important;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 1) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

@@ -231,35 +231,48 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
 
   // Helper function to determine input field classes based on validation
   const getInputClasses = (fieldName) => {
-    const baseClasses = "w-full pl-10 pr-4 py-3 rounded-lg border bg-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm hover:shadow-md hover:border-blue-400 transform hover:-translate-y-0.5";
+    const baseClasses = "w-full pl-10 pr-4 py-3 rounded-lg border transition-all duration-300 focus:outline-none focus:ring-2 text-sm shadow-sm";
     if (fieldErrors[fieldName]) {
-      return `${baseClasses} border-red-300 bg-red-50 focus:ring-red-500 focus:border-red-500`;
+      return `${baseClasses} border-red-500/50 bg-red-900/20 focus:ring-red-500 focus:border-red-500 text-red-300 placeholder-red-400`;
     }
-    return `${baseClasses} border-gray-200 hover:border-blue-300 focus:border-blue-500`;
+    return `${baseClasses} border-slate-600/50 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500/50 hover:border-indigo-400/50 dark-form-input`;
   };
   return (
-    <div className="shadow-md rounded-lg border border-gray-200 bg-white p-4">
+    <div className="rounded-lg p-4" style={{
+      background: 'rgba(30, 41, 59, 0.4)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+    }}>
       <div className="relative">
         {/* Card header with accent gradient */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-t-lg"></div>
+        <div className="absolute top-0 left-0 right-0 h-1.5 rounded-t-lg" style={{
+          background: 'linear-gradient(90deg, #6366f1 0%, #06b6d4 100%)'
+        }}></div>
         <div className="pt-3 mb-3">
           <div className="flex items-center mb-6">
-            <div className="mr-3 bg-gradient-to-br from-blue-500 to-blue-600 p-2.5 rounded-lg shadow-md transform transition-all duration-300 hover:scale-110 hover:shadow-lg group">
+            <div className="mr-3 p-2.5 rounded-lg shadow-md transform transition-all duration-300 hover:scale-110 hover:shadow-lg group" style={{
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+            }}>
               <svg className="w-6 h-6 text-white transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
               </svg>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+              <h2 className="text-2xl font-bold text-white flex items-center">
                 Database Connection
-                <span className="ml-3 inline-block text-xs py-1 px-2 bg-blue-100 text-blue-700 rounded-md shadow-sm transition-all hover:bg-blue-200">
+                <span className="ml-3 inline-block text-xs py-1 px-2 rounded-md shadow-sm transition-all" style={{
+                  background: 'rgba(99, 102, 241, 0.2)',
+                  color: '#a5b4fc',
+                  border: '1px solid rgba(99, 102, 241, 0.3)'
+                }}>
                   SQL Server
                 </span>
               </h2>
-              <p className="text-gray-600 text-sm mt-1">Connect to your SQL Server database</p>
+              <p className="text-slate-400 text-sm mt-1">Connect to your SQL Server database</p>
             </div>
           </div>
         </div>
+
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -267,12 +280,12 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
           <div className="grid grid-cols-2 gap-x-4">
             {/* SQL Server Name */}
             <div className="input-group">
-              <label htmlFor="serverName" className="block text-xs font-medium text-gray-700 mb-1">
+              <label htmlFor="serverName" className="block text-xs font-medium text-slate-300 mb-1">
                 <span>SQL Server Name</span>
               </label>
               <div className="relative group" ref={suggestionsRefs.serverName}>
                 <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none transition-all duration-300">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-blue-500 transition-all duration-300 group-hover:text-blue-600 group-hover:scale-110">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-indigo-400 transition-all duration-300 group-hover:text-indigo-300 group-hover:scale-110">
                     <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                     <path d="M8 21h8"></path>
                     <path d="M12 17v4"></path>
@@ -289,17 +302,17 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
                   style={{ paddingLeft: '2.75rem' }}
                 />
                 {showSuggestions.serverName && suggestions.serverNames.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-sm max-h-60 overflow-auto">
+                  <div className="absolute z-10 w-full mt-1 rounded-md shadow-xl max-h-60 overflow-auto" style={{ background: 'rgba(30, 41, 59, 0.98)', border: '1px solid rgba(71, 85, 105, 0.5)' }}>
                     <ul className="py-1">
                       {suggestions.serverNames
                         .filter(server => server.toLowerCase().includes(credentials.serverName.toLowerCase()))
                         .map((server, index) => (
                           <li
                             key={index}
-                            className="px-3 py-1.5 text-xs hover:bg-blue-50 cursor-pointer flex items-center"
+                            className="px-3 py-1.5 text-xs hover:bg-indigo-500/15 cursor-pointer flex items-center text-slate-300"
                             onClick={() => handleSuggestionClick('serverName', server)}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                             </svg>
                             {server}
@@ -309,19 +322,19 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
                   </div>
                 )}
                 {fieldErrors.serverName && (
-                  <p className="mt-1 text-xs text-red-600">{fieldErrors.serverName}</p>
+                  <p className="mt-1 text-xs text-red-400">{fieldErrors.serverName}</p>
                 )}
               </div>
             </div>
 
             {/* Database Name */}
             <div className="input-group">
-              <label htmlFor="databaseName" className="block text-xs font-medium text-gray-700 mb-1">
+              <label htmlFor="databaseName" className="block text-xs font-medium text-slate-300 mb-1">
                 <span>Database Name</span>
               </label>
               <div className="relative group" ref={suggestionsRefs.databaseName}>
                 <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none transition-all duration-300">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-blue-500 transition-all duration-300 group-hover:text-blue-600 group-hover:scale-110">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-indigo-400 transition-all duration-300 group-hover:text-indigo-300 group-hover:scale-110">
                     <path d="M12 2C6.48 2 2 4.48 2 7.5v9c0 3.02 4.48 5.5 10 5.5s10-2.48 10-5.5v-9C22 4.48 17.52 2 12 2z"></path>
                     <path d="M22 7.5C22 10.52 17.52 13 12 13S2 10.52 2 7.5"></path>
                     <path d="M2 11.5C2 14.52 6.48 17 12 17s10-2.48 10-5.5"></path>
@@ -337,17 +350,17 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
                   style={{ paddingLeft: '2.75rem' }}
                 />
                 {showSuggestions.databaseName && suggestions.databaseNames.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-sm max-h-60 overflow-auto">
+                  <div className="absolute z-10 w-full mt-1 rounded-md shadow-xl max-h-60 overflow-auto" style={{ background: 'rgba(30, 41, 59, 0.98)', border: '1px solid rgba(71, 85, 105, 0.5)' }}>
                     <ul className="py-1">
                       {suggestions.databaseNames
                         .filter(db => db.toLowerCase().includes(credentials.databaseName.toLowerCase()))
                         .map((db, index) => (
                           <li
                             key={index}
-                            className="px-3 py-1.5 text-xs hover:bg-blue-50 cursor-pointer flex items-center"
+                            className="px-3 py-1.5 text-xs hover:bg-indigo-500/15 cursor-pointer flex items-center text-slate-300"
                             onClick={() => handleSuggestionClick('databaseName', db)}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                             </svg>
                             {db}
@@ -367,12 +380,12 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
           <div className="grid grid-cols-2 gap-x-4">
             {/* Username */}
             <div className="input-group">
-              <label htmlFor="username" className="block text-xs font-medium text-gray-700 mb-1">
+              <label htmlFor="username" className="block text-xs font-medium text-slate-300 mb-1">
                 <span>Username</span>
               </label>
               <div className="relative group" ref={suggestionsRefs.username}>
                 <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none transition-all duration-300">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-blue-500 transition-all duration-300 group-hover:text-blue-600 group-hover:scale-110">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-indigo-400 transition-all duration-300 group-hover:text-indigo-300 group-hover:scale-110">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
                   </svg>
@@ -387,17 +400,17 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
                   style={{ paddingLeft: '2.75rem' }}
                 />
                 {showSuggestions.username && suggestions.usernames.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-sm max-h-60 overflow-auto">
+                  <div className="absolute z-10 w-full mt-1 rounded-md shadow-xl max-h-60 overflow-auto" style={{ background: 'rgba(30, 41, 59, 0.98)', border: '1px solid rgba(71, 85, 105, 0.5)' }}>
                     <ul className="py-1">
                       {suggestions.usernames
                         .filter(user => user.toLowerCase().includes(credentials.username.toLowerCase()))
                         .map((user, index) => (
                           <li
                             key={index}
-                            className="px-3 py-1.5 text-xs hover:bg-blue-50 cursor-pointer flex items-center"
+                            className="px-3 py-1.5 text-xs hover:bg-indigo-500/15 cursor-pointer flex items-center text-slate-300"
                             onClick={() => handleSuggestionClick('username', user)}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                             </svg>
                             {user}
@@ -414,12 +427,12 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
 
             {/* Password */}
             <div className="input-group">
-              <label htmlFor="password" className="block text-xs font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-xs font-medium text-slate-300 mb-1">
                 <span>Password</span>
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none transition-all duration-300">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-blue-500 transition-all duration-300 group-hover:text-blue-600 group-hover:scale-110">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-indigo-400 transition-all duration-300 group-hover:text-indigo-300 group-hover:scale-110">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
@@ -462,8 +475,8 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
           {/* Test Connection Result */}
           {testConnectionResult && (
             <div className={`p-2 rounded-md text-xs mb-3 border ${testConnectionResult.success
-                ? 'bg-green-50 text-green-700 border-green-100'
-                : 'bg-red-50 text-red-700 border-red-100'
+              ? 'bg-green-900/20 text-green-300 border-green-500/30'
+              : 'bg-red-900/20 text-red-300 border-red-500/30'
               }`}>
               <div className="flex items-start">
                 <div className="flex-shrink-0">
@@ -486,12 +499,12 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
                   {testConnectionResult.success && testConnectionResult.details && (
                     <div className="mt-1 text-xs space-y-0.5">
                       <div className="flex items-center gap-1">
-                        <span className="text-gray-600">Server:</span>
-                        <span className="font-medium">{testConnectionResult.details.server}</span>
+                        <span className="text-slate-400">Server:</span>
+                        <span className="font-medium text-white">{testConnectionResult.details.server}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="text-gray-600">Database:</span>
-                        <span className="font-medium">{testConnectionResult.details.database}</span>
+                        <span className="text-slate-400">Database:</span>
+                        <span className="font-medium text-white">{testConnectionResult.details.database}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-gray-600">Status:</span>
@@ -506,7 +519,7 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
 
           {/* Success message after test connection */}
           {testConnectionResult && testConnectionResult.success && (
-            <div className="p-2.5 bg-green-50 text-green-700 border border-green-100 rounded-lg text-xs mb-4 transition-all duration-300 hover:shadow-md">
+            <div className="p-2.5 bg-green-900/20 text-green-300 border border-green-500/30 rounded-lg text-xs mb-4 transition-all duration-300 hover:shadow-md">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <div className="p-1 bg-green-100 rounded-full">
@@ -524,7 +537,7 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
 
           {/* General error message */}
           {error && !testConnectionResult && (
-            <div className="p-2.5 bg-red-50 text-red-700 border border-red-100 rounded-lg text-xs transition-all duration-300 hover:shadow-md">
+            <div className="p-2.5 bg-red-900/20 text-red-300 border border-red-500/30 rounded-lg text-xs transition-all duration-300 hover:shadow-md">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <div className="p-1 bg-red-100 rounded-full transition-all duration-300 group-hover:scale-110">
@@ -545,7 +558,11 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
               type="button"
               onClick={handleTestConnection}
               disabled={testingConnection || loading}
-              className="flex items-center justify-center px-4 py-2.5 border border-blue-300 rounded-lg bg-white text-blue-600 hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 group"
+              className="flex items-center justify-center px-4 py-2.5 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md group" style={{
+                border: '1px solid rgba(99, 102, 241, 0.5)',
+                background: 'rgba(99, 102, 241, 0.1)',
+                color: '#a5b4fc'
+              }}
             >
               {testingConnection ? (
                 <span className="flex items-center justify-center">
@@ -569,7 +586,10 @@ const DatabaseConnector = ({ onConnected, onConnectionInfoUpdate }) => {
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 group"
+              className="flex items-center justify-center px-4 py-2.5 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg group" style={{
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                color: 'white'
+              }}
             >
               {loading ? (
                 <span className="flex items-center justify-center">

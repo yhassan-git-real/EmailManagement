@@ -4,6 +4,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/animations.css';
 import AppRoutes from './routes';
+import StarryBackground from './components/ui/StarryBackground';
 import { saveConnectionToSession, loadConnectionFromSession, clearConnectionSession, updateActivityTimestamp } from './utils/sessionUtils';
 
 // Silence React Router warnings for future version
@@ -43,7 +44,7 @@ function App() {
 
     // Update activity every 5 minutes
     const interval = setInterval(updateActivity, 5 * 60 * 1000);
-    
+
     // Update activity on user interactions
     const handleUserActivity = () => {
       if (isConnected) {
@@ -77,18 +78,22 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="min-h-screen">
-        <AppRoutes 
-          isConnected={isConnected}
-          connectionInfo={connectionInfo}
-          onConnect={handleConnect}
-          onDisconnect={handleDisconnect}
-        />
-        <ToastContainer position="top-right" autoClose={5000} />
-      </div>
-    </Router>
+    <>
+      <StarryBackground />
+      <Router>
+        <div className="min-h-screen">
+          <AppRoutes
+            isConnected={isConnected}
+            connectionInfo={connectionInfo}
+            onConnect={handleConnect}
+            onDisconnect={handleDisconnect}
+          />
+          <ToastContainer position="top-right" autoClose={5000} />
+        </div>
+      </Router>
+    </>
   );
 }
 
 export default App;
+

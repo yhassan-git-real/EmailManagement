@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StatusBadge, GDriveShareButton } from '../../../components';
 import {
   CogIcon,
   PlayIcon,
   StopIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 import { CogIcon as CogIconSolid } from '@heroicons/react/24/solid';
 import ConsolidatedSettingsPanel from './ConsolidatedSettingsPanel';
+import TestMailModal from './TestMailModal';
 
 /**
  * AutomationControlPanel - Contains control buttons and status display for email automation
@@ -29,6 +31,8 @@ const AutomationControlPanel = ({
   setCleanupDays,
   onCleanupArchive
 }) => {
+  const [showTestMailModal, setShowTestMailModal] = useState(false);
+
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 mb-6 border border-gray-100">
       <div className="p-4 sm:p-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
@@ -55,6 +59,16 @@ const AutomationControlPanel = ({
       <div className="p-5">
         {/* Control Buttons - Enhanced with modern UI */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Test Mail Button */}
+          <button
+            onClick={() => setShowTestMailModal(true)}
+            className="group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-purple-500 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow"
+            title="Send a test email to validate settings and templates"
+          >
+            <PaperAirplaneIcon className="h-5 w-5 mr-2 transition-transform duration-200 group-hover:translate-x-0.5" />
+            <span>Test Mail</span>
+          </button>
+
           <button
             onClick={onStartAutomation}
             disabled={isLoading.start || automationStatus.status === 'running' || automationStatus.status === 'restarting'}
@@ -131,6 +145,12 @@ const AutomationControlPanel = ({
           isCleanupLoading={isLoading.archive}
         />
       </div>
+
+      {/* Test Mail Modal */}
+      <TestMailModal
+        isOpen={showTestMailModal}
+        onClose={() => setShowTestMailModal(false)}
+      />
     </div>
   );
 };

@@ -1,0 +1,8 @@
+{
+    "recipientEmail": "mdyounushassan104@gmail.com",
+    "subject": "Test Email - {{company_name}}",
+    "body": "",
+    "templateId": "default",
+    "folderPath": "D:\\Email_Folders_test\\Report4",
+    "companyName": "Test Company"
+}

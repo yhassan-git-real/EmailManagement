@@ -3,6 +3,8 @@ from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
 from datetime import datetime
 from enum import Enum
+import json
+import os
 
 from ...services.automation import (
     start_automation,
@@ -84,6 +86,17 @@ class EmailSizeSettingsModel(BaseModel):
     emailMaxSizeMB: int = 25  # Maximum email attachment size in MB
     emailSafeSizeMB: int = 20  # Safe size limit for direct attachment in MB
     gdriveUploadThresholdMB: int = 20  # Size threshold for uploading to Google Drive in MB
+
+
+class TestMailRequest(BaseModel):
+    """Request model for sending a test email"""
+    recipientEmail: str
+    subject: str
+    body: Optional[str] = ""  # Optional custom body
+    templateId: str = "default"
+    folderPath: Optional[str] = ""  # Optional folder path for attachments
+    companyName: Optional[str] = "Test Company"
+    saveAsDefault: bool = False  # Whether to save these settings as defaults
 
 
 @router.get("/status")
@@ -802,3 +815,217 @@ async def update_size_settings(settings: EmailSizeSettingsModel):
     except Exception as e:
         logger.error(f"Error updating size settings: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to update size settings")
+
+
+# ============================================================================
+# Test Mail Endpoints
+# ============================================================================
+
+TEST_MAIL_DEFAULTS_PATH = os.path.join(
+    os.path.dirname(__file__), 
+    '..', '..', 'services', 'email', 'test_mail_defaults.json'
+)
+
+
+def _load_test_mail_defaults() -> dict:
+    """Load test mail defaults from JSON file"""
+    try:
+        if os.path.exists(TEST_MAIL_DEFAULTS_PATH):
+            with open(TEST_MAIL_DEFAULTS_PATH, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        logger.warning(f"Could not load test mail defaults: {str(e)}")
+    
+    return {
+        "recipientEmail": "",
+        "subject": "Test Email - {{company_name}}",
+        "body": "",
+        "templateId": "default",
+        "folderPath": "",
+        "companyName": "Test Company"
+    }
+
+
+def _save_test_mail_defaults(defaults: dict) -> bool:
+    """Save test mail defaults to JSON file"""
+    try:
+        os.makedirs(os.path.dirname(TEST_MAIL_DEFAULTS_PATH), exist_ok=True)
+        with open(TEST_MAIL_DEFAULTS_PATH, 'w') as f:
+            json.dump(defaults, f, indent=4)
+        return True
+    except Exception as e:
+        logger.error(f"Could not save test mail defaults: {str(e)}")
+        return False
+
+
+@router.get("/test-mail/defaults")
+async def get_test_mail_defaults():
+    """
+    Get saved default test mail settings.
+    
+    Returns:
+        Default settings for test mail form.
+    """
+    try:
+        defaults = _load_test_mail_defaults()
+        return {
+            "success": True,
+            "data": defaults
+        }
+    except Exception as e:
+        logger.error(f"Error getting test mail defaults: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get test mail defaults")
+
+
+@router.post("/test-mail/defaults")
+async def save_test_mail_defaults(request: TestMailRequest):
+    """
+    Save default test mail settings.
+    
+    Args:
+        request: Test mail settings to save as defaults
+        
+    Returns:
+        Success status
+    """
+    try:
+        defaults = {
+            "recipientEmail": request.recipientEmail,
+            "subject": request.subject,
+            "body": request.body or "",
+            "templateId": request.templateId,
+            "folderPath": request.folderPath or "",
+            "companyName": request.companyName or "Test Company"
+        }
+        
+        if _save_test_mail_defaults(defaults):
+            return {
+                "success": True,
+                "message": "Test mail defaults saved successfully",
+                "data": defaults
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save test mail defaults")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error saving test mail defaults: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to save test mail defaults")
+
+
+@router.post("/test-mail/send")
+async def send_test_mail(request: TestMailRequest):
+    """
+    Send a test email to validate settings, templates, and attachments.
+    
+    This endpoint works independently from automation and uses the same
+    SMTP settings and template logic.
+    
+    Args:
+        request: Test mail parameters
+        
+    Returns:
+        Success status and message
+    """
+    try:
+        from ...services.email import EmailSender
+        from ...services.templates import get_template_by_id
+        from ...services.automation.core.settings_manager import _get_smtp_settings
+        from datetime import datetime
+        
+        # Save as default if requested
+        if request.saveAsDefault:
+            defaults = {
+                "recipientEmail": request.recipientEmail,
+                "subject": request.subject,
+                "body": request.body or "",
+                "templateId": request.templateId,
+                "folderPath": request.folderPath or "",
+                "companyName": request.companyName or "Test Company"
+            }
+            _save_test_mail_defaults(defaults)
+        
+        # Get SMTP settings
+        smtp_settings = _get_smtp_settings()
+        
+        if not smtp_settings["smtp_server"] or not smtp_settings["username"] or not smtp_settings["password"]:
+            raise HTTPException(status_code=400, detail="SMTP settings are incomplete. Please configure email settings first.")
+        
+        # Create email sender
+        email_sender = EmailSender(
+            smtp_server=smtp_settings["smtp_server"],
+            port=smtp_settings["port"],
+            username=smtp_settings["username"],
+            password=smtp_settings["password"],
+            use_tls=smtp_settings["use_tls"],
+            archive_path=smtp_settings["archive_path"]
+        )
+        
+        sender_email = smtp_settings["sender_email"] or smtp_settings["username"]
+        
+        # Get email body from template or use custom body
+        email_body = request.body or ""
+        
+        if request.templateId and request.templateId != "none":
+            try:
+                template = get_template_by_id(request.templateId)
+                if template:
+                    # Process template placeholders
+                    placeholders = {
+                        "{{company_name}}": request.companyName or "Test Company",
+                        "{{recipient}}": request.recipientEmail,
+                        "{{subject}}": request.subject,
+                        "{{date}}": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "{{file_path}}": request.folderPath or ""
+                    }
+                    
+                    template_body = template['body_template']
+                    for placeholder, value in placeholders.items():
+                        template_body = template_body.replace(placeholder, str(value))
+                    
+                    email_body = template_body
+            except Exception as e:
+                logger.warning(f"Could not load template {request.templateId}: {str(e)}")
+                if not email_body:
+                    email_body = f"<p>Test email sent on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>"
+        
+        if not email_body:
+            email_body = f"<p>Test email sent on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>"
+        
+        # Process subject placeholders
+        subject = request.subject
+        subject = subject.replace("{{company_name}}", request.companyName or "Test Company")
+        subject = subject.replace("{{date}}", datetime.now().strftime("%Y-%m-%d"))
+        
+        # Send using smart attachment logic
+        folder_path = request.folderPath if request.folderPath else None
+        
+        success, reason = email_sender.send_email_smart(
+            recipient=request.recipientEmail,
+            subject=subject,
+            body=email_body,
+            folder_path=folder_path,
+            sender=sender_email,
+            email_id=None,  # No database record for test emails
+            use_smart_attachment=True
+        )
+        
+        if success:
+            return {
+                "success": True,
+                "message": f"Test email sent successfully to {request.recipientEmail}",
+                "details": reason
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Failed to send test email",
+                "details": reason
+            }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending test mail: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to send test email: {str(e)}")
+

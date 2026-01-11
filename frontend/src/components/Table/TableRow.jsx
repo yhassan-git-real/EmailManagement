@@ -33,13 +33,12 @@ const TableRow = ({
 
   return (
     <tr
-      className={`${isSelected
-        ? 'bg-primary-500/15 hover:bg-primary-500/20 border-l-2 border-primary-500'
-        : 'hover:bg-dark-500/50'
-        } cursor-pointer transition-all`}
+      className={`h-10 ${isSelected
+        ? 'bg-primary-500/10 hover:bg-primary-500/15'
+        : 'hover:bg-dark-500/30 odd:bg-dark-600/20'
+        } cursor-pointer transition-colors`}
       onClick={handleRowClick}
       onKeyDown={(e) => {
-        // Add keyboard navigation support
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           handleRowClick();
@@ -49,23 +48,16 @@ const TableRow = ({
       role="row"
       aria-selected={isSelected}
     >
-      {/* Checkbox Cell */}
-      <td className="px-2 py-2 whitespace-nowrap">
+      {/* Checkbox Cell - Compact */}
+      <td className="px-2 py-1.5 whitespace-nowrap">
         <div className="flex items-center justify-center">
-          <div
-            className={`w-6 h-6 border rounded-md flex items-center justify-center transition-all ${isSelected
-              ? 'border-primary-500 bg-primary-500/20 shadow-md'
-              : 'border-dark-300/50 bg-dark-500/50 hover:bg-dark-400/50'
-              }`}
-          >
-            <input
-              type="checkbox"
-              className="focus:ring-2 focus:ring-primary-500 h-4 w-4 text-primary-600 border-dark-300 rounded cursor-pointer bg-dark-500"
-              checked={isSelected}
-              onChange={handleCheckboxChange}
-              aria-label={`Select ${row.id || 'row'}`}
-            />
-          </div>
+          <input
+            type="checkbox"
+            className="h-3.5 w-3.5 rounded border-dark-400 bg-dark-600 text-primary-500 focus:ring-1 focus:ring-primary-500 focus:ring-offset-0 cursor-pointer"
+            checked={isSelected}
+            onChange={handleCheckboxChange}
+            aria-label={`Select ${row.id || 'row'}`}
+          />
         </div>
       </td>
 

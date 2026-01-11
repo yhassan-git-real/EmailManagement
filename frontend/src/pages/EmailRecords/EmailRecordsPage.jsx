@@ -68,63 +68,61 @@ const EmailRecordsPage = ({ connectionInfo, onDisconnect }) => {
             <Header connectionInfo={connectionInfo} onDisconnect={onDisconnect} />
 
             <div className="flex-grow">
-                <main className="flex-grow py-3 px-3 w-full animate-fadeIn">
-                    <div className="w-full max-w-full mx-auto px-2">
-                        <div className="w-full card rounded-xl p-5">
-                            {/* Header */}
-                            <EmailRecordsHeader />
+                <main className="flex-grow py-4 px-4 w-full animate-fadeIn">
+                    <div className="w-full max-w-full mx-auto">
+                        {/* Header */}
+                        <EmailRecordsHeader />
 
-                            {/* Toolbar */}
-                            <EmailRecordsToolbar
-                                searchTerm={searchTerm}
-                                onSearchChange={handleSearch}
-                                statusFilter={statusFilter}
-                                onStatusFilterChange={handleStatusFilterChange}
-                                onExecuteFilter={handleExecuteFilter}
-                                selectedRows={selectedRows}
-                                onEditSelected={handleEditSelected}
-                                onDeleteSelected={handleDeleteSelected}
-                                isLoading={isLoading || actionsLoading}
-                                isLocalFiltering={isLocalFiltering}
-                                onClearFilters={clearFilters}
-                                filteredCount={filteredData.length}
-                                totalCount={tableData.length}
+                        {/* Toolbar */}
+                        <EmailRecordsToolbar
+                            searchTerm={searchTerm}
+                            onSearchChange={handleSearch}
+                            statusFilter={statusFilter}
+                            onStatusFilterChange={handleStatusFilterChange}
+                            onExecuteFilter={handleExecuteFilter}
+                            selectedRows={selectedRows}
+                            onEditSelected={handleEditSelected}
+                            onDeleteSelected={handleDeleteSelected}
+                            isLoading={isLoading || actionsLoading}
+                            isLocalFiltering={isLocalFiltering}
+                            onClearFilters={clearFilters}
+                            filteredCount={filteredData.length}
+                            totalCount={tableData.length}
+                        />
+
+                        {/* List */}
+                        <EmailRecordsList
+                            data={isLocalFiltering ? filteredData : tableData}
+                            isLoading={isLoading || actionsLoading}
+                            totalRows={isLocalFiltering ? filteredData.length : totalRows}
+                            currentPage={currentPage}
+                            pageSize={pageSize}
+                            onPageChange={handlePageChange}
+                            onRowSelect={handleRowSelect}
+                            selectedRows={selectedRows}
+                            onFilePreview={handleFilePreview}
+                            isFiltering={isLocalFiltering}
+                            onEditRecord={handleEditRecord}
+                            onDeleteRecord={handleDeleteRecord}
+                        />
+
+                        {/* File Previewer */}
+                        {selectedFile && (
+                            <FilePreviewer
+                                file={selectedFile}
+                                onClose={() => setSelectedFile(null)}
                             />
+                        )}
 
-                            {/* List */}
-                            <EmailRecordsList
-                                data={isLocalFiltering ? filteredData : tableData}
-                                isLoading={isLoading || actionsLoading}
-                                totalRows={isLocalFiltering ? filteredData.length : totalRows}
-                                currentPage={currentPage}
-                                pageSize={pageSize}
-                                onPageChange={handlePageChange}
-                                onRowSelect={handleRowSelect}
-                                selectedRows={selectedRows}
-                                onFilePreview={handleFilePreview}
-                                isFiltering={isLocalFiltering}
-                                onEditRecord={handleEditRecord}
-                                onDeleteRecord={handleDeleteRecord}
+                        {/* Edit Modal */}
+                        {showEditModal && editingRecord && (
+                            <EmailRecordEditModal
+                                record={editingRecord}
+                                onSave={handleSaveRecord}
+                                onCancel={() => setShowEditModal(false)}
+                                isLoading={actionsLoading}
                             />
-
-                            {/* File Previewer */}
-                            {selectedFile && (
-                                <FilePreviewer
-                                    file={selectedFile}
-                                    onClose={() => setSelectedFile(null)}
-                                />
-                            )}
-
-                            {/* Edit Modal */}
-                            {showEditModal && editingRecord && (
-                                <EmailRecordEditModal
-                                    record={editingRecord}
-                                    onSave={handleSaveRecord}
-                                    onCancel={() => setShowEditModal(false)}
-                                    isLoading={actionsLoading}
-                                />
-                            )}
-                        </div>
+                        )}
                     </div>
                 </main>
             </div>

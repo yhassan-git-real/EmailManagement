@@ -39,14 +39,13 @@ const TableCell = ({
 
   return (
     <td
-      className={`px-3 py-2 whitespace-nowrap ${column.align === 'right' ? 'text-right' : ''} 
-        ${isSelected ? 'text-text-primary font-medium' : 'text-text-secondary'} text-sm
-        ${column.type === 'actions' ? 'text-right' : ''}`}
+      className={`px-3 py-1.5 whitespace-nowrap text-[13px] truncate ${column.align === 'right' ? 'text-right' : ''
+        } ${isSelected ? 'text-text-primary' : 'text-text-secondary'} ${column.type === 'actions' ? 'text-right' : ''
+        }`}
       style={{ maxWidth: column.width ? undefined : '150px' }}
       title={column.key !== 'actions' ? getCellValue() : undefined}
       role="cell"
       data-column={column.key}
-      aria-label={`${column.label}: ${getCellValue()}`}
     >
       {content}
     </td>

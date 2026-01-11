@@ -1,41 +1,38 @@
 import React from 'react';
-import { EnvelopeIcon } from '@heroicons/react/24/outline';
 
 /**
- * Header component for Email Records page - simplified version as main layout handles the structure
+ * Compact header component for Email Records page - Modern SaaS style
  */
 const EmailRecordsHeader = () => {
     return (
-        <div className="mb-4 border-b border-dark-300/50 pb-3">
-            <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center">
-                    <div className="bg-primary-500/20 p-2 rounded-xl mr-3">
-                        <EnvelopeIcon className="h-5 w-5 text-primary-400" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-text-primary tracking-tight font-display">Database Email Records</h1>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <div className="text-xs text-text-muted font-medium bg-dark-500/50 px-2 py-1 rounded-lg border border-dark-300/50 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        {new Date().toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                        })}
-                    </div>
-                    <div className="text-xs text-primary-400 font-medium bg-primary-500/15 px-2 py-1 rounded-lg border border-primary-500/30 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
-                        </svg>
-                        Last updated: Today
-                    </div>
-                </div>
+        <div className="flex items-center justify-between py-3 mb-3 border-b border-dark-300/30">
+            {/* Left: Title and Description */}
+            <div>
+                <h1 className="text-xl font-semibold text-text-primary">Email Records</h1>
+                <p className="text-xs text-text-muted mt-0.5">View and manage email records with search, filter, and bulk actions</p>
             </div>
-            <div className="text-sm text-text-secondary font-medium">
-                View and manage email records with search, filter, and bulk actions functionality.
+
+            {/* Right: Status chips */}
+            <div className="flex items-center gap-2">
+                {/* Date chip */}
+                <div className="text-xs text-text-muted bg-dark-500/40 px-2 py-1 rounded border border-dark-300/40 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {new Date().toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    })}
+                </div>
+
+                {/* Last updated chip */}
+                <div className="text-xs text-primary-400 bg-primary-500/10 px-2 py-1 rounded border border-primary-500/20 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Updated today
+                </div>
             </div>
         </div>
     );

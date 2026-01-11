@@ -22,22 +22,22 @@ export const formatCellContent = (value, type, options = {}) => {
       let statusColor;
       switch (value) {
         case 'Success':
-          statusColor = 'bg-green-100 text-green-800';
+          statusColor = 'bg-emerald-500/15 text-emerald-400';
           break;
         case 'Failed':
-          statusColor = 'bg-red-100 text-red-800';
+          statusColor = 'bg-red-500/15 text-red-400';
           break;
         case 'Pending':
-          statusColor = 'bg-yellow-100 text-yellow-800';
+          statusColor = 'bg-amber-500/15 text-amber-400';
           break;
         case 'Draft':
-          statusColor = 'bg-gray-100 text-gray-800';
+          statusColor = 'bg-slate-500/15 text-slate-400';
           break;
         default:
-          statusColor = 'bg-blue-100 text-blue-800';
+          statusColor = 'bg-blue-500/15 text-blue-400';
       }
       return (
-        <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColor}`}>
+        <span className={`px-1.5 py-0.5 text-[11px] font-medium rounded ${statusColor}`}>
           {value}
         </span>
       );
@@ -47,9 +47,9 @@ export const formatCellContent = (value, type, options = {}) => {
       const fileName = value.split('/').pop();
       return (
         <button
-          className="text-primary-600 hover:text-primary-700 text-xs underline truncate max-w-[150px] inline-block"
+          className="text-primary-400 hover:text-primary-300 text-xs underline truncate max-w-[120px] inline-block"
           onClick={(e) => {
-            e.stopPropagation(); // Prevent row selection
+            e.stopPropagation();
             options.onFileClick && options.onFileClick(value);
           }}
           title={value}
@@ -61,19 +61,19 @@ export const formatCellContent = (value, type, options = {}) => {
     case 'actions':
       if (!value || !Array.isArray(value) || value.length === 0) return null;
       return (
-        <div className="flex space-x-2 justify-end">
+        <div className="flex space-x-1 justify-end">
           {value.map((action, i) => (
             <button
               key={i}
               onClick={(e) => {
-                e.stopPropagation(); // Prevent row selection
+                e.stopPropagation();
                 action.onClick && action.onClick(e);
               }}
               title={action.label}
-              className={`p-1.5 rounded-md border shadow-sm transition-colors ${action.className || 'bg-gray-100 hover:bg-gray-200 border-gray-200'}`}
+              className="p-1 rounded hover:bg-dark-500/60 text-text-muted hover:text-text-secondary transition-colors"
             >
               <span className="sr-only">{action.label}</span>
-              {action.icon}
+              {React.cloneElement(action.icon, { className: 'h-3.5 w-3.5' })}
             </button>
           ))}
         </div>

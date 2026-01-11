@@ -27,50 +27,28 @@ const TableHeader = ({
     }
   }, [someSelected, allSelected]);
   return (
-    <thead className="bg-dark-700/80 sticky top-0 z-10" role="rowgroup">
+    <thead className="bg-dark-700 sticky top-0 z-10" role="rowgroup">
       <tr role="row">
-        {/* Checkbox Column - Enhanced for better visibility */}
-        <th scope="col" className="w-10 px-2 py-2 text-left text-xs font-medium text-text-muted tracking-wider">
+        {/* Checkbox Column - Compact */}
+        <th scope="col" className="w-10 px-2 py-2">
           <div className="flex items-center justify-center">
-            <div
-              className="w-6 h-6 border border-dark-300/50 bg-dark-500/50 rounded-md flex items-center justify-center shadow-sm hover:bg-dark-400/50 cursor-pointer"
-              tabIndex="0"
-              role="checkbox"
-              aria-checked={allSelected}
+            <input
+              type="checkbox"
+              ref={checkboxRef}
+              className="h-3.5 w-3.5 rounded border-dark-400 bg-dark-600 text-primary-500 focus:ring-1 focus:ring-primary-500 focus:ring-offset-0 cursor-pointer"
+              checked={allSelected}
+              onChange={handleSelectAllChange}
               aria-label="Select all rows"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  if (onSelectAll) {
-                    onSelectAll(!allSelected);
-                  }
-                }
-              }}
-              onClick={() => {
-                if (onSelectAll) {
-                  onSelectAll(!allSelected);
-                }
-              }}
-            >
-              <input
-                type="checkbox"
-                className="focus:ring-2 focus:ring-primary-500 h-4 w-4 text-primary-600 border-dark-300 rounded cursor-pointer bg-dark-500"
-                checked={allSelected}
-                ref={checkboxRef}
-                onChange={handleSelectAllChange}
-                aria-label="Select all rows"
-              />
-            </div>
+            />
           </div>
         </th>
 
-        {/* Column Headers */}
+        {/* Column Headers - Compact uppercase */}
         {columns.map((column) => (
           <th
             key={column.key}
             scope="col"
-            className={`px-3 py-2 text-left text-xs font-medium text-text-muted tracking-wider ${column.width ? column.width : ''}`}
-            aria-sort={column.sortable ? (column.sortDirection || 'none') : undefined}
+            className={`px-3 py-2 text-left text-[11px] font-medium text-text-muted uppercase tracking-wider ${column.width || ''}`}
           >
             <div className="flex items-center">
               <span>{column.label}</span>

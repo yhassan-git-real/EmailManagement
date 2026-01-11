@@ -7,14 +7,32 @@ const EmailChart = ({ type, data }) => {
 
   useEffect(() => {
     if (!chartRef.current) return;
-    
+
     // Destroy existing chart if it exists
     if (chartInstance.current) {
       chartInstance.current.destroy();
     }
-    
+
     const ctx = chartRef.current.getContext('2d');
-    
+
+    // Common legend configuration for consistent alignment
+    const legendConfig = {
+      position: 'bottom',
+      align: 'center',
+      labels: {
+        usePointStyle: true,
+        pointStyle: 'circle',
+        boxWidth: 8,
+        boxHeight: 8,
+        padding: 16,
+        font: {
+          size: 11,
+          family: 'Inter, sans-serif'
+        },
+        color: '#94a3b8'
+      }
+    };
+
     if (type === 'pie') {
       chartInstance.current = new Chart(ctx, {
         type: 'doughnut',
@@ -23,49 +41,43 @@ const EmailChart = ({ type, data }) => {
           datasets: [{
             data: data.values,
             backgroundColor: data.colors,
-            borderWidth: 1,
-            borderColor: '#ffffff',
-            hoverOffset: 5
+            borderWidth: 0,
+            hoverOffset: 4
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           cutout: '65%',
+          layout: {
+            padding: {
+              bottom: 10
+            }
+          },
           plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                usePointStyle: true,
-                boxWidth: 8,
-                padding: 15,
-                font: {
-                  size: 11
-                }
-              }
-            },
+            legend: legendConfig,
             tooltip: {
               displayColors: false,
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              titleColor: '#64748B',
-              bodyColor: '#334155',
-              borderColor: '#E2E8F0',
+              backgroundColor: 'rgba(30, 37, 56, 0.95)',
+              titleColor: '#f8fafc',
+              bodyColor: '#e2e8f0',
+              borderColor: 'rgba(99, 102, 241, 0.3)',
               borderWidth: 1,
               padding: 10,
-              cornerRadius: 4,
+              cornerRadius: 8,
               titleFont: {
                 size: 12,
-                weight: 'bold'
+                weight: '600'
               },
               bodyFont: {
                 size: 12
               },
               callbacks: {
-                label: function(context) {
+                label: function (context) {
                   const label = context.label || '';
                   const value = context.raw || 0;
                   const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                  const percentage = Math.round((value / total) * 100);
+                  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
                   return `${label}: ${value} (${percentage}%)`;
                 }
               }
@@ -82,13 +94,13 @@ const EmailChart = ({ type, data }) => {
             label: dataset.label,
             data: dataset.data,
             borderColor: dataset.color,
-            backgroundColor: `${dataset.color}20`,
+            backgroundColor: `${dataset.color}15`,
             borderWidth: 2,
-            tension: 0.3,
+            tension: 0.4,
             fill: true,
-            pointBackgroundColor: '#fff',
+            pointBackgroundColor: dataset.color,
             pointBorderColor: dataset.color,
-            pointBorderWidth: 1.5,
+            pointBorderWidth: 0,
             pointRadius: 3,
             pointHoverRadius: 5
           }))
@@ -100,29 +112,24 @@ const EmailChart = ({ type, data }) => {
             mode: 'index',
             intersect: false
           },
+          layout: {
+            padding: {
+              bottom: 10
+            }
+          },
           plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                usePointStyle: true,
-                boxWidth: 8,
-                padding: 15,
-                font: {
-                  size: 11
-                }
-              }
-            },
+            legend: legendConfig,
             tooltip: {
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              titleColor: '#64748B',
-              bodyColor: '#334155',
-              borderColor: '#E2E8F0',
+              backgroundColor: 'rgba(30, 37, 56, 0.95)',
+              titleColor: '#f8fafc',
+              bodyColor: '#e2e8f0',
+              borderColor: 'rgba(99, 102, 241, 0.3)',
               borderWidth: 1,
-              padding: 8,
-              cornerRadius: 4,
+              padding: 10,
+              cornerRadius: 8,
               titleFont: {
                 size: 12,
-                weight: 'bold'
+                weight: '600'
               },
               bodyFont: {
                 size: 12
@@ -132,34 +139,38 @@ const EmailChart = ({ type, data }) => {
           scales: {
             x: {
               grid: {
-                display: false
+                display: false,
+                drawBorder: false
               },
               ticks: {
                 font: {
                   size: 10
-                }
+                },
+                color: '#64748b'
               }
             },
             y: {
               beginAtZero: true,
               grid: {
-                color: '#EEF2F6'
+                color: 'rgba(42, 53, 72, 0.5)',
+                drawBorder: false
               },
               border: {
-                dash: [5, 5]
+                dash: [4, 4]
               },
               ticks: {
                 precision: 0,
                 font: {
                   size: 10
-                }
+                },
+                color: '#64748b'
               }
             }
           }
         }
       });
     }
-    
+
     return () => {
       if (chartInstance.current) {
         chartInstance.current.destroy();
@@ -168,7 +179,7 @@ const EmailChart = ({ type, data }) => {
   }, [type, data]);
 
   return (
-    <div className="w-full h-64">
+    <div className="w-full h-full">
       <canvas ref={chartRef}></canvas>
     </div>
   );

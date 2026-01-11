@@ -1,250 +1,224 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { formatConnectionTime, getFormattedDate } from '../../utils/dateUtils';
+import { formatConnectionTime } from '../../utils/dateUtils';
 
 const Header = ({ connectionInfo, onDisconnect }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const searchInputRef = useRef(null);
 
-  // Check if screen is mobile size on mount and when window resizes
+  // Check if screen is mobile size
   useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
+    const checkIfMobile = () => setIsMobile(window.innerWidth < 768);
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
-
-    return () => {
-      window.removeEventListener('resize', checkIfMobile);
-    };
+    return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
-  // Navigation items with their icons and routes
+  // Handle Ctrl+K shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+        setTimeout(() => searchInputRef.current?.focus(), 100);
+      }
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const navItems = [
-    {
-      id: 'home',
-      label: 'Home',
-      path: '/home',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-          className="w-5 h-5">
-          <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" />
-          <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z" />
-        </svg>
-      )
-    },
-    {
-      id: 'records',
-      label: 'Email Records',
-      path: '/email-records',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-          className="w-5 h-5">
-          <path fillRule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 013.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 013.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 01-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875zm6.905 9.97a.75.75 0 00-1.06 0l-3 3a.75.75 0 101.06 1.06l1.72-1.72V18a.75.75 0 001.5 0v-4.19l1.72 1.72a.75.75 0 101.06-1.06l-3-3z" clipRule="evenodd" />
-          <path d="M14.25 5.25a5.23 5.23 0 00-1.279-3.434 9.768 9.768 0 016.963 6.963A5.23 5.23 0 0016.5 7.5h-1.875a.375.375 0 01-.375-.375V5.25z" />
-        </svg>
-      )
-    },
-    {
-      id: 'automate',
-      label: 'Automate Email',
-      path: '/automate',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-          className="w-5 h-5">
-          <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clipRule="evenodd" />
-        </svg>
-      )
-    }
+    { id: 'home', label: 'Dashboard', path: '/home' },
+    { id: 'records', label: 'Records', path: '/email-records' },
+    { id: 'automate', label: 'Automate', path: '/automate' }
   ];
 
-  // Check if a nav item is active based on current path
   const isActive = (path) => {
-    if (path === '/home' && (currentPath === '/home' || currentPath === '/dashboard' || currentPath === '/status')) {
-      return true;
-    }
-    if (path === '/email-records' && (currentPath === '/email-records' || currentPath === '/records')) {
-      return true;
-    }
+    if (path === '/home' && ['/home', '/dashboard', '/status'].includes(currentPath)) return true;
+    if (path === '/email-records' && ['/email-records', '/records'].includes(currentPath)) return true;
     return currentPath === path;
   };
 
   return (
-    <header className="bg-dark-700/95 backdrop-blur-xl border-b border-dark-300/50 sticky top-0 z-50 w-full shadow-dark-lg">
-      <div className="max-w-full mx-auto px-2 sm:px-3 lg:px-4">
-        <div className="flex justify-between items-center py-2.5">
-          <div className="flex items-center gap-3">
-            {/* Logo with gradient background */}
-            <div className="bg-gradient-to-br from-primary-500 to-accent-violet p-2.5 rounded-xl shadow-glow-sm mr-3 transform transition-all duration-300 hover:scale-105 hover:shadow-glow-md">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-7 h-7 text-white"
-              >
-                <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
-                <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gradient tracking-tight font-display">EmailManagement</h1>
-              <p className="text-xs text-text-muted font-medium">Email Delivery Management System</p>
-            </div>
-          </div>
+    <header className="bg-dark-700/95 backdrop-blur-xl border-b border-dark-300/40 sticky top-0 z-50 w-full">
+      <div className="max-w-full mx-auto px-3 lg:px-4">
+        <div className="flex justify-between items-center h-14">
+          {/* Left: Logo + Nav */}
+          <div className="flex items-center gap-6">
+            {/* Logo */}
+            <Link to="/home" className="flex items-center gap-2.5 group">
+              <div className="bg-gradient-to-br from-primary-500 to-accent-violet p-2 rounded-lg shadow-glow-sm transition-all duration-200 group-hover:shadow-glow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white">
+                  <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
+                  <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
+                </svg>
+              </div>
+              <span className="text-base font-semibold text-text-primary hidden sm:block">EmailManager</span>
+            </Link>
 
-          {/* Navigation items - desktop */}
-          <div className="hidden md:flex items-center">
-            {navItems.map((item) => (
-              <Link
-                key={item.id}
-                to={item.path}
-                className={`group flex items-center px-3 py-1.5 mx-1 relative rounded-lg transition-all duration-300 ${isActive(item.path)
-                  ? 'text-primary-400 bg-primary-500/10'
-                  : 'text-text-secondary hover:text-primary-400 hover:bg-dark-500/50'
-                  }`}
-              >
-                <div className={`p-1 rounded-lg mr-1.5 transition-all duration-300 ${isActive(item.path)
-                  ? 'text-primary-400'
-                  : 'text-text-muted group-hover:text-primary-400'}`}>
-                  {item.icon}
-                </div>
-                <span className={`text-sm font-medium tracking-wide ${isActive(item.path) ? 'font-semibold' : ''}`}>
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-150 ${isActive(item.path)
+                    ? 'text-text-primary bg-dark-500/80'
+                    : 'text-text-muted hover:text-text-secondary hover:bg-dark-500/40'
+                    }`}
+                >
                   {item.label}
-                </span>
-                {isActive(item.path) && (
-                  <span className="absolute -bottom-0.5 left-2 right-2 h-0.5 bg-gradient-to-r from-primary-500 to-accent-violet rounded-full shadow-glow-sm"></span>
-                )}
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </nav>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Date display */}
-            <span className="text-sm text-text-secondary bg-dark-500/80 px-3 py-1.5 rounded-lg border border-dark-300/50 hidden sm:block">
-              {new Date().toLocaleDateString()}
-            </span>
+          {/* Right: Search + Date + Actions + Profile */}
+          <div className="flex items-center gap-2">
+            {/* Search Button */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm text-text-muted bg-dark-500/60 hover:bg-dark-500/80 rounded-lg border border-dark-300/50 transition-all duration-150"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+              <span className="hidden lg:block">Search...</span>
+              <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs bg-dark-400/60 rounded text-text-muted">
+                ⌘K
+              </kbd>
+            </button>
 
-            {/* Connection Info Badge */}
+            {/* Notifications */}
+            <button className="p-2 text-text-muted hover:text-text-secondary hover:bg-dark-500/60 rounded-lg transition-all duration-150 relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+              </svg>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary-500 rounded-full"></span>
+            </button>
+
+            {/* Connection/Profile */}
             {connectionInfo && (
               <div className="relative">
                 <button
-                  className="flex items-center bg-gradient-to-r from-primary-500 to-accent-violet text-white rounded-lg px-4 py-2 text-sm font-medium hover:shadow-glow-md hover:from-primary-600 hover:to-primary-700 transition-all duration-300"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 px-2 py-1.5 text-sm rounded-lg hover:bg-dark-500/60 transition-all duration-150"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 mr-2">
-                    <path fillRule="evenodd" d="M7.584 2.186a.75.75 0 01.832 0l7 4a.75.75 0 010 1.312l-7 4a.75.75 0 01-.832 0l-7-4a.75.75 0 010-1.312l7-4z" clipRule="evenodd" />
-                    <path fillRule="evenodd" d="M2.5 10.677v4.073c0 .342.192.66.5.847l7 4.2a.75.75 0 00.75 0l7-4.2a1 1 0 00.5-.847v-4.073a.75.75 0 00-1.5 0v3.927l-6.5 3.9-6.5-3.9v-3.927a.75.75 0 00-1.5 0z" clipRule="evenodd" />
-                  </svg>
-                  <span className="hidden sm:inline">{connectionInfo.databaseName}</span>
-                  <span className="px-2 py-0.5 ml-2 bg-success/20 text-success-light text-xs font-medium rounded-full flex items-center border border-success/30">
-                    <span className="w-1.5 h-1.5 bg-success rounded-full mr-1 animate-pulse"></span>
-                    Connected
-                  </span>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-5 h-5 ml-2 opacity-70 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}>
-                    <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z" clipRule="evenodd" />
-                  </svg>
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500 to-accent-violet flex items-center justify-center">
+                    <span className="text-xs font-semibold text-white">
+                      {connectionInfo.databaseName?.charAt(0)?.toUpperCase() || 'D'}
+                    </span>
+                  </div>
+                  <span className="hidden lg:block text-text-secondary text-sm">{connectionInfo.databaseName}</span>
+                  <span className="w-2 h-2 bg-success rounded-full"></span>
                 </button>
 
-                {/* Dropdown menu */}
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-96 rounded-xl shadow-dark-lg py-1 z-10 border border-dark-300/50 animate-scaleIn origin-top-right bg-dark-700/95 backdrop-blur-xl">
-                    <div className="px-6 py-4">
-                      <div className="flex items-center justify-between border-b border-dark-300/50 pb-3 mb-3">
-                        <p className="text-base font-bold text-text-primary">Database Connection</p>
-                        <div className="px-2 py-0.5 bg-success/20 text-success-light text-xs font-medium rounded-full border border-success/30">
-                          Active
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 text-sm">
-                        <div className="flex">
-                          <div className="w-32 flex-shrink-0 text-text-muted">Server</div>
-                          <div className="font-medium text-text-primary break-all">{connectionInfo.serverName}</div>
-                        </div>
-                        <div className="flex">
-                          <div className="w-32 flex-shrink-0 text-text-muted">Database</div>
-                          <div className="font-medium text-text-primary break-all">{connectionInfo.databaseName}</div>
-                        </div>
-                        <div className="flex">
-                          <div className="w-32 flex-shrink-0 text-text-muted">User</div>
-                          <div className="font-medium text-text-primary break-all">{connectionInfo.username}</div>
-                        </div>
-                        <div className="flex">
-                          <div className="w-32 flex-shrink-0 text-text-muted">Connected at</div>
-                          <div className="font-medium text-text-primary">{formatConnectionTime(connectionInfo.connectedAt)}</div>
-                        </div>
-                        <div className="flex">
-                          <div className="w-32 flex-shrink-0 text-text-muted">Status</div>
-                          <div className="px-2 py-0.5 bg-success/20 text-success-light text-xs font-medium rounded-full flex items-center border border-success/30">
-                            <span className="w-1.5 h-1.5 bg-success rounded-full mr-1"></span>
-                            Active
-                          </div>
-                        </div>
+                  <div className="absolute right-0 mt-1 w-72 bg-dark-600/95 backdrop-blur-xl rounded-xl border border-dark-300/50 shadow-dark-lg py-2 z-50 animate-fadeIn">
+                    <div className="px-4 py-2 border-b border-dark-300/50">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-text-primary">Database Connection</span>
+                        <span className="px-2 py-0.5 text-xs bg-success/20 text-success-light rounded-full">Active</span>
                       </div>
                     </div>
 
-                    <div className="border-t border-dark-300/50 p-3">
+                    <div className="px-4 py-3 space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-text-muted">Server</span>
+                        <span className="text-text-secondary truncate max-w-[140px]">{connectionInfo.serverName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-text-muted">Database</span>
+                        <span className="text-text-secondary">{connectionInfo.databaseName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-text-muted">User</span>
+                        <span className="text-text-secondary">{connectionInfo.username}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-text-muted">Connected</span>
+                        <span className="text-text-secondary">{formatConnectionTime(connectionInfo.connectedAt)}</span>
+                      </div>
+                    </div>
+
+                    <div className="px-3 pt-2 border-t border-dark-300/50">
                       <button
-                        type="button"
-                        className="flex w-full items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-danger to-danger-dark hover:from-danger-dark hover:to-red-700 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                        onClick={() => {
-                          onDisconnect();
-                          setDropdownOpen(false);
-                        }}
+                        onClick={() => { onDisconnect(); setDropdownOpen(false); }}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-danger-light hover:bg-danger/10 rounded-lg transition-colors"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-2">
-                          <path fillRule="evenodd" d="M10 2a.75.75 0 01.75.75v7.5a.75.75 0 01-1.5 0v-7.5A.75.75 0 0110 2zM5.404 4.343a.75.75 0 010 1.06 6.5 6.5 0 109.192 0 .75.75 0 111.06-1.06 8 8 0 11-11.313 0 .75.75 0 011.06 0z" clipRule="evenodd" />
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9" />
                         </svg>
-                        Disconnect Database
+                        Disconnect
                       </button>
                     </div>
                   </div>
                 )}
               </div>
             )}
+
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-text-muted hover:text-text-secondary rounded-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d={mobileMenuOpen ? 'M6 18 18 6M6 6l12 12' : 'M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5'} />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu button */}
-      {isMobile && (
-        <div className="md:hidden px-4 py-2 border-t border-dark-300/50 flex justify-between items-center">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex items-center text-primary-400 hover:text-primary-300 focus:outline-none rounded-lg px-3 py-2 hover:bg-dark-500/50 transition-all duration-200 w-full justify-center"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-5 w-5 mr-1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
-            </svg>
-            <span className="text-sm font-medium">{mobileMenuOpen ? 'Close Menu' : 'Menu'}</span>
-          </button>
-        </div>
-      )}
-
-      {/* Mobile navigation menu */}
+      {/* Mobile Navigation */}
       {isMobile && mobileMenuOpen && (
-        <div className="md:hidden bg-dark-700/95 backdrop-blur-xl border-t border-dark-300/50 shadow-dark-lg animate-fadeIn">
-          <div className="px-3 pt-2 pb-3 space-y-1">
+        <div className="md:hidden bg-dark-700/95 backdrop-blur-xl border-t border-dark-300/40 animate-fadeIn">
+          <nav className="px-3 py-2 space-y-1">
             {navItems.map((item) => (
               <Link
                 key={item.id}
                 to={item.path}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-all duration-200 ${isActive(item.path)
-                  ? 'bg-primary-500/15 text-primary-400 border-l-4 border-primary-500 pl-3'
-                  : 'text-text-secondary hover:bg-dark-500/50 hover:text-primary-400'
+                className={`block px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive(item.path)
+                  ? 'text-primary-400 bg-primary-500/10'
+                  : 'text-text-secondary hover:bg-dark-500/40'
                   }`}
               >
-                <span className={`mr-3 ${isActive(item.path) ? 'text-primary-400' : 'text-text-muted'}`}>
-                  {item.icon}
-                </span>
                 {item.label}
               </Link>
             ))}
+          </nav>
+        </div>
+      )}
+
+      {/* Search Modal */}
+      {searchOpen && (
+        <div className="fixed inset-0 bg-dark-900/80 backdrop-blur-sm z-50 flex items-start justify-center pt-24 animate-fadeIn" onClick={() => setSearchOpen(false)}>
+          <div className="w-full max-w-lg mx-4 bg-dark-600/95 backdrop-blur-xl rounded-xl border border-dark-300/50 shadow-dark-lg overflow-hidden animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-dark-300/50">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-text-muted">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search emails, records, settings..."
+                className="flex-1 bg-transparent text-text-primary placeholder-text-muted outline-none text-sm"
+                autoFocus
+              />
+              <kbd className="px-2 py-1 text-xs bg-dark-500/60 rounded text-text-muted">ESC</kbd>
+            </div>
+            <div className="px-4 py-8 text-center text-sm text-text-muted">
+              Start typing to search...
+            </div>
           </div>
         </div>
       )}

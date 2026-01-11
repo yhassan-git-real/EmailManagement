@@ -7,6 +7,7 @@ from datetime import datetime
 
 from ....utils.db_utils import get_db_connection
 from ....core.config import get_settings
+from ....utils.log_parser import calculate_avg_processing_time, get_log_metrics_from_logs, get_daily_trends_from_logs
 
 logger = logging.getLogger(__name__)
 
@@ -314,34 +315,32 @@ def get_dashboard_metrics(start_date: Optional[datetime] = None, end_date: Optio
             elif status_key.lower() == "failed":
                 status_results["Failed"] = count
         
-        # Calculate metrics
-        delivery_rate = 0
-        bounce_rate = 0
+        # Get log-based metrics for processed count (more accurate for rate calculations)
+        log_metrics = get_log_metrics_from_logs(start_date, end_date)
         
-        if total_count > 0:
-            delivery_rate = (status_results["Success"] / total_count) * 100
-            bounce_rate = (status_results["Failed"] / total_count) * 100
+        # Calculate delivery/bounce rates from LOG data (actual processed emails)
+        # This is more accurate than database counts which include pending
+        processed_total = log_metrics.get('total_processed', 0)
+        if processed_total > 0:
+            delivery_rate = log_metrics.get('delivery_rate', 0)
+            bounce_rate = 100 - delivery_rate
+        else:
+            # Fallback to database counts (excluding pending)
+            db_processed = status_results["Success"] + status_results["Failed"]
+            if db_processed > 0:
+                delivery_rate = (status_results["Success"] / db_processed) * 100
+                bounce_rate = (status_results["Failed"] / db_processed) * 100
+            else:
+                delivery_rate = 0
+                bounce_rate = 0
         
-        # Get average processing time using only the Date column
-        time_query = f"""
-            SELECT 
-                AVG(DATEDIFF(SECOND, Date, GETDATE())) as AvgProcessingTime
-            FROM {settings.EMAIL_TABLE}
-            WHERE Email_Status IN ('Success', 'Failed')
-        """
-        
-        # Add date filter to the query if provided
-        if date_filter:
-            time_query = time_query.replace('WHERE', 'WHERE ' + date_filter.replace('WHERE', '') + ' AND')
-        
-        cursor.execute(time_query, params)
-        avg_time_row = cursor.fetchone()
-        
-        # Provide a default value if NULL is returned
-        avg_processing_time = avg_time_row[0] if avg_time_row and avg_time_row[0] is not None else 0
+        # Get average processing time from Email_Logs (parsed from log files)
+        # This provides accurate elapsed times from the automation process
+        time_metrics = calculate_avg_processing_time(start_date, end_date)
+        avg_processing_time = time_metrics.get('avg_seconds', 0)
         
         # Log the result for debugging
-        logger.debug(f"Average processing time query result: {avg_time_row}")
+        logger.debug(f"Average processing time from logs: {avg_processing_time}s (from {log_metrics.get('total_emails', 0)} emails)")
         
         # Get daily trends for the last 7 days or specified date range
         # Adjust the WHERE clause for trend query based on date filter
@@ -399,21 +398,29 @@ def get_dashboard_metrics(start_date: Optional[datetime] = None, end_date: Optio
                 change_pct = ((last_day_total - first_day_total) / first_day_total) * 100
                 weekly_change = f"{'+' if change_pct >= 0 else ''}{change_pct:.1f}%"
         
+        # Get log-based metrics for processed count and accurate success/failed counts
+        log_metrics = get_log_metrics_from_logs(start_date, end_date)
+        log_success = log_metrics.get('success_count', 0)
+        log_failed = log_metrics.get('failed_count', 0)
+        
         return {
             "metrics": {
-                "totalSent": total_count,
+                "totalRecords": total_count,
                 "weeklyChange": weekly_change,
                 "deliveryRate": f"{delivery_rate:.1f}%",
                 "bounceRate": f"{bounce_rate:.1f}%",
-                "processingTime": f"{avg_processing_time:.1f}s"
+                "processingTime": f"{avg_processing_time:.1f}s",
+                "processedCount": log_metrics.get('total_processed', 0),
+                "successCount": log_success,
+                "failedCount": log_failed
             },
             "statusSummary": {
                 "pending": status_results["Pending"],
-                "success": status_results["Success"],
-                "failed": status_results["Failed"],
-                "total": total_count
+                "success": log_success,  # Use log-based count for consistency
+                "failed": log_failed,    # Use log-based count for consistency
+                "total": log_success + log_failed + status_results["Pending"]
             },
-            "trends": formatted_trends,
+            "trends": get_daily_trends_from_logs(start_date, end_date),  # Use log-based trends
             "last_updated": datetime.now().isoformat()
         }
     except Exception as e:

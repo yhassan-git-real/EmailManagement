@@ -119,11 +119,7 @@ def get_settings() -> Settings:
     Uses lru_cache for performance optimization.
     """
     try:
-        print("Loading settings...")
         settings = Settings()
-        print(f"CORS_ORIGINS: {settings.CORS_ORIGINS}")
-        print(f"CORS_ALLOW_METHODS: {settings.CORS_ALLOW_METHODS}")
-        print(f"CORS_ALLOW_HEADERS: {settings.CORS_ALLOW_HEADERS}")
         return settings
     except Exception as e:
         print(f"Error loading settings: {str(e)}")

@@ -2,11 +2,9 @@ import React from 'react';
 import {
     Header,
     Footer,
-    Breadcrumb,
     EmailSettingsModal,
     TemplateSelector
 } from '../../components';
-import { HomeIcon } from '@heroicons/react/24/outline';
 
 // Custom hooks
 import useAutomationStatus from './hooks/useAutomationStatus';
@@ -110,19 +108,11 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="flex flex-col min-h-screen">
             <Header connectionInfo={connectionInfo} onDisconnect={onDisconnect} />
             <div className="flex flex-row flex-grow relative">
                 <main className="flex-grow py-3 px-3 w-full animate-fadeIn">
                     <div className="w-full max-w-full mx-auto px-2">
-                        {/* Breadcrumb Navigation */}
-                        <Breadcrumb
-                            items={[
-                                { label: 'Home', path: '/home', icon: <HomeIcon /> },
-                                { label: 'Automate Email' }
-                            ]}
-                        />
-
                         {/* Control Panel - Now includes Template, Scheduler, Archive, and Attachment settings */}
                         <AutomationControlPanel
                             automationStatus={automationStatus}

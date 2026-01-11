@@ -13,35 +13,35 @@ const TableEmpty = ({
   error = null,
 }) => {
   return (
-    <tbody className="bg-white divide-y divide-gray-200" role="rowgroup">
+    <tbody className="bg-dark-600/50 divide-y divide-dark-300/30" role="rowgroup">
       <tr role="row">
-        <td 
-          colSpan={colSpan} 
-          className="px-3 py-4 whitespace-nowrap text-center text-sm text-gray-500"
+        <td
+          colSpan={colSpan}
+          className="px-3 py-4 whitespace-nowrap text-center text-sm text-text-muted"
           role="cell"
           aria-live="polite"
         >
           {isLoading ? (
-            <div 
+            <div
               className="flex justify-center items-center space-x-2"
               role="status"
               aria-label="Loading content"
             >
-              <ArrowPathIcon className="h-5 w-5 animate-spin text-blue-600" aria-hidden="true" />
-              <span>{loadingMessage}</span>
+              <ArrowPathIcon className="h-5 w-5 animate-spin text-primary-500" aria-hidden="true" />
+              <span className="text-text-secondary">{loadingMessage}</span>
               <span className="sr-only">Loading</span>
             </div>
           ) : error ? (
-            <div 
-              className="flex justify-center items-center space-x-2 text-red-600"
+            <div
+              className="flex justify-center items-center space-x-2 text-danger"
               role="alert"
               aria-live="assertive"
             >
-              <ExclamationTriangleIcon className="h-5 w-5 text-red-600" aria-hidden="true" />
+              <ExclamationTriangleIcon className="h-5 w-5 text-danger" aria-hidden="true" />
               <span>{typeof error === 'string' ? error : 'An error occurred while loading data'}</span>
             </div>
           ) : (
-            <div className="py-2" aria-label={emptyMessage}>
+            <div className="py-2 text-text-muted" aria-label={emptyMessage}>
               {emptyMessage}
             </div>
           )}

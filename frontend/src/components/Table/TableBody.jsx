@@ -33,14 +33,14 @@ const TableBody = ({
       console.error('[TableBody] Error handling row selection:', error);
     }
   }, [onRowSelect]);
-  
+
   // Memoize the data array to prevent unnecessary re-renders
   const memoizedData = useMemo(() => {
     return Array.isArray(data) ? data : [];
   }, [data]);
 
   return (
-    <tbody className="bg-white divide-y divide-gray-200" role="rowgroup">
+    <tbody className="bg-dark-600/50 divide-y divide-dark-300/30" role="rowgroup">
       {memoizedData.map((row) => (
         <TableRow
           key={row.id || `row-${Math.random().toString(36).substr(2, 9)}`}

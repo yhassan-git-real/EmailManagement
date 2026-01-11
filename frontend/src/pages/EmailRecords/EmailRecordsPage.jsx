@@ -6,8 +6,8 @@ import EmailRecordsHeader from './components/EmailRecordsHeader';
 import EmailRecordsToolbar from './components/EmailRecordsToolbar';
 import EmailRecordsList from './components/EmailRecordsList';
 import EmailRecordEditModal from './components/EmailRecordEditModal';
-import { FilePreviewer, Header, Footer, Breadcrumb } from '../../components';
-import { EnvelopeIcon, HomeIcon } from '@heroicons/react/24/outline';
+import { FilePreviewer, Header, Footer } from '../../components';
+import { EnvelopeIcon } from '@heroicons/react/24/outline';
 
 /**
  * Main EmailRecordsPage component that combines header, toolbar, list, and edit modal
@@ -67,18 +67,10 @@ const EmailRecordsPage = ({ connectionInfo, onDisconnect }) => {
         <div className="flex flex-col min-h-screen">
             <Header connectionInfo={connectionInfo} onDisconnect={onDisconnect} />
 
-            <div className="flex-grow bg-gradient-to-b from-gray-50 to-gray-100">
+            <div className="flex-grow">
                 <main className="flex-grow py-3 px-3 w-full animate-fadeIn">
                     <div className="w-full max-w-full mx-auto px-2">
-                        {/* Breadcrumb Navigation */}
-                        <Breadcrumb
-                            items={[
-                                { label: 'Home', path: '/home', icon: <HomeIcon /> },
-                                { label: 'Email Records', icon: <EnvelopeIcon className="h-3.5 w-3.5" /> }
-                            ]}
-                        />
-
-                        <div className="w-full bg-white shadow-md rounded-xl p-5">
+                        <div className="w-full card rounded-xl p-5">
                             {/* Header */}
                             <EmailRecordsHeader />
 

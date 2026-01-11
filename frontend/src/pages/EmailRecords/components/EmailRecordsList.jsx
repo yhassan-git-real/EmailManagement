@@ -25,7 +25,7 @@ const EmailRecordsList = ({
     const columns = getEmailColumns();
 
     return (
-        <div className="overflow-hidden border border-gray-200 rounded-lg shadow-md">
+        <div className="overflow-hidden border border-dark-300/50 rounded-xl shadow-sm">
             <Table
                 data={processedData}
                 columns={columns}

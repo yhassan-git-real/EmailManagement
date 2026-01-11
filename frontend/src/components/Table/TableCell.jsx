@@ -20,7 +20,7 @@ const TableCell = ({
       return '';
     }
   };
-  
+
   // Format cell content based on column type
   const content = formatCellContent(getCellValue(), column.type, {
     onFileClick: column.type === 'file' ? onFileClick : null
@@ -40,7 +40,7 @@ const TableCell = ({
   return (
     <td
       className={`px-3 py-2 whitespace-nowrap ${column.align === 'right' ? 'text-right' : ''} 
-        ${isSelected ? 'text-gray-900 font-medium' : 'text-gray-800'} text-sm
+        ${isSelected ? 'text-text-primary font-medium' : 'text-text-secondary'} text-sm
         ${column.type === 'actions' ? 'text-right' : ''}`}
       style={{ maxWidth: column.width ? undefined : '150px' }}
       title={column.key !== 'actions' ? getCellValue() : undefined}

@@ -34,19 +34,19 @@ const AutomationControlPanel = ({
   const [showTestMailModal, setShowTestMailModal] = useState(false);
 
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 mb-6 border border-gray-100">
-      <div className="p-4 sm:p-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+    <div className="card rounded-xl mb-6 relative z-20">
+      <div className="p-4 sm:p-5 border-b border-dark-300/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div className="flex items-center">
-          <div className="mr-4 bg-gradient-to-br from-primary-500 to-primary-600 text-white p-3 rounded-lg shadow-sm transform transition-all duration-300 hover:scale-105 hover:rotate-3">
+          <div className="mr-4 bg-gradient-to-br from-primary-500 to-accent-violet text-white p-3 rounded-xl shadow-glow-sm transform transition-all duration-300 hover:scale-105 hover:shadow-glow-md">
             <CogIconSolid className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 tracking-tight">Email Automation Control Panel</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Start, stop, and monitor your email automation workflow</p>
+            <h2 className="text-xl font-semibold text-text-primary tracking-tight font-display">Email Automation Control Panel</h2>
+            <p className="text-sm text-text-muted mt-0.5">Start, stop, and monitor your email automation workflow</p>
           </div>
         </div>
         <div className="flex items-center">
-          <div className="text-sm font-semibold text-primary-600 mr-3 hidden sm:flex items-center bg-primary-50 px-2.5 py-1 rounded-lg">
+          <div className="text-sm font-semibold text-primary-400 mr-3 hidden sm:flex items-center bg-primary-500/15 px-2.5 py-1 rounded-lg border border-primary-500/30">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -62,7 +62,7 @@ const AutomationControlPanel = ({
           {/* Test Mail Button */}
           <button
             onClick={() => setShowTestMailModal(true)}
-            className="group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-purple-500 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow"
+            className="group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-accent-violet to-accent-purple hover:from-purple-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-700 focus:ring-accent-violet transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-glow-accent"
             title="Send a test email to validate settings and templates"
           >
             <PaperAirplaneIcon className="h-5 w-5 mr-2 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -72,9 +72,9 @@ const AutomationControlPanel = ({
           <button
             onClick={onStartAutomation}
             disabled={isLoading.start || automationStatus.status === 'running' || automationStatus.status === 'restarting'}
-            className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${isLoading.start || automationStatus.status === 'running' || automationStatus.status === 'restarting'
-              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-              : 'text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 hover:shadow'
+            className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${isLoading.start || automationStatus.status === 'running' || automationStatus.status === 'restarting'
+              ? 'bg-dark-400 text-text-muted cursor-not-allowed'
+              : 'text-white bg-gradient-to-r from-success to-success-dark hover:from-success-dark hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-700 focus:ring-success hover:shadow-lg'
               }`}
             title="Process only pending emails, never emails with status 'Failed' or 'Success'"
           >
@@ -88,9 +88,9 @@ const AutomationControlPanel = ({
           <button
             onClick={onRestartFailed}
             disabled={isLoading.restart || automationStatus.status === 'restarting' || automationStatus.status === 'running' || automationStatus.summary.failed === 0}
-            className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${isLoading.restart || automationStatus.status === 'restarting' || automationStatus.status === 'running' || automationStatus.summary.failed === 0
-              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-              : 'text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-amber-500 hover:shadow'
+            className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${isLoading.restart || automationStatus.status === 'restarting' || automationStatus.status === 'running' || automationStatus.summary.failed === 0
+              ? 'bg-dark-400 text-text-muted cursor-not-allowed'
+              : 'text-white bg-gradient-to-r from-warning to-warning-dark hover:from-warning-dark hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-700 focus:ring-warning hover:shadow-lg'
               }`}
             title="Process only emails with status 'Failed', never pending emails"
           >
@@ -101,9 +101,9 @@ const AutomationControlPanel = ({
           <button
             onClick={onStopAutomation}
             disabled={isLoading.stop || automationStatus.status !== 'running'}
-            className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${automationStatus.status !== 'running'
-              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-              : 'text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 hover:shadow'
+            className={`group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg shadow-sm transition-all duration-200 transform hover:-translate-y-0.5 ${automationStatus.status !== 'running'
+              ? 'bg-dark-400 text-text-muted cursor-not-allowed'
+              : 'text-white bg-gradient-to-r from-danger to-danger-dark hover:from-danger-dark hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-700 focus:ring-danger hover:shadow-lg'
               }`}
           >
             <StopIcon className="h-5 w-5 mr-2 transition-transform duration-200 group-hover:scale-110" />
@@ -112,9 +112,9 @@ const AutomationControlPanel = ({
 
           <button
             onClick={onOpenSettings}
-            className="group inline-flex items-center px-3 py-1.5 border border-gray-200 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 transition-all duration-200 transform hover:-translate-y-0.5 hover:border-primary-200 hover:shadow"
+            className="group inline-flex items-center px-3 py-1.5 border border-dark-300/50 text-xs font-medium rounded-lg shadow-sm text-text-secondary bg-dark-500/50 hover:bg-dark-400/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-700 focus:ring-primary-500 transition-all duration-200 transform hover:-translate-y-0.5 hover:border-primary-500/30 hover:shadow-glow-sm"
           >
-            <CogIcon className="h-5 w-5 mr-2 text-gray-500 transition-transform duration-300 group-hover:rotate-45 group-hover:text-primary-500" />
+            <CogIcon className="h-5 w-5 mr-2 text-text-muted transition-transform duration-300 group-hover:rotate-45 group-hover:text-primary-400" />
             <span>Configure Email Settings</span>
           </button>
 
@@ -128,7 +128,7 @@ const AutomationControlPanel = ({
           <button
             onClick={onRefreshStatus}
             disabled={isLoading.refresh}
-            className="group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow"
+            className="group inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-700 focus:ring-primary-500 transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-glow-sm"
           >
             <ArrowPathIcon className={`h-5 w-5 mr-2 ${isLoading.refresh ? 'animate-spin' : 'group-hover:animate-spin-slow'}`} />
             <span>{isLoading.refresh ? 'Refreshing...' : 'Refresh Status'}</span>

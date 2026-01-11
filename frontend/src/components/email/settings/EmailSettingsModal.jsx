@@ -6,7 +6,6 @@ import DraggableWithRef from '../../dragdrop/DraggableWithRef';
 
 const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
   const [formData, setFormData] = useState(() => {
-    // Try to load saved settings from localStorage
     const savedSettings = localStorage.getItem('emailSettings');
     if (savedSettings) {
       try {
@@ -15,9 +14,7 @@ const EmailSettingsModal = ({ onClose, onSave, initialData = {} }) => {
         console.error('Error parsing saved email settings', e);
       }
     }
-
-    // Use initialData from props or default values
-return {
+    return {
       senderEmail: initialData.senderEmail || '',
       smtpServer: initialData.smtpServer || '',
       port: initialData.port || '587',
@@ -25,7 +22,6 @@ return {
       username: initialData.username || '',
       password: initialData.password || '',
       useTLS: initialData.useTLS !== undefined ? initialData.useTLS : true,
-      // Google Drive sharing options removed - now handled in control panel
     };
   });
 
@@ -42,26 +38,17 @@ return {
       [name]: type === 'checkbox' ? checked : value
     });
 
-    // Reset validation status when fields change
-    if (name === 'smtpServer' || name === 'port' || name === 'username' || name === 'password' || name === 'useTLS') {
-      setValidationStatus({
-        isValidating: false,
-        isValid: null,
-        message: ''
-      });
+    if (['smtpServer', 'port', 'username', 'password', 'useTLS'].includes(name)) {
+      setValidationStatus({ isValidating: false, isValid: null, message: '' });
     }
   };
 
-  // Load SMTP configuration from localStorage when modal opens
   useEffect(() => {
     const savedSettings = localStorage.getItem('emailSettings');
     if (savedSettings) {
       try {
         const parsedSettings = JSON.parse(savedSettings);
-        setFormData(prevState => ({
-          ...prevState,
-          ...parsedSettings
-        }));
+        setFormData(prev => ({ ...prev, ...parsedSettings }));
       } catch (e) {
         console.error('Error parsing saved email settings', e);
       }
@@ -69,14 +56,9 @@ return {
   }, []);
 
   const handleValidateSmtp = async () => {
-    setValidationStatus({
-      isValidating: true,
-      isValid: null,
-      message: 'Validating SMTP settings...'
-    });
+    setValidationStatus({ isValidating: true, isValid: null, message: 'Validating...' });
 
     try {
-      // Use the automation API to validate SMTP credentials
       const credentials = {
         smtpServer: formData.smtpServer,
         port: parseInt(formData.port, 10),
@@ -88,214 +70,179 @@ return {
       const response = await validateSMTPCredentials(credentials);
 
       if (response.success) {
-        setValidationStatus({
-          isValidating: false,
-          isValid: true,
-          message: 'SMTP credentials are valid!'
-        });
+        setValidationStatus({ isValidating: false, isValid: true, message: 'SMTP valid!' });
       } else {
-        setValidationStatus({
-          isValidating: false,
-          isValid: false,
-          message: response.message || 'SMTP validation failed'
-        });
+        setValidationStatus({ isValidating: false, isValid: false, message: response.message || 'Validation failed' });
       }
     } catch (error) {
-      setValidationStatus({
-        isValidating: false,
-        isValid: false,
-        message: 'Error validating SMTP: ' + (error.message || 'Unknown error')
-      });
+      setValidationStatus({ isValidating: false, isValid: false, message: error.message || 'Error' });
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      // We'll just save to localStorage and pass to onSave
-      // The automation settings will be updated through the AutomatePage
       localStorage.setItem('emailSettings', JSON.stringify(formData));
-      toast.success('SMTP configuration saved successfully');
-
-      // Call the onSave prop
-      if (onSave) {
-        onSave(formData);
-      }
+      toast.success('SMTP configuration saved');
+      if (onSave) onSave(formData);
     } catch (error) {
       console.error('Error saving SMTP config:', error);
-      toast.error(`Error saving configuration: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     }
   };
 
+  const inputClass = "w-full px-2.5 py-1.5 text-sm border border-dark-300/50 rounded-lg bg-dark-500/50 text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500";
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <DraggableWithRef handle=".modal-handle">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-          <div className="modal-handle flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg cursor-grab">
-            <h3 className="text-lg font-medium text-gray-700">Email Configuration Settings</h3>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 focus:outline-none"
-            >
+        <div className="bg-dark-600 rounded-xl shadow-2xl w-full max-w-md border border-dark-300/50">
+          {/* Header */}
+          <div className="modal-handle flex items-center justify-between px-4 py-2.5 border-b border-dark-300/50 bg-dark-700/80 rounded-t-xl cursor-grab">
+            <h3 className="text-base font-medium text-text-primary font-display">Email Configuration</h3>
+            <button onClick={onClose} className="text-text-muted hover:text-text-primary transition-colors">
               <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="p-4">
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="senderEmail" className="block text-sm font-medium text-gray-700 mb-1">
-                  Sender Email
-                </label>
+            {/* Two column grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Sender Email - Full width */}
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-text-secondary mb-1">Sender Email</label>
                 <input
                   type="email"
-                  id="senderEmail"
                   name="senderEmail"
                   value={formData.senderEmail}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  className={inputClass}
                   placeholder="name@company.com"
                   required
                 />
               </div>
 
-              <div>
-                <label htmlFor="smtpServer" className="block text-sm font-medium text-gray-700 mb-1">
-                  SMTP Server
-                </label>
+              {/* SMTP Server - Full width */}
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-text-secondary mb-1">SMTP Server</label>
                 <input
                   type="text"
-                  id="smtpServer"
                   name="smtpServer"
                   value={formData.smtpServer}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  className={inputClass}
                   placeholder="smtp.example.com"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="port" className="block text-sm font-medium text-gray-700 mb-1">
-                    Port
-                  </label>
-                  <input
-                    type="text"
-                    id="port"
-                    name="port"
-                    value={formData.port}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="authType" className="block text-sm font-medium text-gray-700 mb-1">
-                    Authentication
-                  </label>
-                  <select
-                    id="authType"
-                    name="authType"
-                    value={formData.authType}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  >
-                    <option value="login">Login</option>
-                    <option value="plain">Plain</option>
-                    <option value="cram-md5">CRAM-MD5</option>
-                    <option value="oauth2">OAuth2</option>
-                  </select>
-                </div>
-              </div>
-
+              {/* Port */}
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                  Username
-                </label>
+                <label className="block text-xs font-medium text-text-secondary mb-1">Port</label>
                 <input
                   type="text"
-                  id="username"
+                  name="port"
+                  value={formData.port}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
+                />
+              </div>
+
+              {/* Auth Type */}
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1">Auth Type</label>
+                <select
+                  name="authType"
+                  value={formData.authType}
+                  onChange={handleChange}
+                  className={inputClass}
+                >
+                  <option value="login">Login</option>
+                  <option value="plain">Plain</option>
+                  <option value="cram-md5">CRAM-MD5</option>
+                  <option value="oauth2">OAuth2</option>
+                </select>
+              </div>
+
+              {/* Username */}
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1">Username</label>
+                <input
+                  type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  className={inputClass}
                   required
                 />
               </div>
 
+              {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
+                <label className="block text-xs font-medium text-text-secondary mb-1">Password</label>
                 <input
                   type="password"
-                  id="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  className={inputClass}
                   required
                 />
               </div>
 
-              <div className="flex items-center">
+              {/* Use TLS */}
+              <div className="col-span-2 flex items-center">
                 <input
                   type="checkbox"
                   id="useTLS"
                   name="useTLS"
                   checked={formData.useTLS}
                   onChange={handleChange}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  className="h-3.5 w-3.5 text-primary-600 focus:ring-primary-500 border-dark-300 rounded bg-dark-500"
                 />
-                <label htmlFor="useTLS" className="ml-2 block text-sm text-gray-700">
-                  Use TLS
-                </label>
+                <label htmlFor="useTLS" className="ml-2 text-sm text-text-secondary">Use TLS</label>
               </div>
 
-              {/* Google Drive Sharing Options removed - now in Control Panel */}
-              
+              {/* Validation Status */}
               {validationStatus.message && (
-                <div className={`rounded-md p-3 flex items-center ${validationStatus.isValid === true
-                  ? 'bg-green-50 text-green-700'
-                  : validationStatus.isValid === false
-                    ? 'bg-red-50 text-red-700'
-                    : 'bg-blue-50 text-blue-700'
+                <div className={`col-span-2 rounded-lg px-3 py-2 flex items-center text-sm ${validationStatus.isValid === true
+                    ? 'bg-success/20 text-success-light border border-success/30'
+                    : validationStatus.isValid === false
+                      ? 'bg-danger/20 text-danger-light border border-danger/30'
+                      : 'bg-primary-500/20 text-primary-300 border border-primary-500/30'
                   }`}>
-                  {validationStatus.isValid === true ? (
-                    <CheckCircleIcon className="h-5 w-5 mr-2" />
-                  ) : validationStatus.isValid === false ? (
-                    <ExclamationCircleIcon className="h-5 w-5 mr-2" />
-                  ) : null}
+                  {validationStatus.isValid === true && <CheckCircleIcon className="h-4 w-4 mr-2" />}
+                  {validationStatus.isValid === false && <ExclamationCircleIcon className="h-4 w-4 mr-2" />}
                   <span>{validationStatus.message}</span>
                 </div>
               )}
 
-              {/* Test SMTP button */}
-              <div>
+              {/* Test Button */}
+              <div className="col-span-2">
                 <button
                   type="button"
                   onClick={handleValidateSmtp}
                   disabled={validationStatus.isValidating}
-                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                  className="w-full py-1.5 text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg hover:from-primary-600 hover:to-primary-700 disabled:opacity-50 transition-all"
                 >
-                  {validationStatus.isValidating ? 'Validating...' : 'Test SMTP Connection'}
+                  {validationStatus.isValidating ? 'Validating...' : 'Test SMTP'}
                 </button>
               </div>
             </div>
 
-            <div className="mt-5 flex justify-end space-x-3">
+            {/* Actions */}
+            <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                className="px-3 py-1.5 text-sm font-medium text-text-secondary bg-dark-500/50 border border-dark-300/50 rounded-lg hover:bg-dark-400/50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                className="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-accent-violet rounded-lg hover:from-primary-600 hover:to-accent-violet/90 transition-all"
               >
                 Save
               </button>

@@ -88,14 +88,14 @@ const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'defa
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-dark-600 rounded-xl shadow-2xl max-w-md w-full border border-dark-300/50">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-800">Select Email Template</h2>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-dark-300/50 bg-dark-700/80 rounded-t-xl">
+          <h2 className="text-lg font-medium text-text-primary font-display">Select Email Template</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-text-muted hover:text-text-primary transition-colors"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -105,16 +105,16 @@ const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'defa
         <div className="p-4 max-h-96 overflow-y-auto">
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
             </div>
           ) : (
             <div className="space-y-2">
               {templates.map((template) => (
                 <div
                   key={template.id}
-                  className={`w-full text-left p-3 rounded-md flex items-start ${selectedTemplateId === template.id
-                    ? 'bg-primary-50 border border-primary-300'
-                    : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                  className={`w-full text-left p-3 rounded-lg flex items-start transition-all ${selectedTemplateId === template.id
+                    ? 'bg-primary-500/20 border border-primary-500/50'
+                    : 'bg-dark-500/50 border border-dark-300/50 hover:bg-dark-400/50'
                     }`}
                 >
                   <div
@@ -130,19 +130,19 @@ const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'defa
                     }}
                   >
                     <div className="flex items-center">
-                      <DocumentTextIcon className={`h-5 w-5 mr-3 ${selectedTemplateId === template.id ? 'text-primary-600' : 'text-gray-500'
+                      <DocumentTextIcon className={`h-5 w-5 mr-3 ${selectedTemplateId === template.id ? 'text-primary-400' : 'text-text-muted'
                         }`} />
                       <div>
-                        <div className={`font-medium ${selectedTemplateId === template.id ? 'text-primary-700' : 'text-gray-700'
+                        <div className={`font-medium ${selectedTemplateId === template.id ? 'text-primary-300' : 'text-text-primary'
                           }`}>
                           {template.name}
                         </div>
                         {template.subject && (
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-xs text-text-muted mt-1">
                             Subject prefix: {template.subject}
                           </div>
                         )}
-                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                        <div className="text-xs text-text-muted mt-1 line-clamp-2">
                           {template.body ? template.body.substring(0, 100) + '...' : 'No preview available'}
                         </div>
                       </div>
@@ -152,7 +152,7 @@ const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'defa
                   {/* Edit button */}
                   <button
                     onClick={() => handleEditTemplate(template)}
-                    className="ml-2 p-1 text-gray-500 hover:text-primary-600 rounded-full hover:bg-gray-100 flex-shrink-0"
+                    className="ml-2 p-1 text-text-muted hover:text-primary-400 rounded-full hover:bg-primary-500/20 flex-shrink-0 transition-all"
                     title="Edit template"
                   >
                     <PencilIcon className="h-4 w-4" />
@@ -164,24 +164,24 @@ const TemplateSelector = ({ onSelectTemplate, onClose, initialTemplateId = 'defa
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-gray-200 flex justify-end space-x-3">
+        <div className="px-4 py-3 border-t border-dark-300/50 flex justify-end space-x-3 bg-dark-700/50 rounded-b-xl">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 border border-dark-300/50 rounded-lg text-sm font-medium text-text-secondary bg-dark-500/50 hover:bg-dark-400/50 transition-all"
           >
             Cancel
           </button>
           {!directSelect && (
             <button
               onClick={handleConfirm}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              className="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-accent-violet hover:from-primary-600 hover:to-accent-violet/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-600 focus:ring-primary-500 transition-all"
               disabled={isLoading || !selectedTemplateId}
             >
               Use Selected Template
             </button>
           )}
           {directSelect && selectedTemplateId && (
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-text-muted">
               Click on a template to select it
             </div>
           )}

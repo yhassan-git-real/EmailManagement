@@ -17,7 +17,7 @@ const TablePagination = ({
   const validatedTotalPages = Math.max(1, isNaN(totalPages) ? 1 : totalPages);
   const validatedTotalRows = Math.max(0, isNaN(totalRows) ? 0 : totalRows);
   const validatedPageSize = Math.max(1, isNaN(pageSize) ? 5 : pageSize);
-  
+
   // Handle pagination - memoized to prevent unnecessary re-renders
   const goToPage = useCallback((page) => {
     try {
@@ -30,13 +30,13 @@ const TablePagination = ({
   }, [validatedTotalPages, onPageChange]);
 
   return (
-    <div className="bg-gray-50 px-3 py-2 border-t border-gray-200 flex items-center justify-between relative overflow-x-auto" role="navigation" aria-label="Pagination navigation">
+    <div className="bg-dark-700/80 px-3 py-2 border-t border-dark-300/50 flex items-center justify-between relative overflow-x-auto" role="navigation" aria-label="Pagination navigation">
       {/* Mobile pagination controls */}
       <div className="flex-1 flex justify-between sm:hidden">
         <button
           onClick={() => goToPage(validatedCurrentPage - 1)}
           disabled={validatedCurrentPage === 1}
-          className={`relative inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 ${validatedCurrentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`relative inline-flex items-center px-2 py-1 border border-dark-300/50 text-xs font-medium rounded-md text-text-secondary bg-dark-500/50 hover:bg-dark-400/50 ${validatedCurrentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
           aria-label="Previous page"
           tabIndex={validatedCurrentPage === 1 ? -1 : 0}
         >
@@ -45,7 +45,7 @@ const TablePagination = ({
         <button
           onClick={() => goToPage(validatedCurrentPage + 1)}
           disabled={validatedCurrentPage === validatedTotalPages}
-          className={`ml-3 relative inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 ${validatedCurrentPage === validatedTotalPages ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`ml-3 relative inline-flex items-center px-2 py-1 border border-dark-300/50 text-xs font-medium rounded-md text-text-secondary bg-dark-500/50 hover:bg-dark-400/50 ${validatedCurrentPage === validatedTotalPages ? 'opacity-50 cursor-not-allowed' : ''}`}
           aria-label="Next page"
           tabIndex={validatedCurrentPage === validatedTotalPages ? -1 : 0}
         >
@@ -57,10 +57,10 @@ const TablePagination = ({
       <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
         {/* Results summary */}
         <div>
-          <p className="text-xs text-gray-700" aria-live="polite">
-            Showing <span className="font-medium">{validatedTotalRows === 0 ? 0 : Math.min((validatedCurrentPage - 1) * validatedPageSize + 1, validatedTotalRows)}</span> to{' '}
-            <span className="font-medium">{Math.min(validatedCurrentPage * validatedPageSize, validatedTotalRows)}</span> of{' '}
-            <span className="font-medium">{validatedTotalRows}</span> results
+          <p className="text-xs text-text-secondary" aria-live="polite">
+            Showing <span className="font-medium text-text-primary">{validatedTotalRows === 0 ? 0 : Math.min((validatedCurrentPage - 1) * validatedPageSize + 1, validatedTotalRows)}</span> to{' '}
+            <span className="font-medium text-text-primary">{Math.min(validatedCurrentPage * validatedPageSize, validatedTotalRows)}</span> of{' '}
+            <span className="font-medium text-text-primary">{validatedTotalRows}</span> results
           </p>
         </div>
 
@@ -71,7 +71,7 @@ const TablePagination = ({
             <button
               onClick={() => goToPage(validatedCurrentPage - 1)}
               disabled={validatedCurrentPage === 1}
-              className={`relative inline-flex items-center px-2 py-1 rounded-l-md border border-gray-300 bg-white text-xs font-medium text-gray-500 hover:bg-gray-50 ${validatedCurrentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`relative inline-flex items-center px-2 py-1 rounded-l-md border border-dark-300/50 bg-dark-500/50 text-xs font-medium text-text-muted hover:bg-dark-400/50 ${validatedCurrentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Go to previous page"
               tabIndex={validatedCurrentPage === 1 ? -1 : 0}
             >
@@ -93,14 +93,14 @@ const TablePagination = ({
               }
 
               const isCurrentPage = validatedCurrentPage === pageNumber;
-              
+
               return (
                 <button
                   key={pageNumber}
                   onClick={() => goToPage(pageNumber)}
                   className={`relative inline-flex items-center px-3 py-1 border text-xs font-medium ${isCurrentPage
-                    ? 'z-10 bg-primary-50 border-primary-500 text-primary-600'
-                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                    ? 'z-10 bg-primary-500/20 border-primary-500/50 text-primary-400'
+                    : 'bg-dark-500/50 border-dark-300/50 text-text-muted hover:bg-dark-400/50'
                     }`}
                   aria-label={`Page ${pageNumber}`}
                   aria-current={isCurrentPage ? 'page' : undefined}
@@ -114,7 +114,7 @@ const TablePagination = ({
             <button
               onClick={() => goToPage(validatedCurrentPage + 1)}
               disabled={validatedCurrentPage === validatedTotalPages}
-              className={`relative inline-flex items-center px-2 py-1 rounded-r-md border border-gray-300 bg-white text-xs font-medium text-gray-500 hover:bg-gray-50 ${validatedCurrentPage === validatedTotalPages ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`relative inline-flex items-center px-2 py-1 rounded-r-md border border-dark-300/50 bg-dark-500/50 text-xs font-medium text-text-muted hover:bg-dark-400/50 ${validatedCurrentPage === validatedTotalPages ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Go to next page"
               tabIndex={validatedCurrentPage === validatedTotalPages ? -1 : 0}
             >

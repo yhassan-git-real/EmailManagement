@@ -257,18 +257,18 @@ const ConsolidatedSettingsPanel = ({
     };
 
     return (
-        <div className="border-t border-gray-100 pt-4 mt-1">
+        <div className="border-t border-dark-300/50 pt-4 mt-1">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
 
                 {/* Template Setting */}
                 <div className="inline-flex items-center">
-                    <div className="inline-flex items-center px-2 py-1.5 text-xs font-medium text-gray-600 bg-blue-50 border border-blue-200 rounded-l-md">
-                        <DocumentTextIcon className="h-4 w-4 mr-1 text-blue-600" />
+                    <div className="inline-flex items-center px-2 py-1.5 text-xs font-medium text-primary-400 bg-primary-500/15 border border-primary-500/30 rounded-l-lg">
+                        <DocumentTextIcon className="h-4 w-4 mr-1 text-primary-400" />
                         <span className="hidden sm:inline">Template:</span>
                     </div>
                     <button
                         onClick={onOpenTemplateSelector}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-white border border-blue-200 rounded-r-md hover:bg-blue-50 focus:outline-none focus:ring-1 focus:ring-blue-400 transition-all"
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-primary-300 bg-dark-500/50 border border-primary-500/30 rounded-r-lg hover:bg-primary-500/15 focus:outline-none focus:ring-1 focus:ring-primary-400 transition-all"
                     >
                         {getTemplateName()}
                         <ChevronDownIcon className="ml-1 h-3 w-3" />
@@ -276,24 +276,24 @@ const ConsolidatedSettingsPanel = ({
                 </div>
 
                 {/* Separator */}
-                <div className="hidden sm:block w-px h-6 bg-gray-200"></div>
+                <div className="hidden sm:block w-px h-6 bg-dark-300/50"></div>
 
                 {/* Scheduler Setting */}
                 <div className="inline-flex items-center gap-2">
-                    <div className="inline-flex items-center px-2 py-1.5 text-xs font-medium text-gray-600 bg-purple-50 border border-purple-200 rounded-l-md">
-                        <ClockIcon className="h-4 w-4 mr-1 text-purple-600" />
+                    <div className="inline-flex items-center px-2 py-1.5 text-xs font-medium text-accent-violet bg-accent-violet/15 border border-accent-violet/30 rounded-l-lg">
+                        <ClockIcon className="h-4 w-4 mr-1 text-accent-violet" />
                         <span className="hidden sm:inline">Schedule:</span>
                     </div>
-                    <div className="inline-flex items-center border border-purple-200 rounded-r-md bg-white">
+                    <div className="inline-flex items-center border border-accent-violet/30 rounded-r-lg bg-dark-500/50">
                         <label className="inline-flex items-center px-2 py-1.5 cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={scheduleSettings.enabled}
                                 onChange={(e) => handleScheduleToggle(e.target.checked)}
                                 disabled={scheduleLoading}
-                                className="h-3.5 w-3.5 text-purple-600 focus:ring-purple-400 border-gray-300 rounded"
+                                className="h-3.5 w-3.5 text-accent-violet focus:ring-accent-violet border-dark-300 rounded bg-dark-600"
                             />
-                            <span className="ml-1.5 text-xs text-gray-700">{scheduleSettings.enabled ? 'On' : 'Off'}</span>
+                            <span className="ml-1.5 text-xs text-text-secondary">{scheduleSettings.enabled ? 'On' : 'Off'}</span>
                         </label>
                         {scheduleSettings.enabled && (
                             <>
@@ -301,7 +301,7 @@ const ConsolidatedSettingsPanel = ({
                                     value={scheduleSettings.frequency}
                                     onChange={(e) => handleScheduleChange('frequency', e.target.value)}
                                     disabled={scheduleLoading}
-                                    className="text-xs border-0 border-l border-purple-200 py-1.5 pl-2 pr-6 text-gray-700 bg-transparent focus:ring-0 focus:outline-none"
+                                    className="text-xs border-0 border-l border-accent-violet/30 py-1.5 pl-2 pr-6 text-text-secondary bg-transparent focus:ring-0 focus:outline-none"
                                 >
                                     <option value="daily">Daily</option>
                                     <option value="weekly">Weekly</option>
@@ -312,7 +312,7 @@ const ConsolidatedSettingsPanel = ({
                                     value={scheduleSettings.time}
                                     onChange={(e) => handleScheduleChange('time', e.target.value)}
                                     disabled={scheduleLoading}
-                                    className="text-xs border-0 border-l border-purple-200 py-1.5 px-2 text-gray-700 bg-transparent focus:ring-0 focus:outline-none w-20"
+                                    className="text-xs border-0 border-l border-accent-violet/30 py-1.5 px-2 text-text-secondary bg-transparent focus:ring-0 focus:outline-none w-20"
                                 />
                             </>
                         )}
@@ -320,50 +320,50 @@ const ConsolidatedSettingsPanel = ({
                 </div>
 
                 {/* Separator */}
-                <div className="hidden sm:block w-px h-6 bg-gray-200"></div>
+                <div className="hidden sm:block w-px h-6 bg-dark-300/50"></div>
 
                 {/* Archive Cleanup Setting */}
                 <div className="inline-flex items-center">
-                    <div className="inline-flex items-center px-2 py-1.5 text-xs font-medium text-gray-600 bg-orange-50 border border-orange-200 rounded-l-md">
-                        <TrashIcon className="h-4 w-4 mr-1 text-orange-600" />
+                    <div className="inline-flex items-center px-2 py-1.5 text-xs font-medium text-warning bg-warning/15 border border-warning/30 rounded-l-lg">
+                        <TrashIcon className="h-4 w-4 mr-1 text-warning" />
                         <span className="hidden sm:inline">Cleanup:</span>
                     </div>
-                    <div className="inline-flex items-center border-y border-orange-200 bg-white">
+                    <div className="inline-flex items-center border-y border-warning/30 bg-dark-500/50">
                         <button
                             onClick={() => cleanupDays > 1 && setCleanupDays(cleanupDays - 1)}
-                            className="px-1.5 py-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                            className="px-1.5 py-1.5 text-text-muted hover:bg-dark-400/50 hover:text-text-secondary"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                             </svg>
                         </button>
-                        <span className="px-1.5 text-xs font-medium text-gray-700 min-w-[24px] text-center">{cleanupDays}</span>
+                        <span className="px-1.5 text-xs font-medium text-text-secondary min-w-[24px] text-center">{cleanupDays}</span>
                         <button
                             onClick={() => setCleanupDays(cleanupDays + 1)}
-                            className="px-1.5 py-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                            className="px-1.5 py-1.5 text-text-muted hover:bg-dark-400/50 hover:text-text-secondary"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                             </svg>
                         </button>
                     </div>
-                    <span className="px-2 py-1.5 text-xs text-gray-500 border border-orange-200 bg-orange-50">days</span>
+                    <span className="px-2 py-1.5 text-xs text-warning border border-warning/30 bg-warning/15">days</span>
                     <button
                         onClick={onCleanupArchive}
                         disabled={isCleanupLoading}
-                        className="px-2.5 py-1.5 text-xs font-medium text-orange-700 bg-white border border-orange-200 rounded-r-md hover:bg-orange-50 focus:outline-none transition-all disabled:opacity-50"
+                        className="px-2.5 py-1.5 text-xs font-medium text-warning bg-dark-500/50 border border-warning/30 rounded-r-lg hover:bg-warning/15 focus:outline-none transition-all disabled:opacity-50"
                     >
                         {isCleanupLoading ? '...' : 'Clean'}
                     </button>
                 </div>
 
                 {/* Separator */}
-                <div className="hidden sm:block w-px h-6 bg-gray-200"></div>
+                <div className="hidden sm:block w-px h-6 bg-dark-300/50"></div>
 
                 {/* Attachment Setting */}
                 <div className="inline-flex items-center" ref={attachmentDropdownRef}>
-                    <div className="inline-flex items-center px-2 py-1.5 text-xs font-medium text-gray-600 bg-green-50 border border-green-200 rounded-l-md">
-                        <PaperClipIcon className="h-4 w-4 mr-1 text-green-600" />
+                    <div className="inline-flex items-center px-2 py-1.5 text-xs font-medium text-success bg-success/15 border border-success/30 rounded-l-lg">
+                        <PaperClipIcon className="h-4 w-4 mr-1 text-success" />
                         <span className="hidden sm:inline">Attach:</span>
                     </div>
 
@@ -371,25 +371,25 @@ const ConsolidatedSettingsPanel = ({
                     <div className="relative">
                         <button
                             onClick={() => setAttachmentDropdownOpen(!attachmentDropdownOpen)}
-                            className="inline-flex items-center px-2 py-1.5 border-y border-green-200 text-xs font-medium bg-white hover:bg-gray-50"
+                            className="inline-flex items-center px-2 py-1.5 border-y border-success/30 text-xs font-medium bg-dark-500/50 hover:bg-dark-400/50"
                         >
-                            <span className="text-gray-700">{getSelectedLabel()}</span>
-                            <ChevronDownIcon className={`ml-1 h-3 w-3 text-gray-400 transition-transform ${attachmentDropdownOpen ? 'rotate-180' : ''}`} />
+                            <span className="text-text-secondary">{getSelectedLabel()}</span>
+                            <ChevronDownIcon className={`ml-1 h-3 w-3 text-text-muted transition-transform ${attachmentDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
 
                         {attachmentDropdownOpen && (
-                            <div className="absolute z-20 mt-1 w-48 bg-white shadow-lg rounded-md py-1 text-sm ring-1 ring-black ring-opacity-5">
+                            <div className="absolute z-50 mt-1 w-48 bg-dark-600 shadow-lg rounded-lg py-1 text-sm ring-1 ring-dark-300/50 border border-dark-300/50">
                                 {FILE_TYPE_OPTIONS.map((option) => (
                                     <div
                                         key={option.id}
                                         onClick={() => toggleExtension(option.id)}
-                                        className="cursor-pointer select-none relative py-2 pl-3 pr-8 hover:bg-green-50 transition-colors"
+                                        className="cursor-pointer select-none relative py-2 pl-3 pr-8 hover:bg-success/15 transition-colors"
                                     >
-                                        <span className={`block truncate ${selectedExtensions.includes(option.id) ? 'font-medium text-green-700' : 'text-gray-700'}`}>
+                                        <span className={`block truncate ${selectedExtensions.includes(option.id) ? 'font-medium text-success' : 'text-text-secondary'}`}>
                                             {option.label}
                                         </span>
                                         {selectedExtensions.includes(option.id) && (
-                                            <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-green-600">
+                                            <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-success">
                                                 <CheckIcon className="h-4 w-4" />
                                             </span>
                                         )}
@@ -400,55 +400,55 @@ const ConsolidatedSettingsPanel = ({
                     </div>
 
                     {/* Threshold Controls */}
-                    <div className="inline-flex items-center border-y border-green-200 bg-white">
+                    <div className="inline-flex items-center border-y border-success/30 bg-dark-500/50">
                         <button
                             onClick={() => fileCountThreshold > 1 && setFileCountThreshold(fileCountThreshold - 1)}
-                            className="px-1.5 py-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                            className="px-1.5 py-1.5 text-text-muted hover:bg-dark-400/50 hover:text-text-secondary"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                             </svg>
                         </button>
-                        <span className="px-1 text-xs font-medium text-gray-700 min-w-[18px] text-center">{fileCountThreshold}</span>
+                        <span className="px-1 text-xs font-medium text-text-secondary min-w-[18px] text-center">{fileCountThreshold}</span>
                         <button
                             onClick={() => setFileCountThreshold(fileCountThreshold + 1)}
-                            className="px-1.5 py-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                            className="px-1.5 py-1.5 text-text-muted hover:bg-dark-400/50 hover:text-text-secondary"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                             </svg>
                         </button>
                     </div>
-                    <span className="px-2 py-1.5 text-xs text-gray-500 border border-green-200 bg-green-50 rounded-r-md">files</span>
+                    <span className="px-2 py-1.5 text-xs text-success border border-success/30 bg-success/15 rounded-r-lg">files</span>
 
-                    {attachmentHasChanges && <span className="ml-1 text-xs text-amber-600 animate-pulse">●</span>}
+                    {attachmentHasChanges && <span className="ml-1 text-xs text-warning animate-pulse">●</span>}
                 </div>
 
                 {/* Separator */}
-                <div className="hidden sm:block w-px h-6 bg-gray-200"></div>
+                <div className="hidden sm:block w-px h-6 bg-dark-300/50"></div>
 
                 {/* Size Settings */}
                 <div className="inline-flex items-center">
-                    <div className="inline-flex items-center px-2 py-1.5 text-xs font-medium text-gray-600 bg-indigo-50 border border-indigo-200 rounded-l-md">
-                        <CloudArrowUpIcon className="h-4 w-4 mr-1 text-indigo-600" />
+                    <div className="inline-flex items-center px-2 py-1.5 text-xs font-medium text-secondary-400 bg-secondary-500/15 border border-secondary-500/30 rounded-l-lg">
+                        <CloudArrowUpIcon className="h-4 w-4 mr-1 text-secondary-400" />
                         <span className="hidden sm:inline">Sizes:</span>
                     </div>
 
                     {/* Max Size */}
-                    <div className="inline-flex items-center border-y border-indigo-200 bg-white" title="Max email attachment size">
-                        <span className="px-1.5 text-xs text-gray-500">Max</span>
+                    <div className="inline-flex items-center border-y border-secondary-500/30 bg-dark-500/50" title="Max email attachment size">
+                        <span className="px-1.5 text-xs text-text-muted">Max</span>
                         <button
                             onClick={() => updateSizeField('emailMaxSizeMB', sizeSettings.emailMaxSizeMB - 1)}
-                            className="px-1 py-1.5 text-gray-500 hover:bg-gray-100"
+                            className="px-1 py-1.5 text-text-muted hover:bg-dark-400/50"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                             </svg>
                         </button>
-                        <span className="text-xs font-medium text-gray-700 min-w-[16px] text-center">{sizeSettings.emailMaxSizeMB}</span>
+                        <span className="text-xs font-medium text-text-secondary min-w-[16px] text-center">{sizeSettings.emailMaxSizeMB}</span>
                         <button
                             onClick={() => updateSizeField('emailMaxSizeMB', sizeSettings.emailMaxSizeMB + 1)}
-                            className="px-1 py-1.5 text-gray-500 hover:bg-gray-100"
+                            className="px-1 py-1.5 text-text-muted hover:bg-dark-400/50"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -457,20 +457,20 @@ const ConsolidatedSettingsPanel = ({
                     </div>
 
                     {/* Safe Size */}
-                    <div className="inline-flex items-center border-y border-l-0 border-indigo-200 bg-white" title="Safe size for direct attachment">
-                        <span className="px-1.5 text-xs text-gray-500 border-l border-indigo-200">Safe</span>
+                    <div className="inline-flex items-center border-y border-l-0 border-secondary-500/30 bg-dark-500/50" title="Safe size for direct attachment">
+                        <span className="px-1.5 text-xs text-text-muted border-l border-secondary-500/30">Safe</span>
                         <button
                             onClick={() => updateSizeField('emailSafeSizeMB', sizeSettings.emailSafeSizeMB - 1)}
-                            className="px-1 py-1.5 text-gray-500 hover:bg-gray-100"
+                            className="px-1 py-1.5 text-text-muted hover:bg-dark-400/50"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                             </svg>
                         </button>
-                        <span className="text-xs font-medium text-gray-700 min-w-[16px] text-center">{sizeSettings.emailSafeSizeMB}</span>
+                        <span className="text-xs font-medium text-text-secondary min-w-[16px] text-center">{sizeSettings.emailSafeSizeMB}</span>
                         <button
                             onClick={() => updateSizeField('emailSafeSizeMB', sizeSettings.emailSafeSizeMB + 1)}
-                            className="px-1 py-1.5 text-gray-500 hover:bg-gray-100"
+                            className="px-1 py-1.5 text-text-muted hover:bg-dark-400/50"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -479,20 +479,20 @@ const ConsolidatedSettingsPanel = ({
                     </div>
 
                     {/* GDrive Threshold */}
-                    <div className="inline-flex items-center border-y border-l-0 border-indigo-200 bg-white" title="Size threshold for Google Drive upload">
-                        <span className="px-1.5 text-xs text-gray-500 border-l border-indigo-200">GDrive</span>
+                    <div className="inline-flex items-center border-y border-l-0 border-secondary-500/30 bg-dark-500/50" title="Size threshold for Google Drive upload">
+                        <span className="px-1.5 text-xs text-text-muted border-l border-secondary-500/30">GDrive</span>
                         <button
                             onClick={() => updateSizeField('gdriveUploadThresholdMB', sizeSettings.gdriveUploadThresholdMB - 1)}
-                            className="px-1 py-1.5 text-gray-500 hover:bg-gray-100"
+                            className="px-1 py-1.5 text-text-muted hover:bg-dark-400/50"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                             </svg>
                         </button>
-                        <span className="text-xs font-medium text-gray-700 min-w-[16px] text-center">{sizeSettings.gdriveUploadThresholdMB}</span>
+                        <span className="text-xs font-medium text-text-secondary min-w-[16px] text-center">{sizeSettings.gdriveUploadThresholdMB}</span>
                         <button
                             onClick={() => updateSizeField('gdriveUploadThresholdMB', sizeSettings.gdriveUploadThresholdMB + 1)}
-                            className="px-1 py-1.5 text-gray-500 hover:bg-gray-100"
+                            className="px-1 py-1.5 text-text-muted hover:bg-dark-400/50"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -500,9 +500,9 @@ const ConsolidatedSettingsPanel = ({
                         </button>
                     </div>
 
-                    <span className="px-2 py-1.5 text-xs text-gray-500 border border-indigo-200 bg-indigo-50 rounded-r-md">MB</span>
+                    <span className="px-2 py-1.5 text-xs text-secondary-400 border border-secondary-500/30 bg-secondary-500/15 rounded-r-lg">MB</span>
 
-                    {sizeHasChanges && <span className="ml-1 text-xs text-amber-600 animate-pulse">●</span>}
+                    {sizeHasChanges && <span className="ml-1 text-xs text-warning animate-pulse">●</span>}
                 </div>
             </div>
         </div>

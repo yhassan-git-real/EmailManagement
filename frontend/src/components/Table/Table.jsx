@@ -26,23 +26,23 @@ const Table = ({
 }) => {
   // Memoize the data to prevent unnecessary re-renders
   const memoizedData = useMemo(() => data, [data]);
-  
+
   // Memoize the columns to prevent unnecessary re-renders
   const memoizedColumns = useMemo(() => columns, [columns]);
-  
+
   // Memoize the selected rows to prevent unnecessary re-renders
   const memoizedSelectedRows = useMemo(() => selectedRows, [selectedRows]);
-  
+
   // Calculate if all rows are selected
   const allSelected = useMemo(() => {
     return memoizedData.length > 0 && memoizedSelectedRows.length === memoizedData.length;
   }, [memoizedData.length, memoizedSelectedRows.length]);
-  
+
   // Calculate if some rows are selected
   const someSelected = useMemo(() => {
     return memoizedSelectedRows.length > 0 && memoizedSelectedRows.length < memoizedData.length;
   }, [memoizedData.length, memoizedSelectedRows.length]);
-  
+
   // Handle select all rows
   const handleSelectAll = useCallback((selected) => {
     if (onRowSelect) {
@@ -60,19 +60,19 @@ const Table = ({
     }
   }, [memoizedData, onRowSelect]);
   return (
-    <div 
-      className={`w-full bg-white overflow-hidden relative ${className}`}
+    <div
+      className={`w-full bg-dark-600/80 overflow-hidden relative ${className}`}
       role="region"
       aria-label="Data table"
     >
       {/* Table Container with both horizontal and vertical scrolling */}
-      <div 
-        className="overflow-x-auto max-h-[400px] overflow-y-auto" 
+      <div
+        className="overflow-x-auto max-h-[400px] overflow-y-auto"
         style={{ scrollbarWidth: 'thin' }}
         tabIndex="0"
       >
-        <table 
-          className="min-w-full divide-y divide-gray-200 table-fixed"
+        <table
+          className="min-w-full divide-y divide-dark-300/50 table-fixed"
           role="table"
           aria-busy={isLoading ? 'true' : 'false'}
           aria-colcount={memoizedColumns.length}
@@ -82,22 +82,22 @@ const Table = ({
             {isFiltered ? 'Filtered table data' : 'Table data'}
             {memoizedData.length > 0 ? ` showing ${memoizedData.length} rows` : ''}
           </caption>
-          
-          <TableHeader 
-            columns={memoizedColumns} 
+
+          <TableHeader
+            columns={memoizedColumns}
             onSelectAll={handleSelectAll}
             allSelected={allSelected}
             someSelected={someSelected}
           />
-          
+
           {isLoading || memoizedData.length === 0 ? (
-            <TableEmpty 
-              isLoading={isLoading} 
+            <TableEmpty
+              isLoading={isLoading}
               colSpan={memoizedColumns.length + 1}
               error={error}
             />
           ) : (
-            <TableBody 
+            <TableBody
               data={memoizedData}
               columns={memoizedColumns}
               selectedRows={memoizedSelectedRows}
@@ -107,7 +107,7 @@ const Table = ({
           )}
         </table>
       </div>
-      
+
       {/* Only render pagination if we have data or are loading */}
       {(totalRows > 0 || isLoading) && (
         <TablePagination

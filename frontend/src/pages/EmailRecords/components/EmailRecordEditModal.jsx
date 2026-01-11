@@ -2,12 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 /**
- * Modal component for editing email records
- * 
- * @param {Object} record - The record to edit
- * @param {Function} onSave - Function to call when saving changes
- * @param {Function} onCancel - Function to call when canceling
- * @param {boolean} isLoading - Whether the form is in a loading state
+ * Modal component for editing email records - Compact two-column layout
  */
 const EmailRecordEditModal = ({ record, onSave, onCancel, isLoading = false }) => {
     const [formData, setFormData] = useState({
@@ -25,7 +20,6 @@ const EmailRecordEditModal = ({ record, onSave, onCancel, isLoading = false }) =
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // Special handling for email_send_date to ensure proper ISO format
         if (name === 'email_send_date') {
             setFormData(prev => ({
                 ...prev,
@@ -38,7 +32,6 @@ const EmailRecordEditModal = ({ record, onSave, onCancel, isLoading = false }) =
             }));
         }
 
-        // Clear error when field is edited
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -49,24 +42,13 @@ const EmailRecordEditModal = ({ record, onSave, onCancel, isLoading = false }) =
 
     const validateForm = () => {
         const newErrors = {};
-
-        // Company name validation
-        if (!formData.company_name.trim()) {
-            newErrors.company_name = 'Company name is required';
-        }
-
-        // Email validation
+        if (!formData.company_name.trim()) newErrors.company_name = 'Required';
         if (!formData.email.trim()) {
-            newErrors.email = 'Email is required';
+            newErrors.email = 'Required';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            newErrors.email = 'Please enter a valid email address';
+            newErrors.email = 'Invalid email';
         }
-
-        // Subject validation
-        if (!formData.subject.trim()) {
-            newErrors.subject = 'Subject is required';
-        }
-
+        if (!formData.subject.trim()) newErrors.subject = 'Required';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -78,161 +60,147 @@ const EmailRecordEditModal = ({ record, onSave, onCancel, isLoading = false }) =
         }
     };
 
+    const inputClass = (hasError) => `w-full px-2.5 py-1.5 text-sm border ${hasError ? 'border-danger' : 'border-dark-300/50'} rounded-lg bg-dark-500/50 text-text-primary focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500`;
+
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="flex items-center justify-center min-h-screen p-4">
                 {/* Background overlay */}
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={onCancel}></div>
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" aria-hidden="true" onClick={onCancel}></div>
 
-                {/* Modal panel */}
-                <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-                    <div className="sm:flex sm:items-start">
-                        <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                            <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                Edit Email Record
-                            </h3>
-
-                            <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-                                <div>
-                                    <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">
-                                        Company Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="company_name"
-                                        id="company_name"
-                                        value={formData.company_name}
-                                        onChange={handleChange}
-                                        className={`mt-1 block w-full border ${errors.company_name ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
-                                        disabled={isLoading}
-                                    />
-                                    {errors.company_name && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.company_name}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                        Email Address
-                                    </label>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        id="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        className={`mt-1 block w-full border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
-                                        disabled={isLoading}
-                                    />
-                                    {errors.email && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
-                                        Subject
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="subject"
-                                        id="subject"
-                                        value={formData.subject}
-                                        onChange={handleChange}
-                                        className={`mt-1 block w-full border ${errors.subject ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
-                                        disabled={isLoading}
-                                    />
-                                    {errors.subject && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.subject}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="file_path" className="block text-sm font-medium text-gray-700">
-                                        File Path
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="file_path"
-                                        id="file_path"
-                                        value={formData.file_path}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                                        disabled={isLoading}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label htmlFor="email_status" className="block text-sm font-medium text-gray-700">
-                                        Status
-                                    </label>
-                                    <select
-                                        name="email_status"
-                                        id="email_status"
-                                        value={formData.email_status}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                                        disabled={isLoading}
-                                    >
-                                        <option value="Pending">Pending</option>
-                                        <option value="Success">Success</option>
-                                        <option value="Failed">Failed</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label htmlFor="reason" className="block text-sm font-medium text-gray-700">
-                                        Reason / Notes
-                                    </label>
-                                    <textarea
-                                        name="reason"
-                                        id="reason"
-                                        value={formData.reason}
-                                        onChange={handleChange}
-                                        rows={3}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                                        disabled={isLoading}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label htmlFor="email_send_date" className="block text-sm font-medium text-gray-700">
-                                        Email Send Date
-                                    </label>
-                                    <input
-                                        type="datetime-local"
-                                        name="email_send_date"
-                                        id="email_send_date"
-                                        value={formData.email_send_date ? new Date(formData.email_send_date).toISOString().slice(0, 16) : ''}
-                                        onChange={handleChange}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                                        disabled={isLoading}
-                                    />
-                                    <p className="mt-1 text-xs text-gray-500">
-                                        Optional. If not set, the current date will be used.
-                                    </p>
-                                </div>
-
-                                <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                                    <button
-                                        type="submit"
-                                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm"
-                                        disabled={isLoading}
-                                    >
-                                        {isLoading ? 'Saving...' : 'Save Changes'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:w-auto sm:text-sm"
-                                        onClick={onCancel}
-                                        disabled={isLoading}
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                {/* Modal panel - Compact */}
+                <div className="relative bg-dark-600 rounded-xl shadow-2xl w-full max-w-lg border border-dark-300/50 overflow-hidden">
+                    {/* Header */}
+                    <div className="px-4 py-3 border-b border-dark-300/50 bg-dark-700/80">
+                        <h3 className="text-base font-medium text-text-primary font-display">Edit Email Record</h3>
                     </div>
+
+                    <form onSubmit={handleSubmit} className="p-4">
+                        {/* Two column grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                            {/* Company Name */}
+                            <div>
+                                <label className="block text-xs font-medium text-text-secondary mb-1">
+                                    Company <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="company_name"
+                                    value={formData.company_name}
+                                    onChange={handleChange}
+                                    className={inputClass(errors.company_name)}
+                                    disabled={isLoading}
+                                />
+                                {errors.company_name && <p className="mt-0.5 text-xs text-danger-light">{errors.company_name}</p>}
+                            </div>
+
+                            {/* Email */}
+                            <div>
+                                <label className="block text-xs font-medium text-text-secondary mb-1">
+                                    Email <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    className={inputClass(errors.email)}
+                                    disabled={isLoading}
+                                />
+                                {errors.email && <p className="mt-0.5 text-xs text-danger-light">{errors.email}</p>}
+                            </div>
+
+                            {/* Subject - Full width */}
+                            <div className="col-span-2">
+                                <label className="block text-xs font-medium text-text-secondary mb-1">
+                                    Subject <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="subject"
+                                    value={formData.subject}
+                                    onChange={handleChange}
+                                    className={inputClass(errors.subject)}
+                                    disabled={isLoading}
+                                />
+                                {errors.subject && <p className="mt-0.5 text-xs text-danger-light">{errors.subject}</p>}
+                            </div>
+
+                            {/* File Path - Full width */}
+                            <div className="col-span-2">
+                                <label className="block text-xs font-medium text-text-secondary mb-1">File Path</label>
+                                <input
+                                    type="text"
+                                    name="file_path"
+                                    value={formData.file_path}
+                                    onChange={handleChange}
+                                    className={inputClass(false)}
+                                    disabled={isLoading}
+                                />
+                            </div>
+
+                            {/* Status */}
+                            <div>
+                                <label className="block text-xs font-medium text-text-secondary mb-1">Status</label>
+                                <select
+                                    name="email_status"
+                                    value={formData.email_status}
+                                    onChange={handleChange}
+                                    className={inputClass(false)}
+                                    disabled={isLoading}
+                                >
+                                    <option value="Pending">Pending</option>
+                                    <option value="Success">Success</option>
+                                    <option value="Failed">Failed</option>
+                                </select>
+                            </div>
+
+                            {/* Send Date */}
+                            <div>
+                                <label className="block text-xs font-medium text-text-secondary mb-1">Send Date</label>
+                                <input
+                                    type="datetime-local"
+                                    name="email_send_date"
+                                    value={formData.email_send_date ? new Date(formData.email_send_date).toISOString().slice(0, 16) : ''}
+                                    onChange={handleChange}
+                                    className={inputClass(false)}
+                                    disabled={isLoading}
+                                />
+                            </div>
+
+                            {/* Reason - Full width, shorter */}
+                            <div className="col-span-2">
+                                <label className="block text-xs font-medium text-text-secondary mb-1">Reason / Notes</label>
+                                <textarea
+                                    name="reason"
+                                    value={formData.reason}
+                                    onChange={handleChange}
+                                    rows={2}
+                                    className={inputClass(false)}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="mt-4 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={onCancel}
+                                disabled={isLoading}
+                                className="px-3 py-1.5 text-sm font-medium text-text-secondary bg-dark-500/50 border border-dark-300/50 rounded-lg hover:bg-dark-400/50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-accent-violet rounded-lg hover:from-primary-600 hover:to-accent-violet/90 transition-all"
+                            >
+                                {isLoading ? 'Saving...' : 'Save'}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

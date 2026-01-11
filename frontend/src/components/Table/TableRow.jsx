@@ -22,7 +22,7 @@ const TableRow = ({
       console.error('[TableRow] Error handling row click:', error);
     }
   }, [onSelect, isSelected]);
-  
+
   // Memoize the checkbox change handler
   const handleCheckboxChange = useCallback((e) => {
     e.stopPropagation(); // Prevent row click
@@ -34,9 +34,9 @@ const TableRow = ({
   return (
     <tr
       className={`${isSelected
-        ? 'bg-blue-100 hover:bg-blue-200 border border-blue-300'
-        : 'hover:bg-gray-50'
-      } cursor-pointer transition-all`}
+        ? 'bg-primary-500/15 hover:bg-primary-500/20 border-l-2 border-primary-500'
+        : 'hover:bg-dark-500/50'
+        } cursor-pointer transition-all`}
       onClick={handleRowClick}
       onKeyDown={(e) => {
         // Add keyboard navigation support
@@ -54,13 +54,13 @@ const TableRow = ({
         <div className="flex items-center justify-center">
           <div
             className={`w-6 h-6 border rounded-md flex items-center justify-center transition-all ${isSelected
-              ? 'border-blue-600 bg-blue-100 shadow-md'
-              : 'border-gray-300 bg-white hover:bg-gray-50'
-            }`}
+              ? 'border-primary-500 bg-primary-500/20 shadow-md'
+              : 'border-dark-300/50 bg-dark-500/50 hover:bg-dark-400/50'
+              }`}
           >
             <input
               type="checkbox"
-              className="focus:ring-2 focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-400 rounded cursor-pointer"
+              className="focus:ring-2 focus:ring-primary-500 h-4 w-4 text-primary-600 border-dark-300 rounded cursor-pointer bg-dark-500"
               checked={isSelected}
               onChange={handleCheckboxChange}
               aria-label={`Select ${row.id || 'row'}`}

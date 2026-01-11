@@ -133,7 +133,7 @@ const AutomatePage = ({ connectionInfo, onDisconnect }) => {
                         />
 
                         {/* Status Summary */}
-                        <StatusSummary automationStatus={automationStatus} />
+                        <StatusSummary summary={automationStatus.summary} />
 
                         {/* Email Logs */}
                         <EmailLogs

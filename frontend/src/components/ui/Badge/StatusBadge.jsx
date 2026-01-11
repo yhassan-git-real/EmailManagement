@@ -1,61 +1,65 @@
 import React from 'react';
+import {
+  PlayCircleIcon,
+  StopCircleIcon,
+  PauseCircleIcon,
+  ArrowPathIcon
+} from '@heroicons/react/24/solid';
 
+/**
+ * StatusBadge - Displays automation status with improved icons
+ */
 const StatusBadge = ({ status }) => {
   const getStatusConfig = () => {
     switch (status) {
       case 'running':
-        return { 
-          bg: 'bg-green-100', 
-          border: 'border-green-300',
-          text: 'text-green-800', 
-          shadow: 'shadow-green-100',
-          icon: '✅',
+        return {
+          bg: 'bg-emerald-500/20',
+          border: 'border-emerald-400/40',
+          text: 'text-emerald-400',
+          Icon: PlayCircleIcon,
           label: 'Running'
         };
       case 'stopped':
-        return { 
-          bg: 'bg-red-100', 
-          border: 'border-red-300',
-          text: 'text-red-800', 
-          shadow: 'shadow-red-100',
-          icon: '🔴',
+        return {
+          bg: 'bg-red-500/20',
+          border: 'border-red-400/40',
+          text: 'text-red-400',
+          Icon: StopCircleIcon,
           label: 'Stopped'
         };
       case 'idle':
-        return { 
-          bg: 'bg-gray-100', 
-          border: 'border-gray-300',
-          text: 'text-gray-800', 
-          shadow: 'shadow-gray-100',
-          icon: '🕒',
+        return {
+          bg: 'bg-slate-500/20',
+          border: 'border-slate-400/40',
+          text: 'text-slate-300',
+          Icon: PauseCircleIcon,
           label: 'Idle'
         };
       case 'restarting':
-        return { 
-          bg: 'bg-yellow-100', 
-          border: 'border-yellow-300',
-          text: 'text-yellow-800', 
-          shadow: 'shadow-yellow-100',
-          icon: '🔄',
+        return {
+          bg: 'bg-amber-500/20',
+          border: 'border-amber-400/40',
+          text: 'text-amber-400',
+          Icon: ArrowPathIcon,
           label: 'Restarting'
         };
       default:
-        return { 
-          bg: 'bg-blue-100', 
-          border: 'border-blue-300',
-          text: 'text-blue-800', 
-          shadow: 'shadow-blue-100',
-          icon: '❓',
+        return {
+          bg: 'bg-blue-500/20',
+          border: 'border-blue-400/40',
+          text: 'text-blue-400',
+          Icon: PauseCircleIcon,
           label: 'Unknown'
         };
     }
   };
 
-  const { bg, border, text, shadow, icon, label } = getStatusConfig();
+  const { bg, border, text, Icon, label } = getStatusConfig();
 
   return (
-    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold ${bg} ${text} border ${border} ${shadow} transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5`}>
-      <span className="mr-2 text-base">{icon}</span>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${bg} ${text} border ${border} transition-all duration-200`}>
+      <Icon className={`w-4 h-4 mr-1.5 ${status === 'restarting' ? 'animate-spin' : ''}`} />
       {label}
     </span>
   );

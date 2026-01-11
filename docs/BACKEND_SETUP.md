@@ -1,298 +1,396 @@
-# Backend Setup Guide
+# ⚙️ Backend Setup Guide
 
-This guide provides detailed instructions for setting up the EmailManagement backend, which is built with FastAPI and connects to a Microsoft SQL Server database.
+> *Detailed instructions for setting up the EmailManagement FastAPI backend.*
 
-## Overview
+---
 
-The EmailManagement backend is built with FastAPI and provides a RESTful API that handles:
-- Database connection testing and management
-- Email record retrieval and management
-- Email template operations
-- Email automation configuration with scheduling capabilities
-- Integration with Google Drive for large file handling
-- Asynchronous email processing and retry mechanisms
-- Email archiving and storage management
-- Automated error handling and logging
+## 📋 Overview
 
-## Prerequisites
+The EmailManagement backend is built with **FastAPI** and provides a comprehensive RESTful API that handles:
 
-- Windows 10/11 (for portable Python setup)
-- Microsoft SQL Server (2016 or higher)
-- Internet connection (for downloading dependencies if needed)
+| Capability | Description |
+|------------|-------------|
+| 🗄️ Database Management | Connection testing and record operations |
+| 📧 Email Operations | Record retrieval, template management |
+| 🤖 Automation | Scheduling, retry mechanisms, process control |
+| ☁️ Google Drive | Large file uploads and sharing |
+| 📊 Logging | Comprehensive error handling and activity logs |
 
-## Project Structure
+---
 
-The backend follows a structured organization:
+## ✅ Prerequisites
+
+| Requirement | Details |
+|-------------|---------|
+| 💻 Windows | 10/11 for portable Python setup |
+| 🗄️ SQL Server | 2016 or higher |
+| 🌐 Internet | For downloading dependencies |
+
+---
+
+## 📁 Project Structure
 
 ```
 backend/
-  ├── .env                     # Environment variables for configuration
-  ├── requirements.txt         # Python dependencies
-  ├── run.py                   # Application entry point
-  ├── run_with_portable_env.ps1 # Run script with portable Python
-  ├── database/                # SQL scripts for database setup
-  │   ├── email_tables.sql     # Table definition scripts
-  │   ├── email_records_procedures.sql # Stored procedures
-  │   └── setup_stored_procedures.sql  # Procedure setup script
-  ├── templates/               # Email templates
-  │   ├── default_template.txt # Default email template
-  │   └── custom_template.txt  # Custom email template
-  ├── Email_Archive/           # Archive of sent email attachments
-  ├── portable_python/         # Portable Python runtime
-  ├── portable_venv/           # Portable virtual environment
-  └── app/                     # Main application package
-      ├── __init__.py
-      ├── main.py              # FastAPI application definition
-      ├── api/                 # API endpoints
-      │   ├── __init__.py
-      │   ├── email_records_router.py
-      │   └── endpoints/
-      │       ├── __init__.py
-      │       ├── automation.py
-      │       ├── database.py
-      │       ├── emails.py
-      │       └── templates.py
-      ├── core/                # Core application modules
-      │   ├── __init__.py
-      │   ├── config.py        # Configuration handling
-      │   └── database.py      # Database connection handling
-      ├── models/              # Data models
-      │   ├── __init__.py
-      │   ├── email.py
-      │   └── email_record.py
-      ├── services/            # Business logic services
-      │   ├── __init__.py
-      │   ├── automation_service.py
-      │   ├── email_record_service.py
-      │   ├── email_sender.py
-      │   ├── email_service.py
-      │   ├── gdrive_service.py
-      │   └── template_service.py
-      └── utils/               # Utility functions
-          ├── __init__.py
-          ├── db_utils.py      # Database utilities
-          ├── email_logger.py  # Email logging utilities
-          └── file_utils.py    # File handling utilities
+├── 📄 .env                          # Environment configuration
+├── 📄 requirements.txt              # Python dependencies
+├── 📄 run.py                        # Application entry point
+├── 📄 run_with_portable_env.ps1     # Portable Python runner
+│
+├── 📂 database/                     # SQL Scripts
+│   ├── email_tables.sql             # Table definitions
+│   ├── email_records_procedures.sql # Stored procedures
+│   └── setup_stored_procedures.sql  # Procedure setup
+│
+├── 📂 templates/                    # Email Templates
+│   ├── default_template.txt
+│   └── custom_template.txt
+│
+├── 📂 Email_Archive/                # Sent email archives
+├── 📂 portable_python/              # Portable Python runtime
+├── 📂 portable_venv/                # Virtual environment
+│
+└── 📂 app/                          # Main Application
+    ├── __init__.py
+    ├── main.py                      # FastAPI app definition
+    │
+    ├── 📂 api/                      # API Endpoints
+    │   ├── email_records_router.py
+    │   └── endpoints/
+    │       ├── automation.py
+    │       ├── database.py
+    │       ├── emails.py
+    │       └── templates.py
+    │
+    ├── 📂 core/                     # Core Modules
+    │   ├── config.py                # Configuration handling
+    │   └── database.py              # DB connection handling
+    │
+    ├── 📂 models/                   # Data Models
+    │   ├── email.py
+    │   └── email_record.py
+    │
+    ├── 📂 services/                 # Business Logic
+    │   ├── automation_service.py
+    │   ├── email_record_service.py
+    │   ├── email_sender.py
+    │   ├── email_service.py
+    │   ├── gdrive_service.py
+    │   └── template_service.py
+    │
+    └── 📂 utils/                    # Utilities
+        ├── db_utils.py
+        ├── email_logger.py
+        └── file_utils.py
 ```
 
-## Setup Methods
+---
 
-### Option 1: Using Portable Python Environment (Recommended)
+## 🚀 Setup Methods
 
-This method creates a self-contained, portable Python environment that works across different systems without relying on the system's global Python installation.
+### Option 1: Portable Python Environment ⭐ Recommended
 
-1. From the project root directory, run the backend with a single command:
-   ```powershell
-   .\start_backend.ps1
-   ```
+This method creates a self-contained, portable Python environment.
 
-   This script automatically:
-   - Uses the pre-packaged portable Python environment
-   - Activates the virtual environment
-   - Installs any missing dependencies
-   - Starts the FastAPI server
+```powershell
+# From project root directory
+.\start_backend.ps1
+```
 
-2. The backend will be available at: http://localhost:8000
+This script automatically:
+- ✅ Uses pre-packaged portable Python
+- ✅ Activates the virtual environment
+- ✅ Installs missing dependencies
+- ✅ Starts the FastAPI server
 
-3. Verify it's working by opening http://localhost:8000/health in your browser. You should see a JSON response with "status": "ok".
+**Verify Installation:**
+```
+http://localhost:8000/health
+```
 
-### Option 2: Using System Python (Traditional Setup)
+You should see: `{"status": "ok"}`
 
-If you prefer to use your system's Python installation:
+---
 
-1. Ensure you have Python 3.11 or higher installed.
+### Option 2: System Python
 
-2. Create a virtual environment:
-   ```powershell
-   cd backend
-   python -m venv venv
-   .\venv\Scripts\activate
-   ```
+<details>
+<summary><b>📋 Manual Setup Instructions</b></summary>
 
-3. Install the dependencies:
-   ```powershell
-   pip install -r requirements.txt
-   ```
+<br>
 
-4. Create a `.env` file in the backend directory with the following content:
-   ```
-   # Database settings
-   DB_SERVER=your_sql_server
-   DB_NAME=your_database
-   DB_USER=your_username
-   DB_PASSWORD=your_password
-   
-   # Email tables and columns
-   EMAIL_TABLE=EmailRecords
-   
-   # Email settings
-   SMTP_SERVER=smtp.gmail.com
-   SMTP_PORT=587
-   SMTP_TLS=true
-   EMAIL_USERNAME=your_email@gmail.com
-   EMAIL_PASSWORD=your_app_password
-   SENDER_EMAIL=your_email@gmail.com
-   EMAIL_ARCHIVE_PATH=./Email_Archive
-   
-   # Optional Google Drive integration
-   GDRIVE_CREDENTIALS_PATH=../credentials/oauth_credentials.json
-   GDRIVE_FOLDER_ID=your_folder_id_here
-   
-   # API settings
-   API_PORT=8000
-   CORS_ORIGINS=["http://localhost:5173", "http://127.0.0.1:5173"]
-   
-   # Logging configuration
-   LOG_LEVEL=INFO
-   LOG_FILE=./logs/email_app.log
-   ```
+**1. Verify Python Version**
+```powershell
+python --version  # Should be 3.11+
+```
 
-5. Run the application:
-   ```powershell
-   python run.py
-   ```
+**2. Create Virtual Environment**
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\activate
+```
 
-## Database Setup
+**3. Install Dependencies**
+```powershell
+pip install -r requirements.txt
+```
 
-The application requires the following database tables and stored procedures:
+**4. Create `.env` File**
+```env
+# Database settings
+DB_SERVER=your_sql_server
+DB_NAME=your_database
+DB_USER=your_username
+DB_PASSWORD=your_password
 
-1. Create the necessary tables by running the SQL scripts in the `database` directory:
-   - `email_tables.sql` - Creates the EmailRecords table
-   - `email_records_procedures.sql` - Creates stored procedures for email records
-   - `setup_stored_procedures.sql` - Master script that runs all procedure scripts
+# Email settings
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_TLS=true
+EMAIL_USERNAME=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password
+SENDER_EMAIL=your_email@gmail.com
+EMAIL_ARCHIVE_PATH=./Email_Archive
 
-2. You can run these scripts directly in SQL Server Management Studio or using the sqlcmd utility.
+# Google Drive (optional)
+GDRIVE_CREDENTIALS_PATH=../credentials/oauth_credentials.json
+GDRIVE_FOLDER_ID=your_folder_id_here
 
-3. The application will connect to your database using the credentials provided when using the frontend interface.
+# API settings
+API_PORT=8000
+CORS_ORIGINS=["http://localhost:5173", "http://127.0.0.1:5173"]
 
-## API Endpoints
+# Logging
+LOG_LEVEL=INFO
+LOG_FILE=./logs/email_app.log
+```
 
-The backend exposes the following API endpoints:
+**5. Run the Application**
+```powershell
+python run.py
+```
 
-### Root and Health Endpoints
+</details>
 
-- `GET /` - Root endpoint to verify API is running
-- `GET /health` - Health check endpoint
-- `GET /api/config` - Show current configuration (with sensitive data masked)
+---
+
+## 🗄️ Database Setup
+
+1. Run the SQL scripts in the `database/` directory:
+
+| Script | Purpose |
+|--------|---------|
+| `email_tables.sql` | Creates EmailRecords table |
+| `email_records_procedures.sql` | Record stored procedures |
+| `setup_stored_procedures.sql` | Master setup script |
+
+2. Execute via SSMS or command line:
+```powershell
+sqlcmd -S localhost\SQLEXPRESS -d EmailManagement -i database\email_tables.sql
+```
+
+---
+
+## 🔌 API Endpoints
+
+### System Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Root - Verify API is running |
+| `GET` | `/health` | Health check |
+| `GET` | `/api/config` | Show configuration (masked) |
 
 ### Database Endpoints
 
-- `POST /api/database/test` - Test database connection with provided credentials
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/database/test` | Test database connection |
 
 ### Email Records Endpoints
 
-- `GET /api/email-records/` - Get paginated email records with optional filtering
-- `GET /api/email-records/{record_id}` - Get a specific email record by ID
-- `PUT /api/email-records/{record_id}` - Update an email record
-- `PUT /api/email-records/{record_id}/status` - Update the status of an email record
-- `DELETE /api/email-records/{record_id}` - Delete an email record
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/email-records/` | Get paginated records |
+| `GET` | `/api/email-records/{id}` | Get specific record |
+| `PUT` | `/api/email-records/{id}` | Update record |
+| `PUT` | `/api/email-records/{id}/status` | Update status |
+| `DELETE` | `/api/email-records/{id}` | Delete record |
 
-### Email Templates Endpoints
+### Template Endpoints
 
-- `GET /api/templates` - Get all available email templates
-- `GET /api/templates/{template_id}` - Get a specific template by ID
-- `POST /api/templates` - Create a new template
-- `PUT /api/templates/{template_id}` - Update an existing template
-- `DELETE /api/templates/{template_id}` - Delete a template
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/templates` | List all templates |
+| `GET` | `/api/templates/{id}` | Get specific template |
+| `POST` | `/api/templates` | Create template |
+| `PUT` | `/api/templates/{id}` | Update template |
+| `DELETE` | `/api/templates/{id}` | Delete template |
 
 ### Automation Endpoints
 
-- `GET /api/automation/settings` - Get automation settings
-- `POST /api/automation/settings` - Update automation settings
-- `GET /api/automation/status` - Get automation status
-- `POST /api/automation/start` - Start email automation
-- `POST /api/automation/stop` - Stop email automation
-- `POST /api/automation/restart-failed` - Retry failed emails
-- `GET /api/automation/schedule` - Get automation schedule settings
-- `POST /api/automation/schedule` - Update automation schedule settings
-- `POST /api/automation/schedule/enable` - Enable scheduled automation
-- `POST /api/automation/schedule/disable` - Disable scheduled automation
-- `GET /api/automation/logs` - Get automation process logs
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/automation/settings` | Get settings |
+| `POST` | `/api/automation/settings` | Update settings |
+| `GET` | `/api/automation/status` | Get status |
+| `POST` | `/api/automation/start` | Start automation |
+| `POST` | `/api/automation/stop` | Stop automation |
+| `POST` | `/api/automation/restart-failed` | Retry failed emails |
+| `GET` | `/api/automation/schedule` | Get schedule |
+| `POST` | `/api/automation/schedule` | Update schedule |
+| `POST` | `/api/automation/schedule/enable` | Enable scheduling |
+| `POST` | `/api/automation/schedule/disable` | Disable scheduling |
+| `GET` | `/api/automation/logs` | Get process logs |
 
-### Google Drive Integration Endpoints
+### Google Drive Endpoints
 
-- `GET /api/gdrive/status` - Check Google Drive integration status
-- `POST /api/gdrive/upload` - Upload file to Google Drive
-- `GET /api/gdrive/shared-link/{file_id}` - Get shareable link for a file
-- `GET /api/gdrive/space-usage` - Get Google Drive space usage statistics
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/gdrive/status` | Integration status |
+| `POST` | `/api/gdrive/upload` | Upload file |
+| `GET` | `/api/gdrive/shared-link/{id}` | Get shareable link |
+| `GET` | `/api/gdrive/space-usage` | Storage statistics |
 
-## Testing
+---
 
-You can test the API endpoints using curl, PowerShell, or any API testing tool like Postman.
+## 🧪 Testing the API
 
 ### Using PowerShell
 
 ```powershell
-# Check health
-Invoke-WebRequest -Method GET -Uri http://localhost:8000/health | Select-Object -ExpandProperty Content
+# Health check
+Invoke-WebRequest -Method GET -Uri http://localhost:8000/health | 
+    Select-Object -ExpandProperty Content
 
 # Get configuration
-Invoke-WebRequest -Method GET -Uri http://localhost:8000/api/config | Select-Object -ExpandProperty Content
+Invoke-WebRequest -Method GET -Uri http://localhost:8000/api/config | 
+    Select-Object -ExpandProperty Content
 
 # Test database connection
-Invoke-WebRequest -Method POST -Uri http://localhost:8000/api/database/test -ContentType "application/json" -Body '{"server":"your_server","database":"your_database","username":"your_username","password":"your_password"}' | Select-Object -ExpandProperty Content
+$body = @{
+    server = "your_server"
+    database = "your_database"
+    username = "your_username"
+    password = "your_password"
+} | ConvertTo-Json
+
+Invoke-WebRequest -Method POST -Uri http://localhost:8000/api/database/test `
+    -ContentType "application/json" -Body $body
 ```
 
 ### Using curl
 
 ```bash
-# Check health
+# Health check
 curl -X GET http://localhost:8000/health
 
 # Get configuration
 curl -X GET http://localhost:8000/api/config
 
 # Test database connection
-curl -X POST http://localhost:8000/api/database/test -H "Content-Type: application/json" -d '{"server":"your_server","database":"your_database","username":"your_username","password":"your_password"}'
+curl -X POST http://localhost:8000/api/database/test \
+    -H "Content-Type: application/json" \
+    -d '{"server":"your_server","database":"your_db","username":"user","password":"pass"}'
 ```
 
-## Troubleshooting
+---
 
-### Common Issues
+## 🏛️ Architecture
 
-1. **Port Conflict**
-   - If port 8000 is already in use, modify the `API_PORT` value in the `.env` file
-   - Remember to update the frontend API client to point to the new port
+```mermaid
+graph TB
+    subgraph API["🔌 API Layer"]
+        Routes[HTTP Routes]
+        Validation[Request Validation]
+    end
+    
+    subgraph Services["⚙️ Service Layer"]
+        EmailSvc[Email Service]
+        AutoSvc[Automation Service]
+        GDriveSvc[GDrive Service]
+        TemplateSvc[Template Service]
+    end
+    
+    subgraph Data["💾 Data Layer"]
+        Models[Data Models]
+        DBConn[Database Connection]
+    end
+    
+    subgraph Utils["🔧 Utility Layer"]
+        Logger[Email Logger]
+        FileUtils[File Utils]
+        DBUtils[DB Utils]
+    end
+    
+    Routes --> Validation
+    Validation --> Services
+    Services --> Data
+    Services --> Utils
+    Data --> DBConn
+    
+    style API fill:#667eea,stroke:#5a67d8,color:#fff
+    style Services fill:#48bb78,stroke:#38a169,color:#fff
+    style Data fill:#ed8936,stroke:#dd6b20,color:#fff
+    style Utils fill:#9f7aea,stroke:#805ad5,color:#fff
+```
 
-2. **Database Connection Issues**
-   - Verify SQL Server is running
-   - Check that the connection details are correct
-   - Ensure the user has appropriate permissions on the database
-   - Make sure SQL Server authentication is enabled if using SQL authentication
+---
 
-3. **Missing Dependencies**
-   - If you encounter module import errors, run:
-     ```
-     pip install -r requirements.txt
-     ```
-   - For the portable environment, try:
-     ```
-     .\scripts\portable_env\setup.ps1
-     ```
+## 🔧 Troubleshooting
 
-4. **File Permission Issues**
-   - Ensure the application has write permissions to the `Email_Archive` directory
-   - Check permissions on template files
+<details>
+<summary><b>🔴 Port 8000 Already in Use</b></summary>
 
-## Architectural Notes
+<br>
 
-The backend follows a layered architecture pattern:
+1. Change `API_PORT` in `.env` file
+2. Update frontend `API_BASE_URL` to match
 
-1. **API Layer** (`app/api/`):
-   - Defines all HTTP endpoints
-   - Validates incoming requests
-   - Handles HTTP-specific logic (status codes, headers)
+</details>
 
-2. **Service Layer** (`app/services/`):
-   - Implements business logic
-   - Orchestrates data operations
-   - Handles integration with external services
+<details>
+<summary><b>🔴 Database Connection Failed</b></summary>
 
-3. **Data Layer** (`app/models/` and database connection):
-   - Defines data structures
-   - Manages database connections
-   - Executes database operations
+<br>
 
-4. **Utility Layer** (`app/utils/`):
-   - Provides helper functions
-   - Handles cross-cutting concerns
+- ✅ Verify SQL Server is running
+- ✅ Check connection credentials
+- ✅ Ensure user has database permissions
+- ✅ Verify SQL Server authentication is enabled
+
+</details>
+
+<details>
+<summary><b>🔴 Missing Dependencies</b></summary>
+
+<br>
+
+```powershell
+# Standard environment
+pip install -r requirements.txt
+
+# Portable environment
+.\scripts\portable_env\setup.ps1
+```
+
+</details>
+
+<details>
+<summary><b>🔴 File Permission Errors</b></summary>
+
+<br>
+
+- Ensure write access to `Email_Archive/` directory
+- Check template file permissions
+
+</details>
+
+---
+
+## 📚 Related Documentation
+
+- [Setup Guide](SETUP_GUIDE.md) - Complete installation walkthrough
+- [Frontend Setup](FRONTEND_SETUP.md) - React app configuration
+- [Google Drive Setup](GOOGLE_DRIVE_SETUP.md) - Large file integration

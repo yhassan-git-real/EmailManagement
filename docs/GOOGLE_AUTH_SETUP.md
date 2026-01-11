@@ -1,155 +1,254 @@
-# Google Authentication Setup for Email Sending
+# 🔐 Google Authentication Setup
 
-This guide provides detailed instructions for setting up Google Authentication to send emails through Gmail SMTP with your EmailManagement application.
+> *Configure Gmail SMTP authentication for sending emails through the EmailManagement application.*
 
-## Overview
+---
 
-EmailManagement can send emails through Gmail's SMTP server, which requires proper authentication. There are two main methods for authentication:
+## 📋 Overview
 
-1. **App Password Authentication**: Simpler method for single-user applications
-2. **OAuth 2.0 Authentication**: More secure, especially for multi-user applications
+EmailManagement can send emails through Gmail's SMTP server using two authentication methods:
 
-## Method 1: App Password Authentication (Recommended for Personal Use)
+```mermaid
+flowchart TD
+    A[Choose Authentication Method] --> B{Use Case?}
+    B -->|Personal/Simple| C[🔑 App Password]
+    B -->|Multi-User/Production| D[🔒 OAuth 2.0]
+    
+    C --> C1[Enable 2FA]
+    C1 --> C2[Generate App Password]
+    C2 --> C3[Configure .env]
+    
+    D --> D1[Create GCP Project]
+    D1 --> D2[Enable Gmail API]
+    D2 --> D3[Configure OAuth]
+    D3 --> D4[Run Setup Script]
+    
+    style C fill:#48bb78,stroke:#38a169,color:#fff
+    style D fill:#667eea,stroke:#5a67d8,color:#fff
+```
 
-### Prerequisites
+| Method | Best For | Complexity |
+|--------|----------|------------|
+| 🔑 **App Password** | Personal use, single user | ⭐ Simple |
+| 🔒 **OAuth 2.0** | Multi-user, production | ⭐⭐⭐ Advanced |
 
-- A Google Account
-- Two-factor authentication (2FA) enabled on your Google Account
+---
 
-### Step-by-Step Setup
+## 🔑 Method 1: App Password Authentication
 
-1. **Enable 2-Step Verification (if not already enabled)**
-   - Go to your [Google Account Security Settings](https://myaccount.google.com/security)
-   - Click on "2-Step Verification" and follow the steps to turn it on
-
-2. **Create an App Password**
-   - Go to your [Google Account Security Settings](https://myaccount.google.com/security)
-   - Click on "App passwords" (you may need to enter your password again)
-   - Select "Mail" as the app and "Windows Computer" (or appropriate device) as the device
-   - Click "Generate"
-   - Google will display a 16-character app password. **Copy this password and keep it secure**
-
-3. **Configure EmailManagement**
-   - Edit the `.env` file in the backend directory:
-     ```
-     # Email sending configuration
-     EMAIL_SENDER=your.email@gmail.com
-     EMAIL_PASSWORD=your-16-character-app-password
-     EMAIL_SMTP_SERVER=smtp.gmail.com
-     EMAIL_SMTP_PORT=587
-     ```
-
-4. **Restart the Backend**
-   - Restart the backend server for changes to take effect
-
-### Testing App Password Authentication
-
-1. Send a test email through the application
-2. Check for successful delivery
-3. If issues occur, check the application logs for SMTP-related errors
-
-## Method 2: OAuth 2.0 Authentication (Recommended for Multi-User or Production)
+> ⭐ **Recommended for personal use**
 
 ### Prerequisites
 
-- A Google Account
-- Google Cloud Platform account (free tier is sufficient)
+- ✅ Google Account
+- ✅ Two-Factor Authentication (2FA) enabled
 
 ### Step-by-Step Setup
 
-1. **Create a Google Cloud Project**
-   - Go to the [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select an existing one
-   - Make note of your Project ID
+#### Step 1: Enable 2-Step Verification
 
-2. **Enable the Gmail API**
-   - In your project, go to "APIs & Services" > "Library"
-   - Search for "Gmail API" and click on it
-   - Click "Enable"
+1. Go to [Google Account Security](https://myaccount.google.com/security)
+2. Click on **"2-Step Verification"**
+3. Follow the prompts to enable it
 
-3. **Configure the OAuth Consent Screen**
-   - Go to "APIs & Services" > "OAuth consent screen"
-   - Choose "External" as the user type (unless you're using Google Workspace)
-   - Fill in the required fields:
-     - App name: "EmailManagement"
-     - User support email: Your email address
-     - Developer contact information: Your email address
-   - Add the scopes:
-     - `https://www.googleapis.com/auth/gmail.send`
-   - Add your email as a test user
-   - Complete the setup
+#### Step 2: Generate App Password
 
-4. **Create OAuth Client ID**
-   - Go to "APIs & Services" > "Credentials"
-   - Click "Create Credentials" > "OAuth client ID"
-   - Application type: "Desktop application"
-   - Name: "EmailManagement Desktop Client"
-   - Click "Create"
-   - Download the JSON file (client secret)
-   - Save this file as `gmail_oauth_credentials.json` in the `credentials` directory of your project
+1. Go to [Google Account Security](https://myaccount.google.com/security)
+2. Click on **"App passwords"** (you may need to re-enter your password)
+3. Select:
+   - **App**: Mail
+   - **Device**: Windows Computer
+4. Click **"Generate"**
+5. **Copy the 16-character password** and keep it secure
 
-5. **Configure EmailManagement**
-   - Edit the `.env` file in the backend directory:
-     ```
-     # Email sending configuration (OAuth)
-     EMAIL_SENDER=your.email@gmail.com
-     EMAIL_USE_OAUTH=true
-     EMAIL_OAUTH_CREDENTIALS_PATH=../credentials/gmail_oauth_credentials.json
-     EMAIL_SMTP_SERVER=smtp.gmail.com
-     EMAIL_SMTP_PORT=587
-     ```
+> [!IMPORTANT]
+> This password is shown only once. Store it securely!
 
-6. **Run the OAuth Setup Script**
-   - The first time you run the application, it will:
-     - Open a browser window asking you to sign in to your Google account
-     - Request permission to send emails on your behalf
-     - Generate and save a token file
+#### Step 3: Configure EmailManagement
 
-### Testing OAuth Authentication
+Update your `.env` file in the `backend/` directory:
+
+```env
+# 📧 Email sending configuration
+EMAIL_SENDER=your.email@gmail.com
+EMAIL_PASSWORD=your-16-character-app-password
+EMAIL_SMTP_SERVER=smtp.gmail.com
+EMAIL_SMTP_PORT=587
+```
+
+#### Step 4: Restart Backend
+
+```powershell
+.\start_backend.ps1
+```
+
+### ✅ Testing
 
 1. Send a test email through the application
 2. Check for successful delivery
-3. If issues occur, check the application logs for authentication-related errors
+3. Review application logs for any SMTP errors
 
-## Troubleshooting
+---
 
-### Common Issues with App Passwords
+## 🔒 Method 2: OAuth 2.0 Authentication
 
-1. **Authentication Failed**
-   - Verify the app password was entered correctly (no spaces)
-   - Ensure you're using the correct email address
-   - Check that 2FA is enabled on your account
+> **Recommended for multi-user or production environments**
 
-2. **Connection Timeout**
-   - Check your firewall or antivirus settings
-   - Ensure port 587 is open for outgoing connections
+### Prerequisites
 
-### Common Issues with OAuth
+- ✅ Google Account
+- ✅ Google Cloud Platform account (free tier sufficient)
 
-1. **Redirect URI Mismatch**
-   - Make sure the OAuth client is configured as a Desktop application
+### Step-by-Step Setup
 
-2. **Token Refresh Issues**
-   - If tokens expire, delete the token file and restart the authentication process
+#### Step 1: Create Google Cloud Project
 
-3. **Scope Issues**
-   - Ensure the Gmail API is enabled
-   - Verify the correct scopes are configured in the OAuth consent screen
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Note your **Project ID**
 
-## Security Best Practices
+#### Step 2: Enable Gmail API
 
-1. **Never commit credentials to version control**
-   - Add `gmail_oauth_credentials.json` and token files to `.gitignore`
+1. Navigate to **APIs & Services** → **Library**
+2. Search for **"Gmail API"**
+3. Click **Enable**
 
-2. **Use environment variables in production**
-   - Consider using environment variables instead of `.env` files in production
+#### Step 3: Configure OAuth Consent Screen
 
-3. **Regularly rotate credentials**
-   - For app passwords, generate a new password periodically
-   - For OAuth, generate new client secrets periodically
+1. Go to **APIs & Services** → **OAuth consent screen**
+2. Select **External** user type
+3. Fill required fields:
 
-## Additional Resources
+| Field | Value |
+|-------|-------|
+| App name | EmailManagement |
+| User support email | Your email |
+| Developer contact | Your email |
 
-- [Google App Passwords Documentation](https://support.google.com/accounts/answer/185833)
-- [Gmail API Documentation](https://developers.google.com/gmail/api/guides)
-- [OAuth 2.0 for Mobile & Desktop Apps](https://developers.google.com/identity/protocols/oauth2/native-app)
+4. Add scope: `https://www.googleapis.com/auth/gmail.send`
+5. Add your email as a **test user**
+
+#### Step 4: Create OAuth Client ID
+
+1. Go to **APIs & Services** → **Credentials**
+2. Click **Create Credentials** → **OAuth client ID**
+3. Select **Desktop application**
+4. Name: `EmailManagement Desktop Client`
+5. Click **Create**
+6. **Download JSON** file
+7. Save as `gmail_oauth_credentials.json` in `credentials/` folder
+
+#### Step 5: Configure Environment
+
+```env
+# 📧 Email sending configuration (OAuth)
+EMAIL_SENDER=your.email@gmail.com
+EMAIL_USE_OAUTH=true
+EMAIL_OAUTH_CREDENTIALS_PATH=../credentials/gmail_oauth_credentials.json
+EMAIL_SMTP_SERVER=smtp.gmail.com
+EMAIL_SMTP_PORT=587
+```
+
+#### Step 6: Run OAuth Setup
+
+On first run, the application will:
+1. 🌐 Open a browser for sign-in
+2. 🔐 Request permission to send emails
+3. 💾 Save authentication token
+
+---
+
+## 🔧 Troubleshooting
+
+### App Password Issues
+
+<details>
+<summary><b>🔴 Authentication Failed</b></summary>
+
+<br>
+
+| Check | Solution |
+|-------|----------|
+| Password format | Remove any spaces |
+| Email address | Use correct Gmail address |
+| 2FA status | Ensure 2FA is enabled |
+
+</details>
+
+<details>
+<summary><b>🔴 Connection Timeout</b></summary>
+
+<br>
+
+- Check firewall/antivirus settings
+- Ensure port 587 is open for outgoing connections
+- Try port 465 with SSL instead
+
+</details>
+
+### OAuth Issues
+
+<details>
+<summary><b>🔴 Redirect URI Mismatch</b></summary>
+
+<br>
+
+Ensure OAuth client is configured as **Desktop application**.
+
+</details>
+
+<details>
+<summary><b>🔴 Token Refresh Failed</b></summary>
+
+<br>
+
+Delete token file and re-authenticate:
+```powershell
+del credentials\gmail_token.pickle
+python run.py  # Re-authenticate
+```
+
+</details>
+
+<details>
+<summary><b>🔴 Scope Issues</b></summary>
+
+<br>
+
+1. Verify Gmail API is enabled
+2. Check OAuth consent screen scopes
+3. Re-run setup if scopes changed
+
+</details>
+
+---
+
+## 🛡️ Security Best Practices
+
+> [!CAUTION]
+> Never commit credentials to version control!
+
+| Practice | Details |
+|----------|---------|
+| 🔒 Gitignore credentials | Add `gmail_oauth_credentials.json` and token files |
+| 🔐 Use environment variables | Prefer env vars in production over `.env` files |
+| 🔄 Rotate credentials | Generate new passwords/secrets periodically |
+| 📋 Audit access | Review authorized apps in Google Account |
+
+---
+
+## 📚 Additional Resources
+
+| Resource | Link |
+|----------|------|
+| Google App Passwords | [Documentation](https://support.google.com/accounts/answer/185833) |
+| Gmail API Guide | [Documentation](https://developers.google.com/gmail/api/guides) |
+| OAuth 2.0 for Desktop | [Documentation](https://developers.google.com/identity/protocols/oauth2/native-app) |
+
+---
+
+## 📚 Related Documentation
+
+- [Setup Guide](SETUP_GUIDE.md) - Complete installation walkthrough
+- [Backend Setup](BACKEND_SETUP.md) - API server configuration
+- [Google Drive Setup](GOOGLE_DRIVE_SETUP.md) - Large file integration

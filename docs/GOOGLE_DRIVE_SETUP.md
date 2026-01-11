@@ -1,282 +1,346 @@
-# Google Drive Integration Setup
+# ☁️ Google Drive Integration Setup
 
-This guide provides detailed instructions for setting up Google Drive integration with the EmailManagement application, which is used for handling large file attachments (over 20MB).
+> *Configure Google Drive for handling large email attachments (> 20MB) in EmailManagement.*
 
-## Overview
+---
 
-When an email attachment exceeds 20MB (Gmail's limit), the EmailManagement application can:
-1. Upload the file to Google Drive
-2. Generate a shareable link with customizable permissions
-3. Include the link in the email instead of attaching the file directly
-4. Track links and downloads through the email records system
-5. Automatically manage file sharing permissions based on recipient emails
+## 📋 Overview
 
-## Prerequisites
+When an email attachment exceeds Gmail's 20MB limit, EmailManagement can:
 
-- Google account
-- Google Cloud Platform account (free tier is sufficient)
-- The EmailManagement application installed and configured
+```mermaid
+flowchart LR
+    A[📎 Large Attachment] --> B{Size > 20MB?}
+    B -->|Yes| C[☁️ Upload to GDrive]
+    B -->|No| D[📧 Direct Attach]
+    C --> E[🔗 Generate Link]
+    E --> F[📧 Send with Link]
+    D --> G[✅ Email Sent]
+    F --> G
+    
+    style A fill:#667eea,stroke:#5a67d8,color:#fff
+    style C fill:#4285f4,stroke:#3367d6,color:#fff
+    style G fill:#48bb78,stroke:#38a169,color:#fff
+```
 
-## Setup Methods
+| Feature | Description |
+|---------|-------------|
+| ☁️ Auto-upload | Files > 20MB uploaded automatically |
+| 🔗 Shareable links | Customizable permission levels |
+| ⏰ Expiring access | Time-limited link validity |
+| 🔐 Access control | Per-recipient permissions |
+| 📁 Organization | Date-based folder structure |
 
-There are two methods for Google Drive integration:
+---
 
-1. **Personal Google Account Method** - Using your personal Google account for direct access to uploaded files
-2. **Service Account Method** - Using a service account for automated, background operations
+## ✅ Prerequisites
 
-## Method 1: Personal Google Account (Recommended)
+| Requirement | Details |
+|-------------|---------|
+| 📧 Google Account | Personal or Workspace |
+| ☁️ Google Cloud Platform | Free tier sufficient |
+| 💿 EmailManagement | Installed and configured |
 
-This method allows you to upload files directly to your personal Google Drive, making them easier to manage.
+---
 
-### Step 1: Create a Google Cloud Project
+## 🔀 Setup Methods Comparison
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. At the top of the page, click on the project dropdown menu
-3. Click "New Project"
-4. Enter a project name (e.g., "EmailManagement")
-5. Click "Create"
-6. Wait for the project to be created, then select it from the notification or project dropdown
+| Feature | Personal (OAuth) | Service Account |
+|---------|-----------------|-----------------|
+| **Best for** | Personal use | Server/automated |
+| **File visibility** | Your Drive | Shared folder |
+| **User interaction** | Browser auth required | No interaction |
+| **Complexity** | ⭐⭐ Moderate | ⭐⭐⭐ Advanced |
 
-### Step 2: Enable the Google Drive API
+---
 
-1. In the left sidebar, navigate to "APIs & Services" > "Library"
-2. In the search bar, type "Google Drive API"
-3. Click on "Google Drive API" in the results
-4. Click the blue "Enable" button
-5. Wait for the API to be enabled
+## 👤 Method 1: Personal Google Account (OAuth)
+
+> ⭐ **Recommended for most users**
+
+### Step 1: Create Google Cloud Project
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Click project dropdown → **New Project**
+3. Enter name: `EmailManagement`
+4. Click **Create**
+5. Select the new project
+
+### Step 2: Enable Google Drive API
+
+1. Navigate to **APIs & Services** → **Library**
+2. Search for **"Google Drive API"**
+3. Click **Enable**
 
 ### Step 3: Configure OAuth Consent Screen
 
-1. In the left sidebar, navigate to "APIs & Services" > "OAuth consent screen"
-2. For User Type, select "External" (unless you're using Google Workspace)
-3. Click "Create"
-4. Fill in the required fields:
-   - App name: "EmailManagement App"
-   - User support email: Enter your email address
-   - Developer contact information: Enter your email address
-5. Click "Save and Continue"
-6. On the Scopes page, click "Add or Remove Scopes"
-7. Find and select the scope: `https://www.googleapis.com/auth/drive` (allows full Drive access)
-8. Click "Update" to add the selected scope
-9. Click "Save and Continue"
-10. On the Test Users page, click "Add Users"
-11. Add your own Google email address
-12. Click "Save and Continue"
-13. Review your settings and click "Back to Dashboard"
+1. Go to **APIs & Services** → **OAuth consent screen**
+2. Select **External** user type → **Create**
+3. Fill in required fields:
 
-### Step 4: Create OAuth 2.0 Credentials
+| Field | Value |
+|-------|-------|
+| App name | EmailManagement App |
+| User support email | Your email |
+| Developer contact | Your email |
 
-1. In the left sidebar, navigate to "APIs & Services" > "Credentials"
-2. Click the "+ Create Credentials" button at the top
-3. Select "OAuth client ID" from the dropdown menu
-4. For Application type, select "Desktop application"
-   - If "Desktop application" is not available, select "Other" or "Web application" (and if using "Web application", delete any auto-filled redirect URIs and add `http://localhost` as the redirect URI)
-5. Name your client (e.g., "EmailManagement Desktop App")
-6. Click "Create"
-7. A popup will appear with your client ID and client secret - click "Download JSON"
-8. Save the downloaded file as `oauth_credentials.json` in the project's `credentials` folder
+4. Click **Save and Continue**
+5. On Scopes page, click **Add or Remove Scopes**
+6. Select: `https://www.googleapis.com/auth/drive`
+7. Click **Update** → **Save and Continue**
+8. Add your email as a **Test User**
+9. Click **Save and Continue** → **Back to Dashboard**
 
-### Step 5: Run the Setup Script
+### Step 4: Create OAuth Credentials
 
-1. Make sure the `oauth_credentials.json` file is in the correct location:
-   ```
-   EmailManagement/credentials/oauth_credentials.json
-   ```
+1. Go to **APIs & Services** → **Credentials**
+2. Click **+ Create Credentials** → **OAuth client ID**
+3. Application type: **Desktop application**
+   
+   > [!TIP]
+   > If "Desktop application" isn't available, try "Other" or "Web application"
 
-2. Install the required packages (if not already installed):
-   ```powershell
-   pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
-   ```
+4. Name: `EmailManagement Desktop App`
+5. Click **Create**
+6. Click **Download JSON**
+7. Save as `oauth_credentials.json` in `credentials/` folder
 
-3. Run the OAuth setup script:
-   ```powershell
-   cd credentials
-   python setup_gdrive_oauth.py
-   ```
+### Step 5: Run Setup Script
 
-4. During script execution:
-   - A browser window will open automatically
-   - You will be asked to sign in to your Google account
-   - You'll see a warning screen that says "Google hasn't verified this app"
-   - Click "Continue" or "Advanced" > "Go to [Your App Name] (unsafe)"
-   - Grant permission to access your Google Drive
-   - The script will save the authentication token and list your available folders
+```powershell
+# Ensure credentials file is in place
+# EmailManagement/credentials/oauth_credentials.json
 
-### Step 6: Configure Your Environment
+# Install dependencies
+pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
-Update your `.env` file in the backend directory with the folder ID displayed by the setup script:
-
+# Run setup
+cd credentials
+python setup_gdrive_oauth.py
 ```
-# Google Drive Configuration
+
+**During setup:**
+1. 🌐 Browser opens automatically
+2. 🔐 Sign in to your Google account
+3. ⚠️ Click **Advanced** → **Go to [App Name] (unsafe)** on warning
+4. ✅ Grant Drive access permission
+5. 📁 Script displays available folders
+
+### Step 6: Configure Environment
+
+Update `backend/.env`:
+
+```env
+# ☁️ Google Drive Configuration
 GDRIVE_CREDENTIALS_PATH=../credentials/oauth_credentials.json
 GDRIVE_TOKEN_PATH=../credentials/token.pickle
 GDRIVE_FOLDER_ID=your_folder_id_here
-GDRIVE_SHARING_OPTION=anyone # Options: anyone, domain, or private
-GDRIVE_FILE_EXPIRY_DAYS=30 # Number of days before access expires (0 for never)
+GDRIVE_SHARING_OPTION=anyone
+GDRIVE_FILE_EXPIRY_DAYS=30
 ```
 
-## Method 2: Service Account (Alternative)
+---
 
-This method uses a service account which is better for automated, background operations without user interaction.
+## 🤖 Method 2: Service Account
 
-### Step 1: Create a Google Cloud Project
+> **For server environments without user interaction**
 
-Follow the same steps as in Method 1, Step 1.
+<details>
+<summary><b>📋 Click to expand Service Account setup</b></summary>
 
-### Step 2: Enable the Google Drive API
+<br>
 
-Follow the same steps as in Method 1, Step 2.
+### Step 1: Create Google Cloud Project
 
-### Step 3: Create a Service Account
+Same as Method 1, Steps 1-2.
 
-1. In your Google Cloud Project, navigate to "IAM & Admin" > "Service Accounts"
-2. Click "Create Service Account"
-3. Enter a name and description for your service account
-4. Click "Create and Continue"
-5. Grant the service account the "Editor" role for the Google Drive API
-6. Click "Continue" and then "Done"
+### Step 2: Create Service Account
 
-### Step 4: Create a Service Account Key
+1. Go to **IAM & Admin** → **Service Accounts**
+2. Click **Create Service Account**
+3. Enter name and description
+4. Click **Create and Continue**
+5. Grant **Editor** role
+6. Click **Continue** → **Done**
 
-1. From the service accounts list, click on the email address of your new service account
-2. Click the "Keys" tab
-3. Click "Add Key" > "Create new key"
-4. Select "JSON" as the key type
-5. Click "Create"
-6. Save the downloaded JSON file as `gdrive_credentials.json` in the project's `credentials` folder
+### Step 3: Create Key
 
-### Step 5: Configure Google Drive Access
+1. Click on your service account email
+2. Go to **Keys** tab
+3. Click **Add Key** → **Create new key**
+4. Select **JSON**
+5. Click **Create**
+6. Save as `gdrive_credentials.json` in `credentials/`
 
-1. Create a shared folder in Google Drive where attachments will be uploaded
-2. Share this folder with the service account email address (found in the credentials JSON file)
-3. Copy the folder ID from the Drive URL and add it to your `.env` file
+### Step 4: Configure Drive Access
 
-### Step 6: Configure Your Environment
+1. Create a shared folder in Google Drive
+2. Share folder with service account email (from JSON file)
+3. Copy folder ID from Drive URL
 
-Update your `.env` file in the backend directory:
+### Step 5: Configure Environment
 
-```
-# Google Drive Configuration
+```env
+# ☁️ Google Drive Configuration (Service Account)
 GDRIVE_CREDENTIALS_PATH=../credentials/gdrive_credentials.json
 GDRIVE_USE_SERVICE_ACCOUNT=true
 GDRIVE_FOLDER_ID=your_folder_id_here
-GDRIVE_SHARING_OPTION=anyone # Options: anyone, domain, or private
-GDRIVE_FILE_EXPIRY_DAYS=30 # Number of days before access expires (0 for never)
-GDRIVE_NOTIFICATION_EMAIL=false # Whether to send notification emails when sharing
+GDRIVE_SHARING_OPTION=anyone
+GDRIVE_FILE_EXPIRY_DAYS=30
+GDRIVE_NOTIFICATION_EMAIL=false
 ```
 
-## Testing the Integration
+</details>
 
-To verify your setup is working correctly:
+---
 
-1. Restart the EmailManagement backend server
-2. Send an email with a large attachment (over 20MB) using the application
-3. Verify that:
-   - The file appears in your specified Google Drive folder
-   - The email is sent with a download link instead of the attachment
-   - The download link works correctly when clicked
+## ✅ Testing the Integration
 
-## Comprehensive Troubleshooting Guide
+1. **Restart backend server**
+2. **Send email with large attachment** (> 20MB)
+3. **Verify:**
+   - ✅ File appears in Google Drive folder
+   - ✅ Email contains download link
+   - ✅ Link works when clicked
 
-### OAuth Setup Issues
+---
 
-- **"Desktop application" option not available:**
-  - Make sure you've completed the OAuth consent screen setup first
-  - Try selecting "Other" or "Web application" application type instead
-  - If using "Web application," add `http://localhost` to the redirect URIs
+## ⚙️ Configuration Options
 
-- **"This app isn't verified" warning:**
-  - This is normal for personal projects
-  - Click "Advanced" or "Continue" at the bottom of the warning screen
-  - Then click "Go to [Your App Name] (unsafe)" to proceed
+### Sharing Permissions
 
-- **Access denied errors:**
-  - Verify you added yourself as a test user in the OAuth consent screen
-  - Check that you selected the correct Google Drive scope
-  - Try deleting the token.pickle file (if it exists) and running the setup again
-
-### Script Execution Issues
-
-- **Missing dependencies:**
-  ```powershell
-  pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
-  ```
-
-- **Token pickle errors:**
-  - If you see token.pickle related errors, delete the file and run setup again:
-  ```powershell
-  del credentials\token.pickle
-  python credentials\setup_gdrive_oauth.py
-  ```
-
-### Upload Issues
-
-- **Files not appearing in Drive:**
-  - Verify the folder ID in your .env file matches a folder in your Drive
-  - Check application logs for API errors
-  - Ensure the token hasn't expired (rerun the setup script if needed)
-  - Check your Drive storage quota isn't full
-
-- **Permission errors during upload:**
-  - Verify the scope includes full Drive access
-  - Try refreshing the token by running the setup script again
-
-## Security Best Practices
-
-- The `token.pickle` file contains access tokens for your Google Drive. Keep it secure.
-- Add both `token.pickle` and `oauth_credentials.json` to your `.gitignore` file
-- If you believe your tokens have been compromised:
-  1. Go to your Google account's security settings
-  2. Remove access for the EmailManagement application
-  3. Regenerate new OAuth credentials in the Google Cloud Console
-  4. Run the setup script again
-
-## Maintenance
-
-- Google OAuth tokens eventually expire. If you experience authentication issues:
-  1. Run the setup script again
-  2. Follow the browser authentication steps
-  3. The script will refresh your tokens
-
-- Regularly check that your integration is working by testing large file uploads
-
-## Advanced Features
-
-### File Sharing Options
-
-The application supports different sharing permission levels configured via the `GDRIVE_SHARING_OPTION` environment variable:
-
-- `anyone`: Anyone with the link can access the file (most permissive)
-- `domain`: Only users in your organization can access the file
-- `private`: Only specific email addresses can access the file
+| Option | Description |
+|--------|-------------|
+| `anyone` | Anyone with link can access (most permissive) |
+| `domain` | Only organization users can access |
+| `private` | Only specific email addresses |
 
 ### Expiring Links
 
-For enhanced security, you can set file links to expire after a certain number of days using the `GDRIVE_FILE_EXPIRY_DAYS` setting:
-
-- Set to a positive integer (e.g., `30`) to make links expire after that many days
-- Set to `0` to create permanent links with no expiration
-
-### Access Control by Email
-
-When using the `private` sharing option, the application will automatically:
-
-1. Extract recipient email addresses from the email being sent
-2. Grant access to the Google Drive file only to those specific email addresses
-3. Track permissions in the email records database
+| Setting | Effect |
+|---------|--------|
+| `30` | Links expire after 30 days |
+| `7` | Links expire after 7 days |
+| `0` | Links never expire |
 
 ### File Organization
 
-Files are organized in Google Drive according to these rules:
+Files are automatically organized:
 
-1. All files are uploaded to the folder specified by `GDRIVE_FOLDER_ID`
-2. Within that folder, files are organized into dated subfolders (YYYY-MM-DD format)
-3. Each file is named with a prefix of the email ID for easy tracking
+```
+📁 GDRIVE_FOLDER_ID/
+├── 📁 2026-01-11/
+│   ├── EMAIL_001_attachment.pdf
+│   └── EMAIL_002_report.xlsx
+├── 📁 2026-01-12/
+│   └── EMAIL_003_document.docx
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### OAuth Setup Issues
+
+<details>
+<summary><b>🔴 "Desktop application" not available</b></summary>
+
+<br>
+
+1. Complete OAuth consent screen setup first
+2. Try "Other" or "Web application" type
+3. For Web app, add `http://localhost` to redirect URIs
+
+</details>
+
+<details>
+<summary><b>🔴 "This app isn't verified" warning</b></summary>
+
+<br>
+
+This is normal for personal projects:
+1. Click **Advanced** or **Continue**
+2. Click **Go to [App Name] (unsafe)**
+
+</details>
+
+<details>
+<summary><b>🔴 Access denied errors</b></summary>
+
+<br>
+
+1. Verify you're added as a test user
+2. Check correct Drive scope is selected
+3. Delete `token.pickle` and re-run setup
+
+</details>
+
+### Upload Issues
+
+<details>
+<summary><b>🔴 Files not appearing in Drive</b></summary>
+
+<br>
+
+| Check | Solution |
+|-------|----------|
+| Folder ID | Verify in `.env` matches actual folder |
+| Token | Re-run setup script to refresh |
+| Quota | Check Drive storage isn't full |
+| Logs | Review application logs for API errors |
+
+</details>
+
+<details>
+<summary><b>🔴 Token/pickle errors</b></summary>
+
+<br>
+
+```powershell
+# Delete old token and re-authenticate
+del credentials\token.pickle
+python credentials\setup_gdrive_oauth.py
+```
+
+</details>
+
+---
+
+## 🛡️ Security Best Practices
+
+> [!CAUTION]
+> Keep credentials secure!
+
+| Practice | Details |
+|----------|---------|
+| 🔒 Gitignore | Add `token.pickle` and `oauth_credentials.json` to `.gitignore` |
+| 🔐 Compromised tokens | Revoke in Google Account → Security → Third-party apps |
+| 🔄 Token refresh | Re-run setup if experiencing auth issues |
+| 📋 Regular testing | Periodically verify large file uploads work |
+
+---
+
+## 📊 Advanced Features
 
 ### API Usage Monitoring
 
-The application includes a usage monitoring system to help track Google Drive API quota usage:
+```
+GET /api/gdrive/usage
+```
 
-- View current usage statistics via the `/api/gdrive/usage` endpoint
-- Set up alerts for approaching quota limits via the automation system
-- Monitor failed uploads due to quota limitations
+Returns current quota usage and limits.
+
+### Access Control by Email
+
+When using `private` sharing:
+1. System extracts recipient emails
+2. Grants Drive access only to those addresses
+3. Tracks permissions in database
+
+---
+
+## 📚 Related Documentation
+
+- [Setup Guide](SETUP_GUIDE.md) - Complete installation walkthrough
+- [Backend Setup](BACKEND_SETUP.md) - API server configuration
+- [Google Auth Setup](GOOGLE_AUTH_SETUP.md) - Gmail SMTP authentication

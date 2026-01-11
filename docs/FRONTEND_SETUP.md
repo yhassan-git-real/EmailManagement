@@ -1,249 +1,380 @@
-# Frontend Setup Guide
+# 🎨 Frontend Setup Guide
 
-This guide provides detailed instructions for setting up the EmailManagement frontend, which is built with React, Vite, and Tailwind CSS.
+> *Detailed instructions for setting up the EmailManagement React frontend.*
 
-## Overview
+---
+
+## 📋 Overview
 
 The EmailManagement frontend provides a modern, responsive user interface for:
-- Database connection interface
-- Interactive email status dashboard with analytics
-- Email records management with filtering and sorting
-- Email automation configuration with scheduling
-- Template management and preview
-- Google Drive integration for large attachments
-- Performance monitoring and metrics visualization
 
-## Prerequisites
+| Feature | Description |
+|---------|-------------|
+| 🔐 Database Connection | Secure credential input interface |
+| 📊 Analytics Dashboard | Interactive charts and metrics |
+| 📧 Email Records | Filtering, sorting, and management |
+| 🤖 Automation Config | Scheduling and rule configuration |
+| 📝 Template Management | Create and preview email templates |
+| ☁️ Google Drive | Large attachment handling |
 
-- Node.js 14.x or higher
-- npm 6.x or higher
+---
 
-## Project Structure
+## ✅ Prerequisites
 
-The frontend follows a structured organization:
+| Requirement | Version |
+|-------------|---------|
+| Node.js | 14.x or higher |
+| npm | 6.x or higher |
+
+---
+
+## 📁 Project Structure
 
 ```
 frontend/
-├── public/                    # Static assets
-│   ├── favicon.ico            # Application icon
-│   ├── index.html             # HTML template
-│   └── manifest.json          # PWA manifest
-├── src/                       # Source code
-│   ├── components/            # Reusable UI components
-│   │   ├── Alert.jsx          # Alert message component
-│   │   ├── BrandingHeader.jsx # Header for login page
-│   │   ├── Breadcrumb.jsx     # Navigation breadcrumb
-│   │   ├── DatabaseConnector.jsx # Database connection form
-│   │   ├── EmailChart.jsx     # Chart for email analytics
-│   │   ├── EmailStatusCard.jsx # Email status display card
-│   │   ├── Footer.jsx         # Application footer
-│   │   ├── Header.jsx         # Main application header
-│   │   ├── HeaderNav.jsx      # Navigation in header
-│   │   ├── MetricsPanel.jsx   # Dashboard metrics panel
-│   │   ├── ProtectedRoute.jsx # Route protection wrapper
-│   │   ├── Sidebar.jsx        # Application sidebar
-│   │   ├── StatusBadge.jsx    # Status indicator
-│   │   ├── StatusSummary.jsx  # Email status summary
-│   │   ├── TemplateEditor.jsx # Email template editor
-│   │   ├── TemplatePreview.jsx # Email template preview
-│   │   └── Welcome.jsx        # Welcome message component
-│   ├── features/              # Feature-specific components
-│   │   └── email-records/     # Email records feature
-│   │       ├── EmailRecordEditModal.jsx # Edit modal
-│   │       ├── emailRecordsApi.js # API for email records
-│   │       ├── EmailRecordsView.jsx # Main view component
-│   │       └── index.js       # Feature entry point
-│   ├── pages/                 # Page components
-│   │   ├── AutomateEmail/     # Email automation pages
-│   │   │   ├── AutomationDashboard.jsx # Automation dashboard
-│   │   │   ├── AutomationSchedule.jsx # Schedule configuration
-│   │   │   └── AutomationSettings.jsx # Automation settings
-│   │   ├── EmailRecords/     # Email records pages
-│   │   │   ├── EmailDetails.jsx # Email details view
-│   │   │   └── EmailList.jsx # Email list view
-│   │   ├── HomePage.jsx       # Main dashboard page
-│   │   └── LoginPage.jsx      # Login/connection page
-│   ├── utils/                 # Utility functions
-│   │   ├── apiClient.js       # API communication
-│   │   ├── automationApi.js   # Automation API client
-│   │   ├── chartUtils.js      # Chart data formatting
-│   │   ├── constants.js       # Application constants
-│   │   ├── dateUtils.js       # Date formatting utilities
-│   │   ├── fileUtils.js       # File handling utilities
-│   │   ├── gdriveApi.js       # Google Drive API client
-│   │   └── sessionUtils.js    # Session management
-│   ├── App.js                 # Main application component
-│   ├── index.css              # Global styles
-│   └── index.jsx              # Application entry point
-├── package.json               # Dependencies and scripts
-├── postcss.config.js          # PostCSS configuration
-├── tailwind.config.js         # Tailwind CSS configuration
-├── vite.config.js             # Vite configuration
-└── README.md                  # Frontend documentation
+├── 📂 public/                       # Static Assets
+│   ├── favicon.ico
+│   ├── index.html
+│   └── manifest.json
+│
+├── 📂 src/                          # Source Code
+│   │
+│   ├── 📂 components/               # Reusable UI Components
+│   │   ├── Alert.jsx                # Alert messages
+│   │   ├── BrandingHeader.jsx       # Login page header
+│   │   ├── Breadcrumb.jsx           # Navigation breadcrumb
+│   │   ├── DatabaseConnector.jsx    # DB connection form
+│   │   ├── EmailChart.jsx           # Analytics charts
+│   │   ├── EmailStatusCard.jsx      # Status display cards
+│   │   ├── Footer.jsx               # Application footer
+│   │   ├── Header.jsx               # Main header
+│   │   ├── MetricsPanel.jsx         # Dashboard metrics
+│   │   ├── ProtectedRoute.jsx       # Route protection
+│   │   ├── Sidebar.jsx              # Navigation sidebar
+│   │   ├── StatusBadge.jsx          # Status indicators
+│   │   ├── TemplateEditor.jsx       # Template editing
+│   │   └── TemplatePreview.jsx      # Template preview
+│   │
+│   ├── 📂 features/                 # Feature Modules
+│   │   └── email-records/
+│   │       ├── EmailRecordEditModal.jsx
+│   │       ├── emailRecordsApi.js
+│   │       ├── EmailRecordsView.jsx
+│   │       └── index.js
+│   │
+│   ├── 📂 pages/                    # Page Components
+│   │   ├── AutomateEmail/           # Automation module
+│   │   │   ├── AutomationDashboard.jsx
+│   │   │   ├── AutomationSchedule.jsx
+│   │   │   └── AutomationSettings.jsx
+│   │   ├── EmailRecords/            # Records module
+│   │   │   ├── EmailDetails.jsx
+│   │   │   └── EmailList.jsx
+│   │   ├── HomePage.jsx             # Main dashboard
+│   │   └── LoginPage.jsx            # Login/connection
+│   │
+│   ├── 📂 utils/                    # Utility Functions
+│   │   ├── apiClient.js             # API communication
+│   │   ├── automationApi.js         # Automation API
+│   │   ├── chartUtils.js            # Chart formatting
+│   │   ├── constants.js             # App constants
+│   │   ├── dateUtils.js             # Date utilities
+│   │   ├── fileUtils.js             # File handling
+│   │   ├── gdriveApi.js             # Google Drive API
+│   │   └── sessionUtils.js          # Session management
+│   │
+│   ├── App.js                       # Main app component
+│   ├── index.css                    # Global styles
+│   └── index.jsx                    # Entry point
+│
+├── 📄 package.json                  # Dependencies
+├── 📄 postcss.config.js             # PostCSS config
+├── 📄 tailwind.config.js            # Tailwind config
+└── 📄 vite.config.js                # Vite config
 ```
 
-## Setup Methods
+---
 
-### Option 1: Using the Provided Scripts (Recommended)
+## 🚀 Setup Methods
 
-1. From the project root directory, run the frontend with a single command:
-   ```powershell
-   .\start_frontend.ps1
-   ```
+### Option 1: Using Scripts ⭐ Recommended
 
-   This script automatically:
-   - Checks for Node.js installation
-   - Installs dependencies if needed
-   - Starts the production server
+```powershell
+# From project root directory
+.\start_frontend.ps1
+```
 
-2. The frontend will be available at: http://localhost:5173
+This script automatically:
+- ✅ Checks Node.js installation
+- ✅ Installs dependencies if needed
+- ✅ Starts the development server
 
-3. Open a browser and navigate to http://localhost:5173 to view the application.
+**Access at:** http://localhost:5173
+
+---
 
 ### Option 2: Manual Setup
 
-If you prefer to set up the frontend manually:
+```powershell
+# Navigate to frontend
+cd frontend
 
-1. Navigate to the frontend directory:
-   ```powershell
-   cd frontend
-   ```
+# Install dependencies
+npm install
 
-2. Install dependencies:
-   ```powershell
-   npm install
-   ```
+# Start development server
+npm run dev
+```
 
-3. Start the production server:
-   ```powershell
-   npm run dev
-   ```
+---
 
-4. Open [http://localhost:5173](http://localhost:5173) to view the application.
+## 🏗️ Building for Production
 
-## Building for Production
+```powershell
+# Using script (from project root)
+.\build_frontend.ps1
 
-To build the frontend for production deployment:
+# Or manually
+cd frontend
+npm run build
+```
 
-1. Using the provided script (from project root):
-   ```powershell
-   .\build_frontend.ps1
-   ```
+Output is generated in `frontend/dist/` directory.
 
-2. Or manually:
-   ```powershell
-   cd frontend
-   npm run build
-   ```
+---
 
-This will create an optimized production build in the `frontend/dist` directory that can be deployed to a web server.
+## 🔄 Application Workflow
 
-## Application Workflow
+```mermaid
+flowchart TD
+    A[🔐 Login Page] -->|Enter DB Credentials| B{Validate}
+    B -->|Success| C[📊 Home Dashboard]
+    B -->|Failed| A
+    
+    C --> D[📧 Email Records]
+    C --> E[🤖 Automation]
+    C --> F[📝 Templates]
+    
+    D --> D1[Filter & Search]
+    D --> D2[Edit Records]
+    D --> D3[View Details]
+    
+    E --> E1[Configure Rules]
+    E --> E2[Set Schedule]
+    E --> E3[Monitor Status]
+    
+    F --> F1[Create Template]
+    F --> F2[Preview Template]
+    F --> F3[Edit Variables]
+    
+    style A fill:#667eea,stroke:#5a67d8,color:#fff
+    style C fill:#48bb78,stroke:#38a169,color:#fff
+    style D fill:#ed8936,stroke:#dd6b20,color:#fff
+    style E fill:#9f7aea,stroke:#805ad5,color:#fff
+    style F fill:#f56565,stroke:#c53030,color:#fff
+```
 
-The frontend follows a logical flow:
+---
 
-1. **Login Flow**:
-   - User enters database connection credentials on the Login page
-   - Application validates credentials with backend
-   - On successful connection, user is redirected to the Home page
-
-2. **Home Dashboard**:
-   - Displays email status summary
-   - Provides quick links to main features
-   - Shows connection information
-
-3. **Email Records**:
-   - Lists all email records with pagination
-   - Allows filtering, sorting, and searching
-   - Provides editing and status management capabilities
-   - Displays detailed email information and attachment links
-
-4. **Automation**:
-   - Configure email automation settings
-   - Set up schedules for sending emails with recurring options
-   - Manage automation rules and retry settings
-   - Monitor automation processes with real-time status
-   - View logs of automation activities
-
-## Key Components and Their Purposes
+## 🧩 Key Components
 
 ### Pages
 
-- **LoginPage**: Entry point where users connect to the database
-- **HomePage**: Main dashboard showing email status and quick actions
-- **AutomatePage**: Configuration for email automation rules
-- **EmailRecordsPage**: Management of email records (viewing, editing, filtering)
+| Component | Purpose |
+|-----------|---------|
+| `LoginPage` | Database connection entry point |
+| `HomePage` | Main dashboard with status & quick actions |
+| `AutomatePage` | Email automation configuration |
+| `EmailRecordsPage` | Email record management |
 
-### Components
+### Core Components
 
-- **Header/BrandingHeader**: Application navigation and branding
-- **DatabaseConnector**: Form for entering database credentials
-- **StatusSummary**: Dashboard widget showing email status statistics
-- **ProtectedRoute**: Ensures routes are only accessible after database connection
-- **Sidebar**: Navigation sidebar with collapsible design
+| Component | Purpose |
+|-----------|---------|
+| `Header` / `BrandingHeader` | Navigation and branding |
+| `Sidebar` | Collapsible navigation menu |
+| `DatabaseConnector` | Credential input form |
+| `StatusSummary` | Dashboard status statistics |
+| `ProtectedRoute` | Route access control |
+| `MetricsPanel` | Performance metrics display |
 
-### Utilities
+### Utility Modules
 
-- **apiClient.js**: Centralized API communication with the backend
-- **sessionUtils.js**: Handles session storage for connection information
-- **dateUtils.js**: Date formatting and manipulation functions
+| Module | Purpose |
+|--------|---------|
+| `apiClient.js` | Centralized backend communication |
+| `sessionUtils.js` | Session storage management |
+| `dateUtils.js` | Date formatting functions |
+| `chartUtils.js` | Chart data preparation |
 
-## API Integration
+---
 
-The frontend communicates with the backend through several API clients:
+## 🔌 API Integration
 
-- **apiClient.js**: General API functions for database and email operations
-- **emailRecordsApi.js**: Specific functions for email records management
-- **automationApi.js**: Functions for email automation configuration
-- **gdriveApi.js**: Functions for Google Drive integration
-- **templateApi.js**: Functions for email template management
+The frontend communicates through several API clients:
 
-## Customization
+```mermaid
+graph LR
+    subgraph Frontend
+        UI[UI Components]
+    end
+    
+    subgraph APIClients["API Clients"]
+        AC[apiClient.js]
+        ER[emailRecordsApi.js]
+        AU[automationApi.js]
+        GD[gdriveApi.js]
+    end
+    
+    subgraph Backend
+        API[FastAPI Backend]
+    end
+    
+    UI --> AC
+    UI --> ER
+    UI --> AU
+    UI --> GD
+    AC --> API
+    ER --> API
+    AU --> API
+    GD --> API
+    
+    style Frontend fill:#61dafb,stroke:#21a1c4,color:#000
+    style APIClients fill:#f7df1e,stroke:#c9b616,color:#000
+    style Backend fill:#009688,stroke:#00796b,color:#fff
+```
+
+| Client | Purpose |
+|--------|---------|
+| `apiClient.js` | General API functions |
+| `emailRecordsApi.js` | Email records CRUD |
+| `automationApi.js` | Automation configuration |
+| `gdriveApi.js` | Google Drive operations |
+
+---
+
+## 🎨 Customization
 
 ### Styling
 
-The application uses Tailwind CSS for styling. To customize the appearance:
+The application uses **Tailwind CSS** for styling.
 
-1. Edit the `tailwind.config.js` file to modify colors, fonts, and other design tokens
-2. Add custom styles in `src/index.css`
+**Modify Design Tokens:**
+```javascript
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#your-color',
+      },
+    },
+  },
+}
+```
+
+**Add Custom Styles:**
+```css
+/* src/index.css */
+.custom-class {
+  /* your styles */
+}
+```
 
 ### API Endpoint Configuration
 
-By default, the frontend connects to a backend at `http://localhost:8000`. To change this:
+```javascript
+// src/utils/apiClient.js
+const API_BASE_URL = 'http://localhost:8000';  // Change if needed
+```
 
-1. Open `src/utils/apiClient.js`
-2. Modify the `API_BASE_URL` constant to point to your backend server
+> [!IMPORTANT]
+> Update this URL if your backend runs on a different port.
 
-## Browser Compatibility
+---
 
-The application is designed to work with:
-- Chrome (latest 2 versions)
-- Firefox (latest 2 versions)
-- Edge (latest 2 versions)
-- Safari (latest 2 versions)
+## 🌐 Browser Compatibility
 
-## Troubleshooting
+| Browser | Versions |
+|---------|----------|
+| Chrome | Latest 2 |
+| Firefox | Latest 2 |
+| Edge | Latest 2 |
+| Safari | Latest 2 |
 
-### Common Issues
+---
 
-1. **Node.js Version**
-   - Ensure you have Node.js 14.x or higher installed
-   - Check with: `node --version`
+## 🔧 Troubleshooting
 
-2. **Port Conflict**
-   - If port 5173 is already in use, Vite will automatically try the next available port
-   - Look for the URL in the terminal output when starting the production server
+<details>
+<summary><b>🔴 Node.js Version Error</b></summary>
 
-3. **Backend Connection Issues**
-   - Check if the backend server is running
-   - Verify the API_BASE_URL in apiClient.js matches your backend URL
-   - Check browser console for CORS errors (ensure backend has proper CORS settings)
+<br>
 
-4. **Build Errors**
-   - Run `npm run build` to see detailed error messages
-   - Check for any dependencies that need updating: `npm update`
+```powershell
+node --version  # Ensure 14.x or higher
+```
 
-5. **White Screen/Blank Page**
-   - Check browser console for JavaScript errors
-   - Verify all dependencies are installed correctly
-   - Try clearing your browser cache
+Download latest from [nodejs.org](https://nodejs.org/)
+
+</details>
+
+<details>
+<summary><b>🔴 Port 5173 Already in Use</b></summary>
+
+<br>
+
+Vite automatically selects the next available port. Check terminal output for the actual URL.
+
+</details>
+
+<details>
+<summary><b>🔴 Backend Connection Failed</b></summary>
+
+<br>
+
+1. ✅ Verify backend server is running
+2. ✅ Check `API_BASE_URL` in `apiClient.js`
+3. ✅ Check browser console for CORS errors
+4. ✅ Verify backend CORS settings include frontend URL
+
+</details>
+
+<details>
+<summary><b>🔴 Build Errors</b></summary>
+
+<br>
+
+```powershell
+# See detailed errors
+npm run build
+
+# Update dependencies
+npm update
+
+# Clear cache and reinstall
+rm -rf node_modules
+npm install
+```
+
+</details>
+
+<details>
+<summary><b>🔴 White Screen / Blank Page</b></summary>
+
+<br>
+
+1. Check browser console for JavaScript errors
+2. Verify all dependencies are installed
+3. Clear browser cache
+4. Try incognito/private window
+
+</details>
+
+---
+
+## 📚 Related Documentation
+
+- [Setup Guide](SETUP_GUIDE.md) - Complete installation walkthrough
+- [Backend Setup](BACKEND_SETUP.md) - API server configuration
+- [Google Drive Setup](GOOGLE_DRIVE_SETUP.md) - Large file integration
